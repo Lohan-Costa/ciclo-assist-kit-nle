@@ -1,0 +1,46 @@
+[package]
+name = "cicloassist"
+# ⚠️ Mantenha em sincronia com `tauri.conf.json` e o `VERSAO` do serviço.
+version = "0.1.0"
+description = "A janela do Ciclo Assist: sobe o serviço e mostra o painel, fora do NLE"
+authors = ["Ciclo Media"]
+edition = "2021"
+
+[lib]
+name = "cicloassist_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+# ⭐ A casca é a do De Lá Pra Cá (`_DeLaPraCa/app/src-tauri`, 2026-10-19), enxugada — e as MESMAS versões,
+# para a família compilar uma cópia só das dependências na máquina de quem constrói.
+[dependencies]
+# `unstable`: as VÁRIAS webviews numa janela só (`Window::add_child`) — uma por aba do guarda-chuva.
+tauri = { version = "2", features = ["unstable"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# O alvo de arrasto (`src/arrasto_win.rs`). ⚠️ As MESMAS versões que o wry (o Tauri) já usa — sem compilar uma
+# segunda cópia do `windows`.
+[target.'cfg(target_os = "macos")'.dependencies]
+# a altura da barra de título (`barra_de_titulo` no lib.rs) e o arrasto do MC (`arrasto_mac.rs`): já vêm pelo Tauri
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSGeometry", "NSArray", "NSData", "NSString"] }
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows-core = "0.62"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Com",
+    "Win32_System_DataExchange",
+    "Win32_System_Memory",
+    "Win32_System_Ole",
+    "Win32_System_SystemServices",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }

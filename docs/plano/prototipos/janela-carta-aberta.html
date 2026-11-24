@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Janela da Carta Aberta</title>
+<style>
+/* v3 (autor, 12/11): a identidade do MSync (9 ARQUIVADOS/MSYNC — o mockup do Claude Design), com os cinzas NEUTROS.
+   ⭐ Regra do app: toda parte clara é branco + cinza neutro (R = G = B). O MSync usava cinzas levemente quentes
+   (#f5f5f3, #ececea, #d2d2cd): aqui eles viram #f5f5f5, #ececec, #d2d2d2. Cor só onde tem significado: o status,
+   a origem (Avid/Premiere) e o realce verde-água das ações. Nenhuma SUPERFÍCIE grande é tingida (seleção, faixa). */
+:root {
+  color-scheme: light;
+  --bg-1: #ffffff; --bg-2: #f5f5f5; --bg-3: #ececec; --sel: #e2e2e2; --hover: #f0f0f0;
+  --borda-1: #e6e6e6; --borda-2: #d2d2d2;
+  --tinta: #1f1f1f; --tinta-2: #565656; --tinta-3: #8a8a8a;
+  --realce: #2a7f77; --realce-claro: #e3f1ef;
+  --ok: #1d9e75; --warn: #ba7517; --err: #e24b4a; --info: #378add;
+  --ok-fundo: #e1f5ee; --warn-fundo: #faeeda; --err-fundo: #fcebeb;
+  --raio: 6px; --raio-g: 10px;
+  --texto: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: #e9e9e9; color: var(--tinta); font: 13px/1.45 var(--texto); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+
+.palco { padding: 24px 16px 32px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.legenda-topo { max-width: 1150px; width: 100%; color: var(--tinta-2); }
+.legenda-topo h1 { margin: 0 0 4px; font-size: 17px; color: var(--tinta); font-weight: 600; text-wrap: balance; }
+.legenda-topo p { margin: 0; max-width: 80ch; }
+
+/* a janela */
+.janela { width: 100%; max-width: 1150px; height: 730px; display: flex; flex-direction: column; background: var(--bg-1);
+          border: 1px solid var(--borda-2); border-radius: var(--raio-g); overflow: hidden; box-shadow: 0 10px 34px rgba(0,0,0,.14); position: relative; }
+.titulo { flex: none; height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--bg-2); border-bottom: 1px solid var(--borda-1); }
+.semaforo { display: flex; gap: 7px; }
+.semaforo i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.semaforo i:nth-child(1) { background: #ec6a5e; } .semaforo i:nth-child(2) { background: #f4bf4f; } .semaforo i:nth-child(3) { background: #61c554; }
+.titulo span { flex: 1; text-align: center; color: var(--tinta-2); font-size: 12px; margin-right: 50px; }
+
+.cabeca { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-1); border-bottom: 1px solid var(--borda-1); }
+.projeto { position: relative; }
+.botao { flex: none; padding: 4px 10px; border: 1px solid var(--borda-2); border-radius: var(--raio); background: var(--bg-1); color: var(--tinta); cursor: pointer; }
+.botao:hover { background: var(--hover); }
+.botao.projeto-nome { font-weight: 600; }
+.botao.decidir { border-color: #e7c590; color: var(--warn); }
+.botao.decidir b { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 5px; border-radius: 9px; background: var(--warn-fundo); color: var(--warn); text-align: center; font-size: 11px; }
+.botao.principal { border-color: var(--realce); color: var(--realce); font-weight: 600; }
+.botao.principal:hover { background: var(--realce-claro); }
+.botao.perigo { border-color: #f0c6c6; color: #a32d2d; }
+.caminho { color: var(--tinta-3); font-family: var(--mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 200px; }
+.atualizado { color: var(--tinta-3); font-size: 11px; }
+
+.corpo { flex: 1; min-height: 0; display: flex; }
+.arvore { width: 220px; flex: none; background: var(--bg-2); border-right: 1px solid var(--borda-1); display: flex; flex-direction: column; min-height: 0; }
+.arvore-rot { padding: 10px 14px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-3); }
+.arvore-lista { flex: 1; overflow-y: auto; padding: 2px 8px 8px; display: flex; flex-direction: column; gap: 1px; }
+.pasta { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 8px; border: 1px solid transparent; border-radius: var(--raio);
+         background: none; text-align: left; cursor: pointer; color: var(--tinta); user-select: none; }
+.pasta:hover { background: var(--hover); }
+.pasta.aberta { background: var(--bg-1); box-shadow: 0 0 0 1px var(--borda-1); font-weight: 600; }
+.pasta.alvo { border-color: var(--realce); background: var(--realce-claro); }
+.pasta .tri { width: 10px; color: var(--tinta-3); flex: none; text-align: center; font-size: 10px; }
+.pasta .ic { flex: none; width: 14px; height: 11px; border: 1.3px solid var(--tinta-2); border-radius: 2px; position: relative; }
+.pasta .ic::before { content: ""; position: absolute; left: -1.3px; top: -4px; width: 6px; height: 3px; border: 1.3px solid var(--tinta-2); border-bottom: 0; border-radius: 2px 2px 0 0; }
+.pasta .nome { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pasta .n { color: var(--tinta-3); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 400; }
+.arvore-pe { flex: none; padding: 8px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--borda-1); }
+.tracejado { min-height: 28px; border: 1px dashed var(--borda-2); border-radius: var(--raio); background: none; color: var(--tinta-2); cursor: pointer; }
+.tracejado:hover { background: var(--hover); color: var(--tinta); }
+.quarentena { color: var(--tinta-3); font-size: 11px; padding: 0 4px; }
+
+.direita { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg-1); }
+.direita-cabeca { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--borda-1); flex-wrap: wrap; }
+.direita-cabeca h2 { margin: 0; font-size: 14px; font-weight: 600; flex: 1 1 auto; min-width: 120px; }
+.direita-cabeca h2 small { color: var(--tinta-3); font-weight: 400; margin-left: 6px; font-size: 12px; }
+.chave { display: inline-flex; gap: 12px; flex-wrap: wrap; color: var(--tinta-2); font-size: 11px; }
+.chave span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* a faixa do envio: NEUTRA; só a etiqueta da origem tem cor */
+.faixa { flex: none; display: flex; align-items: center; gap: 10px; padding: 6px 14px; background: var(--bg-2); border-bottom: 1px solid var(--borda-1); color: var(--tinta-2); font-size: 12px; }
+.faixa .origem { flex: none; padding: 0 8px; border-radius: 9px; font-size: 11px; font-weight: 600; background: #ece9fb; color: #5b4bc4; }
+.faixa.avid .origem { background: var(--realce-claro); color: var(--realce); }
+.faixa .conta { flex: 1; min-width: 0; }
+.faixa .conta em { font-style: normal; color: var(--warn); font-weight: 600; }
+.faixa .x { background: none; border: 0; color: var(--tinta-3); cursor: pointer; font-size: 14px; }
+
+/* a lista */
+.tabela-caixa { flex: 1; min-height: 0; overflow: auto; position: relative; background: var(--bg-1); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; table-layout: fixed; }
+th { position: sticky; top: 0; z-index: 1; background: var(--bg-2); text-align: left; font-weight: 500; font-size: 12px; color: var(--tinta-2);
+     padding: 5px 10px; border-bottom: 1px solid var(--borda-1); border-right: 1px solid var(--borda-1); white-space: nowrap;
+     user-select: none; cursor: default; overflow: hidden; text-overflow: ellipsis; }
+td { padding: 3px 10px; border-right: 1px solid var(--borda-1); white-space: nowrap; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
+th.st, td.st { padding: 3px 0; text-align: center; }
+th.mini, td.mini { padding: 3px 6px; }
+th.ti, td.ti { text-align: center; padding: 3px 0; }
+td.tc { font-family: var(--mono); font-size: 11.5px; color: var(--tinta-2); }
+td.codec { color: var(--tinta-2); }
+tbody tr.linha:nth-child(odd) td { background: var(--bg-1); }
+tbody tr.linha:nth-child(even) td { background: var(--bg-2); }
+tr.linha { cursor: default; }
+tbody tr.linha:hover td { background: var(--hover); }
+tbody tr.linha.sel td { background: var(--sel); }
+th .alca { position: absolute; top: 0; right: -1px; bottom: 0; width: 7px; cursor: col-resize; z-index: 2; }
+th .alca:hover, th .alca.puxando { background: rgba(0,0,0,.12); }
+th .seta { margin-left: 4px; color: var(--tinta); font-size: 10px; }
+th.ordenada { color: var(--tinta); font-weight: 600; }
+/* a bolinha de status: 8 px, cor chapada, sem sombra (a régua do De Lá Pra Cá; as cores de status do MSync) */
+.ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: middle; }
+.ponto.ok { background: var(--ok); } .ponto.warn { background: var(--warn); } .ponto.err { background: var(--err); }
+.ponto.item { background: transparent; box-shadow: 0 0 0 1.25px var(--ok) inset; }
+.mini-q { display: block; width: 62px; height: 35px; border-radius: 3px; border: 1px solid var(--borda-2); overflow: hidden; }
+.mini-q svg { display: block; width: 100%; height: 100%; }
+.ti-ic { width: 20px; height: 14px; color: var(--tinta-2); vertical-align: middle; }
+/* na pasta virtual, cada linha diz de que pasta veio */
+.de-pasta { margin-left: 8px; color: var(--tinta-3); font-size: 11px; }
+/* "a decidir": a pílula do MSync (fundo de status, texto do status) */
+.pend { margin-left: 8px; padding: 0 7px; border-radius: 9px; background: var(--warn-fundo); color: #854f0b; font-size: 11px; font-weight: 500; }
+
+.solte { position: absolute; inset: 10px; border: 2px dashed var(--realce); border-radius: var(--raio-g); background: rgba(255,255,255,.92);
+         display: flex; align-items: center; justify-content: center; text-align: center; font-size: 14px; color: var(--tinta); pointer-events: none; }
+.solte.externo { border-color: #5b4bc4; }
+
+/* o detalhe: duas colunas no mesmo topo (metadados · caminhos conhecidos) */
+.detalhe { flex: none; height: 212px; border-top: 1px solid var(--borda-1); background: var(--bg-1); padding: 10px 14px; overflow-y: auto;
+           display: grid; grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.5fr); gap: 0 24px; align-items: start; }
+.detalhe .meta, .detalhe .caminhos { min-width: 0; }
+.detalhe h3, .detalhe .caminhos h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; line-height: 18px; color: var(--tinta); overflow-wrap: anywhere; }
+.detalhe dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; align-content: start; font-size: 12px; }
+.detalhe dt { color: var(--tinta-3); }
+.detalhe dd { margin: 0; color: var(--tinta); overflow-wrap: anywhere; }
+.detalhe .conhecidos { width: 100%; border-collapse: collapse; table-layout: auto; border: 1px solid var(--borda-1); border-radius: var(--raio); }
+.detalhe .conhecidos td { padding: 4px 8px; border: 0; white-space: normal; cursor: default; }
+.detalhe .conhecidos tr:nth-child(odd) td { background: var(--bg-1); }
+.detalhe .conhecidos tr:nth-child(even) td { background: var(--bg-2); }
+.detalhe .conhecidos tr:hover td { background: var(--hover); }
+.detalhe .conhecidos code { font-family: var(--mono); font-size: 11px; color: var(--tinta); overflow-wrap: anywhere; }
+.detalhe .caminhos .falta { margin: 0; color: var(--tinta-3); font-style: italic; }
+.aviso { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 30; max-width: 80%; padding: 8px 14px; border-radius: var(--raio);
+         background: var(--bg-1); border: 1px solid var(--borda-2); color: var(--tinta); box-shadow: 0 8px 22px rgba(0,0,0,.14); }
+.aviso code { font-family: var(--mono); font-size: 11px; color: var(--tinta-2); }
+
+/* menus, gaveta e diálogo: claros também */
+.menu { position: absolute; z-index: 20; min-width: 210px; padding: 5px; background: var(--bg-1); border: 1px solid var(--borda-2); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,.14); display: flex; flex-direction: column; }
+.menu button { text-align: left; padding: 6px 10px; border: 0; border-radius: 5px; background: none; cursor: pointer; }
+.menu button:hover { background: var(--hover); }
+.menu button.perigo { color: #a32d2d; }
+.menu button.perigo:hover { background: var(--err-fundo); }
+.menu hr { border: 0; border-top: 1px solid var(--borda-1); margin: 4px 2px; }
+.menu .rot { padding: 4px 10px 2px; color: var(--tinta-3); font-size: 11px; }
+.menu small { display: block; color: var(--tinta-3); font-size: 11px; }
+
+.gaveta { position: absolute; top: 32px; right: 0; bottom: 30px; width: 420px; max-width: 100%; z-index: 15; background: var(--bg-1); border-left: 1px solid var(--borda-2);
+          box-shadow: -10px 0 26px rgba(0,0,0,.10); display: flex; flex-direction: column; }
+.gaveta-cabeca { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--borda-1); background: var(--bg-2); }
+.gaveta-cabeca h2 { margin: 0; flex: 1; font-size: 14px; }
+.gaveta-corpo { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+.gaveta-corpo > p { margin: 0; color: var(--tinta-2); }
+.caso { border: 1px solid var(--borda-1); border-left: 3px solid var(--warn); border-radius: var(--raio); padding: 10px 12px; background: var(--bg-1); display: flex; flex-direction: column; gap: 6px; }
+.caso h4 { margin: 0; font-size: 13px; }
+.caso .porque { color: var(--tinta-2); }
+.caso .quem { color: var(--tinta-3); font-size: 11px; }
+.caso .cand { font-family: var(--mono); font-size: 11px; color: var(--tinta-2); padding: 3px 8px; background: var(--bg-2); border-radius: 4px; }
+.caso .acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+.caso.resolvido { border-left-color: var(--ok); }
+.caso.resolvido .acoes { color: var(--ok); }
+
+.dialogo-fundo { position: absolute; inset: 32px 0 0 0; z-index: 25; background: rgba(0,0,0,.18); display: flex; align-items: center; justify-content: center; }
+.dialogo { width: 360px; max-width: 92%; background: var(--bg-1); border: 1px solid var(--borda-2); border-radius: var(--raio-g); padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 14px 34px rgba(0,0,0,.18); }
+.dialogo h3 { margin: 0; font-size: 14px; }
+.dialogo p { margin: 0; color: var(--tinta-2); }
+.dialogo .acoes { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* notas para o autor, fora da janela */
+.notas { max-width: 1150px; width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.nota { background: var(--bg-1); border: 1px solid var(--borda-1); border-radius: 8px; padding: 10px 12px; color: var(--tinta-2); }
+.nota b { color: var(--tinta); display: block; margin-bottom: 3px; }
+.simula { max-width: 1150px; width: 100%; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--tinta-2); }
+.simula .botao.av { color: var(--realce); }
+.simula .botao.pr { color: #5b4bc4; }
+
+/* ⭐ A MOLDURA é escura, a do Ciclo Assist (autor, 12/11): barra de título, barra do projeto e árvore. O CONTEÚDO
+   (lista, detalhe, menus, gaveta) fica claro e neutro. Paleta: painel.css/oficina.css; texto nunca abaixo de #a3a3a3. */
+.titulo, .cabeca, .arvore { --e-fundo: #2b2b2b; --e-painel: #242424; --e-linha: #3f3f3f; --e-tinta: #e2e2e2; --e-tinta-2: #b8b8b8; --e-tinta-3: #a3a3a3; }
+.titulo { background: #333; border-bottom-color: #1f1f1f; }
+.titulo span { color: var(--e-tinta-2); }
+.cabeca { background: var(--e-fundo); border-bottom-color: var(--e-linha); }
+.cabeca .botao { background: #333; border-color: #5a5a5a; color: var(--e-tinta); }
+.cabeca .botao:hover { border-color: #4cc4b8; background: #333; }
+.cabeca .botao.decidir { border-color: #d9a95a; color: #d9a95a; background: #3a3326; }
+.cabeca .botao.decidir b { background: #d9a95a; color: #241c0d; }
+.cabeca .caminho { color: var(--e-tinta-2); }
+.cabeca .atualizado { color: var(--e-tinta-3); }
+.cabeca .menu { color: var(--tinta); }
+.arvore { background: var(--e-painel); border-right-color: var(--e-linha); }
+.arvore-rot { color: var(--e-tinta-3); }
+.pasta { color: #d0d0d0; }
+.pasta:hover { background: #2e2e2e; }
+.pasta.aberta { background: #2a7f77; color: #fff; box-shadow: none; }
+.pasta.aberta .n { color: #dff; }
+.pasta.alvo { border-color: #4cc4b8; background: #1b3634; color: var(--e-tinta); }
+.pasta .tri, .pasta .n { color: var(--e-tinta-3); }
+.pasta .ic, .pasta .ic::before { border-color: currentColor; opacity: .85; }
+.arvore-pe { border-top-color: var(--e-linha); }
+.tracejado { border: 1.5px dashed #5f5f5f; color: var(--e-tinta-2); }
+.tracejado:hover:not(:disabled) { border-color: #4cc4b8; color: var(--e-tinta); background: none; }
+.tracejado:disabled { cursor: default; color: #a3a3a3; border-color: #444; background: none; }   /* desativado muda de TINTA, nunca de opacity (regra do painel) */
+.quarentena { color: var(--e-tinta-3); }
+
+/* ⭐ O RODAPÉ: o mesmo do app (app/ui/rodape.*, 30 px), para a janela não terminar do nada (autor, 12/11) */
+.rodape { flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+          background: #1c1c1c; border-top: 1px solid #333; font: 12px/1 "Segoe UI", system-ui, sans-serif; color: #a3a3a3; }
+.rodape p { margin: 0; white-space: nowrap; }
+.rodape button { background: none; border: 0; padding: 0; font: inherit; color: #8fb3ea; cursor: pointer; }
+.rodape .versao { justify-self: end; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 760px) {
+  .arvore { width: 170px; }
+  .detalhe { grid-template-columns: 1fr; height: 220px; }
+  .janela { height: 740px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gaveta, .menu { animation: entra .14s ease-out; }
+  @keyframes entra { from { opacity: .4; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+}
+</style>
+</head>
+<body>
+<div class="palco">
+  <div class="legenda-topo">
+    <h1>Carta Aberta, a janela (protótipo da C2)</h1>
+    <p>Como ficaria a janela aberta pelo botão abaixo de "Fluxos e Agentes". Os dados são do laboratório G01 e da D01 da PRODUCAO-A. Dá para clicar nas pastas e nas linhas, abrir o menu com o botão direito, abrir "A decidir" e simular um arrasto pelos botões embaixo da janela. Na árvore, Ctrl/Cmd ou Shift seleciona várias pastas e a lista mostra tudo junto (experimente "Câmeras" + "Som direto" do G01). Nos títulos da lista: arrastar a borda muda a largura; duplo clique ordena por aquela coluna (outro duplo clique inverte). Versão 3: a moldura escura do Ciclo Assist (título, projeto e árvore) e o conteúdo claro na identidade do MSync, com branco e cinza neutros.</p>
+  </div>
+
+  <div class="janela" id="janela">
+    <div class="titulo"><div class="semaforo"><i></i><i></i><i></i></div><span>Ciclo Assist — Carta Aberta</span></div>
+
+    <div class="cabeca">
+      <div class="projeto">
+        <button class="botao projeto-nome" id="botaoProjeto" aria-haspopup="menu">PRODUCAO-A ▾</button>
+        <div class="menu" id="menuProjeto" hidden style="top:32px;left:0">
+          <button>Novo projeto…<small>nome e taxa; o local você escolhe</small></button>
+          <button>Abrir projeto…<small>aponte a pasta de um projeto que existe</small></button>
+          <hr>
+          <div class="rot">Recentes</div>
+          <button>PRODUCAO-A<small>/Volumes/NAS-CICLO/Projetos/PRODUCAO-A</small></button>
+          <button>G01 itens<small>…/9 SAIDAS DOS APPS/_CICLO ASSIST/2026-11-12 CARTA ABERTA ITENS</small></button>
+        </div>
+      </div>
+      <span class="caminho" title="A raiz do projeto, escolhida por você">/Volumes/NAS-CICLO/Projetos/PRODUCAO-A · 23,976 qps</span>
+      <span class="atualizado" id="atualizado">atualizado há 4 s</span>
+      <button class="botao decidir" id="botaoDecidir">A decidir <b id="nDecidir">2</b></button>
+    </div>
+
+    <div class="corpo">
+      <aside class="arvore">
+        <div class="arvore-rot">Pastas</div>
+        <div class="arvore-lista" id="arvore" role="tree"></div>
+        <div class="arvore-pe">
+          <button class="tracejado" id="novaPasta">+ Nova pasta</button>
+          <div class="quarentena">Quarentena: 2 arquivos que não eram da Carta (ao abrir, 11:02)</div>
+        </div>
+      </aside>
+
+      <section class="direita">
+        <div class="direita-cabeca">
+          <h2 id="tituloPasta">Diarias / D01_230403 <small id="contaPasta">26 mídias</small></h2>
+          <span class="chave" aria-label="legenda do status">
+            <span><i class="ponto ok"></i>encontrada</span>
+            <span><i class="ponto warn"></i>a conferir</span>
+            <span><i class="ponto err"></i>sem mídia</span>
+            <span><i class="ponto item"></i>item</span>
+          </span>
+        </div>
+
+        <div class="faixa" id="faixa">
+          <span class="origem">Premiere</span>
+          <span class="conta">Mandado para D01_230403 às 11:14: 3 novas · 21 já estavam · 1 merged · <em>1 a decidir</em></span>
+          <button class="x" id="fecharFaixa" aria-label="fechar">×</button>
+        </div>
+
+        <div class="tabela-caixa" id="caixa">
+          <table>
+            <colgroup><col style="width:58px"><col style="width:76px"><col style="width:48px"><col style="width:360px"><col style="width:132px"><col style="width:84px"><col style="width:170px"></colgroup>
+            <thead><tr id="titulos"><th class="st" data-col="st">Status</th><th class="mini" data-col="">&nbsp;</th><th class="ti" data-col="tipo">Tipo</th><th data-col="nome">Nome</th><th data-col="tc">TC início</th><th data-col="dur">Duração</th><th data-col="codec">Codec</th></tr></thead>
+            <tbody id="linhas"></tbody>
+          </table>
+          <div class="solte" id="solte" hidden></div>
+        </div>
+
+        <div class="detalhe" id="detalhe"></div>
+      </section>
+    </div>
+
+    <footer class="rodape">
+      <span></span>
+      <p>Idealizado por <button type="button" title="Abrir o LinkedIn de Lohan Costa">Lohan Costa, edt.</button></p>
+      <span class="versao">v0.1.0</span>
+    </footer>
+
+    <div class="menu" id="menuContexto" hidden></div>
+
+    <aside class="gaveta" id="gaveta" hidden aria-label="A decidir">
+      <div class="gaveta-cabeca"><h2>A decidir</h2><button class="botao" id="fecharGaveta">Fechar</button></div>
+      <div class="gaveta-corpo" id="casos"></div>
+    </aside>
+
+    <div class="dialogo-fundo" id="dialogoFundo" hidden>
+      <div class="dialogo" role="dialog" aria-modal="true">
+        <h3 id="dTitulo"></h3>
+        <p id="dTexto"></p>
+        <div class="acoes"><button class="botao" id="dCancelar">Cancelar</button><button class="botao principal" id="dOk"></button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="simula">
+    Simular um arrasto:
+    <button class="botao av" id="simAvid">da bin do Media Composer</button>
+    <button class="botao pr" id="simPremiere">da bin do Premiere</button>
+    <span>(solta na pasta aberta; soltar sobre outra pasta da árvore manda para ela)</span>
+  </div>
+
+  <div class="notas">
+    <div class="nota"><b>Mandar</b>Arrastar da bin do Avid ou do Premiere para a janela. A faixa diz a conta do envio: novas, já estavam, itens, a decidir.</div>
+    <div class="nota"><b>Status</b>A bolinha da lista de mídias do De Lá Pra Cá: verde encontrada, âmbar a conferir (empate ou homônimo), vermelho sem mídia. O anel é um item (subclipe, sincronizado, multicâmera), que não tem arquivo próprio.</div>
+    <div class="nota"><b>Formas (Avid, Trabalho, Original)</b>Fora da tela nesta versão: o conceito de "anexar formato" vai ser repensado. O registro continua guardando as formas (C1).</div>
+    <div class="nota"><b>Pasta virtual</b>Como no DaVinci Resolve: com Ctrl/Cmd (soma ou tira) ou Shift (intervalo) na árvore, as pastas selecionadas aparecem juntas na lista, cada linha dizendo de que pasta veio. Soltar um arrasto na lista, nesse caso, pede a pasta de destino. Sem pasta selecionada, nada é mostrado; "+ Nova pasta" só com UMA selecionada (nasce dentro dela). A pasta-mãe mostra só o que está direto nela, como a bin do Resolve.</div>
+    <div class="nota"><b>A decidir</b>Empates e homônimos ficam guardados no projeto até alguém responder, e os outros editores também veem.</div>
+    <div class="nota"><b>Pastas e referências</b>Botão direito: nova pasta, renomear, mover (ou arrastar a linha para a pasta), tirar. Tirar leva para a Quarentena; nada se apaga.</div>
+    <div class="nota"><b>Fora desta fase</b>Levar e trazer timeline e puxar mídia para o programa (C3 e C4). Nenhum botão disso aparece antes de funcionar.</div>
+  </div>
+</div>
+
+<script>
+const PASTAS = [
+  { id: "raiz", nome: "PRODUCAO-A", nivel: 0, aberta: true },
+  { id: "diarias", nome: "Diarias", nivel: 1, pai: "raiz", aberta: true },
+  { id: "d01", nome: "D01_230403", nivel: 2, pai: "diarias" },
+  { id: "d02", nome: "D02_230404", nivel: 2, pai: "diarias" },
+  { id: "cenas", nome: "Cenas Editadas", nivel: 1, pai: "raiz", aberta: true },
+  { id: "c07", nome: "C07", nivel: 2, pai: "cenas" },
+  { id: "lab", nome: "G01 laboratório", nivel: 1, pai: "raiz", aberta: true },
+  { id: "labcam", nome: "Câmeras", nivel: 2, pai: "lab" },
+  { id: "labsom", nome: "Som direto", nivel: 2, pai: "lab" },
+];
+const MAC = "MAQUINA-1", WIN = "EDITOR2-WIN";
+const ITENS = {
+  d01: [
+    { nome: "A002_03170703_C003", codec: "DNxHR LB", st: "ok", tipo: "vídeo", tc: "03:14:14:17", dur: "3:48", f: ["tem", "tem", "outra"], quem: "Lohan (Avid), 12/11 10:02",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/1/A002_03170703_C003.mxf  (+2 trilhas)"],
+                 ["Trabalho", MAC, "/Volumes/NAS-CICLO/PRODUCAO-A/CONVERTIDOS/D01/A002_03170703_C003.mp4"],
+                 ["Trabalho", WIN, "N:\\PRODUCAO-A\\CONVERTIDOS\\D01\\A002_03170703_C003.mp4"],
+                 ["Original", WIN, "R:\\PRODUCAO-A\\BRAW\\D01\\A002_03170703_C003.braw"]],
+      medida: "Trabalho casado por nome + taxa + TC + quadros; conferido pela imagem (+0,998)" },
+    { nome: "A002_03170711_C004", codec: "DNxHR LB", st: "ok", tipo: "vídeo", tc: "03:22:40:02", dur: "1:12", f: ["tem", "tem", "nao"], quem: "Lohan (Avid), 12/11 10:02",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/1/A002_03170711_C004.mxf  (+2 trilhas)"], ["Trabalho", MAC, "/Volumes/NAS-CICLO/PRODUCAO-A/CONVERTIDOS/D01/A002_03170711_C004.mp4"], ["Original", "—", null]],
+      medida: "Trabalho casado por nome + taxa + TC + quadros" },
+    { nome: "B001_03170705_C001", codec: "H.264", st: "err", tipo: "vídeo", tc: "03:15:02:11", dur: "2:55", f: ["nao", "tem", "nao"], quem: "Editor 2 (Premiere), 12/11 11:14",
+      caminhos: [["Trabalho", MAC, "/Volumes/NAS-CICLO/PRODUCAO-A/CONVERTIDOS/D01/B001_03170705_C001.mp4"], ["Avid", "—", null], ["Original", "—", null]],
+      medida: "Entrou pelo Premiere; sem OP-Atom anexada ainda" },
+    { nome: "PRODUCAO-A - 03-04 PRAIA 03-04-T001", codec: "PCM 48 kHz · 5 canais", st: "warn", tipo: "som", tc: "11:42:00:00", dur: "2:01", f: ["tem", "tem", "na"], quem: "Lohan (Avid), 12/11 10:02",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/1/…T001_A01.mxf  (+4 trilhas)"], ["Trabalho", MAC, "/Volumes/NAS-CICLO/PRODUCAO-A/CONVERTIDOS/D01/SOM/…PRAIA 03-04-T001.WAV"]],
+      medida: "Som casado por nome + duração; conferido canal a canal (+1,000)", pend: true },
+    { nome: "PRODUCAO-A - 03-04 PRAIA 03-04-T002", codec: "PCM 48 kHz · 5 canais", st: "ok", tipo: "som", tc: "11:44:31:07", dur: "1:37", f: ["tem", "tem", "na"], quem: "Lohan (Avid), 12/11 10:02",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/1/…T002_A01.mxf  (+4 trilhas)"], ["Trabalho", MAC, "/Volumes/NAS-CICLO/PRODUCAO-A/CONVERTIDOS/D01/SOM/…PRAIA 03-04-T002.WAV"]],
+      medida: "Som casado por nome + duração" },
+    { nome: "C04_P01-T002", codec: "—", st: "item", tipo: "subclipe", item: true, tc: "de A002_03170703_C003", dur: "0:12", quem: "Lohan (Avid), 12/11 10:05",
+      caminhos: [], medida: "Recorte 214 a 502 do master A002_03170703_C003" },
+    { nome: "C04_P01-T002.sync.01", codec: "—", st: "item", tipo: "sincronizado", item: true, tc: "imagem 0 · som 234", dur: "0:41", quem: "Lohan (Avid), 12/11 10:05",
+      caminhos: [], medida: "Imagem: A002_03170703_C003 a partir do quadro 0 · Som: …PRAIA 03-04-T001 a partir do 234. No Premiere chega como merged clip." },
+  ],
+  labcam: [
+    { nome: "G01_CAM1_T01_MOV-PRORES", codec: "ProRes 422", st: "ok", tipo: "vídeo", tc: "10:00:05:00", dur: "0:50", f: ["tem", "tem", "nao"], quem: "Lohan (Avid), 12/11 10:26",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/202611120/G01_CAM1….mxf"], ["Trabalho", MAC, "…/carta_aberta/G01_GRUPO_23976/CAM 1/G01_CAM1_T01_MOV-PRORES.mov"]], medida: "Trabalho conferido pela imagem (+1,000)" },
+    { nome: "G01_CAM2_T01_MOV-PRORES", codec: "ProRes 422", st: "ok", tipo: "vídeo", tc: "10:00:12:00", dur: "0:43", f: ["tem", "tem", "nao"], quem: "Lohan (Avid), 12/11 10:26",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/202611120/G01_CAM2….mxf"], ["Trabalho", MAC, "…/G01_GRUPO_23976/CAM 2/G01_CAM2_T01_MOV-PRORES.mov"]], medida: "Trabalho conferido pela imagem (+1,000)" },
+    { nome: "G01_CAM3_T01_MOV-PRORES", codec: "ProRes 422", st: "ok", tipo: "vídeo", tc: "10:00:08:00", dur: "0:47", f: ["tem", "tem", "nao"], quem: "Lohan (Avid), 12/11 10:26",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/202611120/G01_CAM3….mxf"], ["Trabalho", MAC, "…/G01_GRUPO_23976/CAM 3/G01_CAM3_T01_MOV-PRORES.mov"]], medida: "Trabalho conferido pela imagem (+1,000)" },
+    { nome: "G01_CAM3.sub.01", codec: "—", st: "item", tipo: "subclipe", item: true, tc: "de G01_CAM3", dur: "0:08", quem: "Lohan (Avid) e Lohan (Premiere), 12/11", caminhos: [],
+      medida: "Recorte 200 a 400 de G01_CAM3. Mandado também do Premiere: reconhecido como o mesmo." },
+    { nome: "G01_CAM2.sync.01", codec: "—", st: "item", tipo: "sincronizado", item: true, tc: "imagem 0 · som 240", dur: "0:43", quem: "Lohan (Avid), 12/11 10:30", caminhos: [],
+      medida: "Imagem: G01_CAM2 a partir do 0 · Som: G01_SOMDIRETO a partir do 240. No Premiere: merged clip." },
+    { nome: "G01-GRUPO-SOM", codec: "—", st: "item", tipo: "multicâmera", item: true, tc: "4 fontes · ângulo CAM 2", dur: "0:55", quem: "Lohan (Avid) 10:30 · ângulo trocado no Premiere 11:29", caminhos: [],
+      medida: "Fontes: CAM 1 em 72, CAM 2 em 240, CAM 3 em 144, som direto em 0. Ângulo vigente: CAM 2 (o último envio); som: CAM 1." },
+  ],
+  labsom: [
+    { nome: "G01_SOMDIRETO_T01_WAV-BWF", codec: "PCM 48 kHz · 2 canais", st: "ok", tipo: "som", tc: "10:00:02:00", dur: "0:55", f: ["tem", "tem", "na"], quem: "Lohan (Avid), 12/11 10:26",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/202611121/G01_SOM….mxf"], ["Trabalho", MAC, "…/G01_GRUPO_23976/SOM DIRETO/G01_SOMDIRETO_T01_WAV-BWF.wav"]], medida: "Som conferido canal a canal (+1,000)" },
+  ],
+  d02: [
+    { nome: "A003_03180802_C001", codec: "DNxHR LB", st: "ok", tipo: "vídeo", tc: "08:02:11:03", dur: "2:20", quem: "Lohan (Avid), 12/11 10:40",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/2/A003_03180802_C001.mxf  (+2 trilhas)"]], medida: "Mandado do Avid" },
+    { nome: "A003_03180815_C002", codec: "DNxHR LB", st: "ok", tipo: "vídeo", tc: "08:15:40:12", dur: "0:58", quem: "Lohan (Avid), 12/11 10:40",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/2/A003_03180815_C002.mxf  (+2 trilhas)"]], medida: "Mandado do Avid" },
+    { nome: "PRODUCAO-A - 05-01 CASA 05-01-T001", codec: "PCM 48 kHz · 5 canais", st: "ok", tipo: "som", tc: "08:01:30:00", dur: "3:05", quem: "Lohan (Avid), 12/11 10:40",
+      caminhos: [["Avid", MAC, "/Volumes/SSD/Avid MediaFiles/MXF/2/…05-01-T001_A01.mxf  (+4 trilhas)"]], medida: "Mandado do Avid" },
+  ],
+  lab: [], cenas: [], c07: [], diarias: [], raiz: [],
+};
+const CONTAGEM = { d01: 26, d02: 3, c07: 0, labcam: 6, labsom: 1 };
+// ⭐ A PASTA VIRTUAL (autor, 12/11, o recurso do DaVinci Resolve): várias pastas selecionadas na árvore (Ctrl/Cmd soma ou
+//    tira, Shift pega o intervalo) e a lista mostra TUDO junto, como se fosse uma pasta só. `vista` é essa lista.
+let abertas = ["d01"], ancora = "d01", vista = [], selecionadas = new Set([0]);
+function montarVista() { vista = abertas.flatMap((id) => (ITENS[id] || []).map((it) => Object.assign(it, { pasta: id }))); }
+const nomeDe = (id) => PASTAS.find((p) => p.id === id).nome;
+let ordem = null;   // { col, dir }: o duplo clique no título ordena por aquela coluna; outro duplo clique inverte
+
+const $ = (id) => document.getElementById(id);
+function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function desenharArvore() {
+  $("arvore").innerHTML = PASTAS.map((p) => {
+    const filhos = PASTAS.some((q) => q.pai === p.id);
+    const n = CONTAGEM[p.id];
+    return `<button class="pasta${abertas.includes(p.id) ? " aberta" : ""}" data-id="${p.id}" role="treeitem" aria-selected="${abertas.includes(p.id)}" style="padding-left:${8 + p.nivel * 14}px">
+      <span class="tri">${filhos ? (p.aberta ? "▾" : "▸") : ""}</span><span class="ic"></span>
+      <span class="nome">${esc(p.nome)}</span>${n !== undefined ? `<span class="n">${n}</span>` : ""}</button>`;
+  }).join("");
+}
+function caminhoDe(id) {
+  const out = []; let p = PASTAS.find((x) => x.id === id);
+  while (p && p.id !== "raiz") { out.unshift(p.nome); p = PASTAS.find((x) => x.id === p.pai); }
+  return out.join(" / ") || "PRODUCAO-A";
+}
+const ST = { ok: "encontrada", warn: "a conferir", err: "sem mídia nesta máquina", item: "item: aponta mídias da pasta" };
+function ponto(v) { return `<i class="ponto ${v}" title="${ST[v]}"></i>`; }
+// miniaturas desenhadas (o protótipo não tem quadros): som = forma de onda em azul, como no Production Manager
+function mini(it) {
+  const i = [...it.nome].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 997, 7);   // o desenho é da MÍDIA, não da posição na lista
+  if (it.tipo === "som") {
+    let d = ""; for (let x = 1; x < 62; x += 2) { const h = 3 + Math.abs(Math.sin(x * .37 + i) * 12 + Math.sin(x * .11) * 5); d += `M${x} ${(17.5 - h / 2).toFixed(1)}v${h.toFixed(1)}`; }
+    return `<span class="mini-q"><svg viewBox="0 0 62 35"><rect width="62" height="35" fill="#1f3fd6"/><path d="${d}" stroke="#0b0b0b" stroke-width="1.4"/></svg></span>`;
+  }
+  const c = [["#2e3b45", "#8fa3b3"], ["#2c3a33", "#7f9c8c"], ["#33333a", "#9a9aa6"], ["#24333f", "#7aa6c2"]][i % 4];   // tons frios: o protótipo não pode sugerir cor na interface
+  return `<span class="mini-q"><svg viewBox="0 0 62 35"><defs><linearGradient id="g${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[0]}"/></linearGradient></defs>
+    <rect width="62" height="35" fill="url(#g${i})"/><rect x="${12 + (i * 7) % 30}" y="9" width="10" height="20" rx="4" fill="rgba(0,0,0,.45)"/>${it.item ? '<rect x=".5" y=".5" width="61" height="34" fill="none" stroke="#fff" stroke-dasharray="3 2"/>' : ""}</svg></span>`;
+}
+// o ícone de tipo: cada espécie com o seu desenho (como a coluna Type do MC)
+const ICONE = {
+  "vídeo": '<rect x="1" y="2" width="18" height="10" rx="1" fill="none" stroke="currentColor"/><path d="M4 2v10M16 2v10" stroke="currentColor"/>',
+  "som": '<path d="M2 7h2M5 4v6M8 2v10M11 5v4M14 3v8M17 6v2" stroke="currentColor" stroke-width="1.4"/>',
+  "subclipe": '<rect x="1" y="2" width="18" height="10" rx="1" fill="none" stroke="currentColor" stroke-dasharray="2 1.5"/><path d="M7 4v6M13 4v6" stroke="currentColor"/>',
+  "sincronizado": '<rect x="1" y="1" width="18" height="5" rx="1" fill="none" stroke="currentColor"/><path d="M2 10h2M5 8v4M8 9v2M11 8v4M14 9v2M17 10h1" stroke="currentColor"/>',
+  "multicâmera": '<rect x="1" y="1" width="8" height="5" fill="none" stroke="currentColor"/><rect x="11" y="1" width="8" height="5" fill="none" stroke="currentColor"/><rect x="1" y="8" width="8" height="5" fill="none" stroke="currentColor"/><rect x="11" y="8" width="8" height="5" fill="currentColor"/>',
+};
+function icone(t) { return `<svg class="ti-ic" viewBox="0 0 20 14" role="img" aria-label="${t}"><title>${t}</title>${ICONE[t] || ""}</svg>`; }
+const RANK = { err: 0, warn: 1, ok: 2, item: 3 };
+function chave(it, col) {
+  if (col === "st") return RANK[it.st];
+  if (col === "dur") { const [m, s] = it.dur.split(":").map(Number); return m * 60 + s; }
+  return String(it[col] || "").toLowerCase();
+}
+function ordenar() {
+  if (!ordem) return;
+  const itens = vista;
+  const sel = new Set([...selecionadas].map((i) => itens[i]));
+  itens.sort((a, b) => { const x = chave(a, ordem.col), y = chave(b, ordem.col); return (x < y ? -1 : x > y ? 1 : 0) * ordem.dir; });
+  selecionadas = new Set(itens.map((it, i) => sel.has(it) ? i : -1).filter((i) => i >= 0));
+}
+function desenharTitulos() {
+  document.querySelectorAll("#titulos th").forEach((th) => {
+    const c = th.dataset.col;
+    th.classList.toggle("ordenada", !!ordem && ordem.col === c);
+    th.querySelector(".seta")?.remove();
+    if (ordem && ordem.col === c) th.insertAdjacentHTML("beforeend", `<span class="seta">${ordem.dir > 0 ? "▲" : "▼"}</span>`);
+    if (!th.querySelector(".alca")) th.insertAdjacentHTML("beforeend", '<span class="alca" title="arraste para mudar a largura"></span>');
+  });
+}
+function desenharLista() {
+  ordenar(); desenharTitulos();
+  const itens = vista, varias = abertas.length > 1;
+  const total = abertas.reduce((n, id) => n + (CONTAGEM[id] || 0), 0);
+  const nenhuma = !abertas.length;
+  atualizarNovaPasta();
+  $("tituloPasta").innerHTML = nenhuma ? `Nenhuma pasta selecionada` : varias
+    ? `${abertas.length} pastas juntas <small>${abertas.map((id) => esc(nomeDe(id))).join(" + ")} · ${total} mídias e itens</small>`
+    : `${esc(caminhoDe(abertas[0]))} <small>${CONTAGEM[abertas[0]] !== undefined ? CONTAGEM[abertas[0]] + " mídias e itens" : ""}${abertas[0] === "d01" ? " · mostrando 7" : ""}</small>`;
+  if (!itens.length) {
+    $("linhas").innerHTML = `<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--tinta-2);background:var(--bg-1);white-space:normal">${nenhuma ? "Selecione uma ou mais pastas na árvore." : varias ? "As pastas selecionadas estão vazias." : "Pasta vazia. Arraste para cá o que estiver na bin do Avid ou do Premiere."}</td></tr>`;
+    $("detalhe").innerHTML = `<div class="meta"><h3>Nada selecionado</h3></div>`;
+    return;
+  }
+  $("linhas").innerHTML = itens.map((it, i) => `<tr class="linha${selecionadas.has(i) ? " sel" : ""}" data-i="${i}" draggable="true">
+    <td class="st">${ponto(it.st)}</td><td class="mini">${mini(it)}</td><td class="ti">${icone(it.tipo)}</td>
+    <td class="nome" title="${esc(it.nome)} · em ${esc(nomeDe(it.pasta))}">${esc(it.nome)}${it.pend ? '<span class="pend">a decidir</span>' : ""}${varias ? `<span class="de-pasta">${esc(nomeDe(it.pasta))}</span>` : ""}</td>
+    <td class="tc">${esc(it.tc)}</td><td class="tc">${esc(it.dur)}</td><td class="codec">${esc(it.codec)}</td>
+  </tr>`).join("");
+  desenharDetalhe();
+}
+function desenharDetalhe() {
+  const itens = vista;
+  const sel = [...selecionadas];
+  if (sel.length !== 1) { $("detalhe").innerHTML = `<div class="meta"><h3>${sel.length} selecionadas</h3><dl><dt>Gestos</dt><dd>Mover (arraste para uma pasta) · tirar (botão direito)</dd></dl></div>`; return; }
+  const it = itens[sel[0]];
+  // "Caminhos conhecidos": só a lista de caminhos da mídia, sem a máquina nem a forma (autor, 12/11, comentário)
+  const arqs = it.caminhos.filter((x) => x[2]).map((x) => x[2]);
+  // uma TABELA com linhas alternadas; duplo clique abre a pasta no Explorer/Finder com o arquivo marcado (autor, 12/11)
+  const caminhos = arqs.length ? `<table class="conhecidos"><tbody>${arqs.map((c) => `<tr data-caminho="${esc(c)}" title="duplo clique: abrir a pasta"><td><code>${esc(c)}</code></td></tr>`).join("")}</tbody></table>`
+    : '<p class="falta">Nenhum: um item não tem arquivo próprio, aponta as mídias da pasta.</p>';
+  $("detalhe").innerHTML = `<div class="meta"><h3>${esc(it.nome)}</h3>
+    <dl><dt>Pasta</dt><dd>${esc(caminhoDe(it.pasta))}</dd><dt>Tipo</dt><dd>${esc(it.tipo)}</dd><dt>Codec</dt><dd>${esc(it.codec)}</dd><dt>TC início</dt><dd>${esc(it.tc)}</dd><dt>Duração</dt><dd>${esc(it.dur)}</dd>
+    <dt>Status</dt><dd>${ST[it.st]}</dd><dt>Mandado por</dt><dd>${esc(it.quem)}</dd><dt>Como</dt><dd>${esc(it.medida)}</dd></dl></div>
+    <div class="caminhos"><h4>Caminhos conhecidos</h4>${caminhos}</div>`;
+}
+
+function fecharMenus() { ["menuProjeto", "menuContexto"].forEach((m) => $(m).hidden = true); }
+function abrirMenuEm(menu, ev, html) {
+  const j = $("janela").getBoundingClientRect();
+  menu.innerHTML = html; menu.hidden = false;
+  menu.style.left = Math.min(ev.clientX - j.left, j.width - 230) + "px";
+  menu.style.top = Math.min(ev.clientY - j.top, j.height - 200) + "px";
+}
+function dialogo(titulo, texto, ok, perigo, aoOk) {
+  $("dTitulo").textContent = titulo; $("dTexto").textContent = texto; $("dOk").textContent = ok;
+  $("dOk").className = "botao " + (perigo ? "perigo" : "principal");
+  $("dialogoFundo").hidden = false;
+  $("dOk").onclick = () => { $("dialogoFundo").hidden = true; aoOk && aoOk(); };
+}
+$("dCancelar").onclick = () => $("dialogoFundo").hidden = true;
+
+$("arvore").addEventListener("click", (e) => {
+  const b = e.target.closest(".pasta"); if (!b) return;
+  const id = b.dataset.id, ordemArvore = PASTAS.map((p) => p.id);
+  if (e.shiftKey) {                                   // o intervalo, na ordem da árvore, a partir da última clicada
+    const a = ordemArvore.indexOf(ancora), z = ordemArvore.indexOf(id);
+    abertas = ordemArvore.slice(Math.min(a, z), Math.max(a, z) + 1);
+  } else if (e.ctrlKey || e.metaKey) {                // soma ou tira; pode ficar sem NENHUMA (autor): aí a lista fica vazia
+    abertas = abertas.includes(id) ? abertas.filter((x) => x !== id) : [...abertas, id];
+    abertas.sort((x, y) => ordemArvore.indexOf(x) - ordemArvore.indexOf(y));
+    ancora = id;
+  } else { abertas = [id]; ancora = id; }
+  montarVista(); selecionadas = new Set(vista.length ? [0] : []);
+  desenharArvore(); desenharLista();
+});
+$("arvore").addEventListener("contextmenu", (e) => {
+  const b = e.target.closest(".pasta"); if (!b) return; e.preventDefault();
+  const p = PASTAS.find((x) => x.id === b.dataset.id);
+  abrirMenuEm($("menuContexto"), e, `<div class="rot">${esc(p.nome)}</div>
+    <button data-acao="nova">Nova pasta dentro</button><button data-acao="renomear">Renomear…</button>
+    <hr><button class="perigo" data-acao="tirar-pasta" data-nome="${esc(p.nome)}">Tirar pasta<small>vai para a Quarentena, com o que tem dentro</small></button>`);
+});
+$("linhas").addEventListener("click", (e) => {
+  const tr = e.target.closest("tr.linha"); if (!tr) return;
+  const i = +tr.dataset.i;
+  if (e.metaKey || e.ctrlKey) { selecionadas.has(i) ? selecionadas.delete(i) : selecionadas.add(i); }
+  else if (e.shiftKey && selecionadas.size) { const a = Math.min(...selecionadas, i), b = Math.max(...selecionadas, i); selecionadas = new Set(); for (let k = a; k <= b; k++) selecionadas.add(k); }
+  else selecionadas = new Set([i]);
+  desenharLista();
+});
+$("linhas").addEventListener("contextmenu", (e) => {
+  const tr = e.target.closest("tr.linha"); if (!tr) return; e.preventDefault();
+  const i = +tr.dataset.i; if (!selecionadas.has(i)) { selecionadas = new Set([i]); desenharLista(); }
+  const n = selecionadas.size;
+  abrirMenuEm($("menuContexto"), e, `<div class="rot">${n === 1 ? esc(vista[i].nome) : n + " selecionadas"}</div>
+    <button data-acao="renomear">Renomear…</button><button data-acao="mover">Mover para…<small>ou arraste para uma pasta da árvore</small></button>
+    <hr><button class="perigo" data-acao="tirar">Tirar ${n === 1 ? "esta referência" : "estas " + n}<small>vai para a Quarentena; a mídia não é tocada</small></button>`);
+});
+$("menuContexto").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return; fecharMenus();
+  const a = b.dataset.acao;
+  if (a === "tirar") dialogo("Tirar do projeto?", `${selecionadas.size} referência(s) vão para Quarentena/2026-11-12. A mídia continua onde está, e dá para trazer de volta pelo Finder.`, "Tirar", true);
+  else if (a === "tirar-pasta") dialogo(`Tirar a pasta ${b.dataset.nome}?`, "A pasta e o que ela tem vão para Quarentena/2026-11-12. Nada é apagado.", "Tirar", true);
+  else if (a === "renomear") dialogo("Renomear", "O nome muda só aqui na Carta. A mídia e os programas não são tocados (o vínculo é pelo identificador, não pelo nome do arquivo).", "Renomear");
+  else if (a === "mover") dialogo("Mover para…", "Escolha a pasta de destino na árvore. As referências mudam de pasta; os vínculos ficam.", "Mover");
+  else if (a === "nova") dialogo("Nova pasta", "Nome da pasta (dentro da selecionada).", "Criar");
+});
+$("botaoProjeto").onclick = (e) => { e.stopPropagation(); const m = $("menuProjeto"); const h = m.hidden; fecharMenus(); m.hidden = !h; };
+// "+ Nova pasta" nasce DENTRO da pasta selecionada; com várias (ou nenhuma) selecionadas, fica desativado (autor, 12/11)
+function atualizarNovaPasta() {
+  const b = $("novaPasta"), um = abertas.length === 1;
+  b.disabled = !um;
+  b.title = um ? `Criar uma pasta dentro de ${nomeDe(abertas[0])}` : abertas.length ? "Selecione uma pasta só para criar dentro dela" : "Selecione a pasta onde criar";
+}
+$("novaPasta").onclick = () => abertas.length === 1 && dialogo("Nova pasta", `Dentro de ${nomeDe(abertas[0])}. O nome é seu; o programa só confere que fica dentro do projeto.`, "Criar");
+document.addEventListener("click", (e) => { if (!e.target.closest(".menu")) fecharMenus(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { fecharMenus(); $("dialogoFundo").hidden = true; $("gaveta").hidden = true; } });
+$("fecharFaixa").onclick = () => $("faixa").hidden = true;
+
+const CASOS = [
+  { titulo: "PRODUCAO-A - 03-04 PRAIA 03-04-T001.WAV", porque: "Dois arquivos de trabalho servem para a mesma mídia: mesmo nome e mesma duração, e o som dos dois confere.",
+    cands: ["CONVERTIDOS/D01/SOM/…T001.WAV  (som +1,000)", "CONVERTIDOS/D01/SOM COPIA/…T001.WAV  (som +1,000)"], quem: "Editor 2, ao mandar do Premiere, 12/11 11:14", botoes: ["Fica o primeiro", "Fica o segundo", "Os dois"] },
+  { titulo: "A001_C001.mp4", porque: "Mesmo nome e duração de A001_C001, mas a imagem não confere (+0,412, abaixo do piso de 0,95). Pode ser outro material, ou o mesmo com LUT ou tarja.",
+    cands: ["já no projeto: A001_C001 (Avid, D01)", "chegou: …/CONVERTIDOS/D02/A001_C001.mp4"], quem: "Lohan, ao mandar do Premiere, 12/11 11:20", botoes: ["É a mesma", "É outra"] },
+];
+function desenharCasos() {
+  const vivos = CASOS.filter((c) => !c.resolvido).length;
+  $("nDecidir").textContent = vivos; $("botaoDecidir").hidden = false;
+  $("casos").innerHTML = `<p>Casos em que o programa não decide sozinho. Ficam guardados no projeto até alguém responder; os outros editores também veem esta lista.</p>` +
+    CASOS.map((c, i) => `<div class="caso${c.resolvido ? " resolvido" : ""}"><h4>${esc(c.titulo)}</h4><div class="porque">${esc(c.porque)}</div>
+      ${c.cands.map((x) => `<div class="cand">${esc(x)}</div>`).join("")}<div class="quem">${esc(c.quem)}</div>
+      <div class="acoes">${c.resolvido ? "✓ " + esc(c.resolvido) + " · Lohan, agora" : c.botoes.map((b, k) => `<button class="botao${k === 0 ? " principal" : ""}" data-caso="${i}" data-r="${esc(b)}">${esc(b)}</button>`).join("")}</div></div>`).join("");
+}
+$("botaoDecidir").onclick = () => { desenharCasos(); $("gaveta").hidden = false; };
+$("fecharGaveta").onclick = () => $("gaveta").hidden = true;
+$("casos").addEventListener("click", (e) => { const b = e.target.closest("button[data-caso]"); if (!b) return; CASOS[+b.dataset.caso].resolvido = b.dataset.r; desenharCasos(); });
+
+function simular(origem) {
+  const s = $("solte"); s.hidden = false; s.className = "solte" + (origem === "Premiere" ? " externo" : "");
+  if (abertas.length > 1) {                           // várias pastas na vista: soltar na LISTA não diz para qual
+    s.innerHTML = `Várias pastas na vista: solte sobre <b>&nbsp;uma pasta da árvore&nbsp;</b> para escolher o destino`;
+    setTimeout(() => { s.hidden = true; }, 2200);
+    return;
+  }
+  const aberta = abertas[0];
+  s.innerHTML = `Solte para mandar para <b>&nbsp;${esc(PASTAS.find((p) => p.id === aberta).nome)}</b><br><small>${origem === "Premiere" ? "3 clipes e 1 merged da bin do Premiere" : "4 masterclipes e 1 subclipe da bin do Media Composer"}</small>`;
+  setTimeout(() => {
+    s.hidden = true;
+    const f = $("faixa"); f.hidden = false; f.className = "faixa" + (origem === "Avid" ? " avid" : "");
+    f.querySelector(".origem").textContent = origem === "Avid" ? "Media Composer" : "Premiere";
+    f.querySelector(".conta").innerHTML = origem === "Avid"
+      ? `Mandado para ${esc(PASTAS.find((p) => p.id === aberta).nome)} agora: 2 novas · 2 já estavam · 1 subclipe (os masters dele foram antes)`
+      : `Mandado para ${esc(PASTAS.find((p) => p.id === aberta).nome)} agora: 1 nova · 2 já estavam · 1 merged · <em>1 a decidir</em>`;
+    $("atualizado").textContent = "atualizado agora";
+  }, 1300);
+}
+// duplo clique num caminho conhecido: o app abriria a pasta com o arquivo marcado (Windows `explorer /select,`, macOS `open -R`)
+let avisoT = null;
+$("detalhe").addEventListener("dblclick", (e) => {
+  const tr = e.target.closest("tr[data-caminho]"); if (!tr) return;
+  const c = tr.dataset.caminho, win = /^[A-Za-z]:\\/.test(c);
+  let a = $("aviso"); if (!a) { a = document.createElement("div"); a.id = "aviso"; a.className = "aviso"; $("janela").appendChild(a); }
+  a.innerHTML = `Abrindo no ${win ? "Explorer" : "Finder"}, com o arquivo marcado:<br><code>${esc(c)}</code>`;
+  a.hidden = false; clearTimeout(avisoT); avisoT = setTimeout(() => a.hidden = true, 2600);
+});
+$("titulos").addEventListener("dblclick", (e) => {
+  if (e.target.closest(".alca")) return;
+  const th = e.target.closest("th"); if (!th || !th.dataset.col) return;
+  ordem = ordem && ordem.col === th.dataset.col ? { col: ordem.col, dir: -ordem.dir } : { col: th.dataset.col, dir: 1 };
+  desenharLista();
+});
+$("titulos").addEventListener("mousedown", (e) => {
+  const alca = e.target.closest(".alca"); if (!alca) return;
+  e.preventDefault();
+  const th = alca.parentElement, idx = [...th.parentElement.children].indexOf(th);
+  const col = th.closest("table").querySelectorAll("col")[idx];
+  const x0 = e.clientX, w0 = th.getBoundingClientRect().width;
+  const tabela = th.closest("table");
+  // a primeira puxada congela as larguras de todas em px: daí cada coluna muda sozinha e a tabela cresce (rola de lado)
+  tabela.querySelectorAll("col").forEach((c, i) => c.style.width = tabela.querySelectorAll("th")[i].getBoundingClientRect().width + "px");
+  tabela.style.width = "max-content";
+  alca.classList.add("puxando");
+  const mover = (ev) => { col.style.width = Math.max(36, w0 + ev.clientX - x0) + "px"; };
+  const soltar = () => { alca.classList.remove("puxando"); removeEventListener("mousemove", mover); removeEventListener("mouseup", soltar); };
+  addEventListener("mousemove", mover); addEventListener("mouseup", soltar);
+});
+$("simAvid").onclick = () => simular("Avid");
+$("simPremiere").onclick = () => simular("Premiere");
+
+montarVista(); desenharArvore(); desenharLista(); desenharCasos();
+</script>
+</body>
+</html>

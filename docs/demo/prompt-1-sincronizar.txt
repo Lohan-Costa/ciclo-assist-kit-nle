@@ -1,0 +1,5 @@
+Sincronize a diária D02 pelo Órbita, no método híbrido (timecode + forma de onda), e monte a sequência sincronizada no projeto aberto. Em seguida, no mesmo pedido, transforme cada take da sequência em subclipe, com o nome no padrão de cena, plano e take (C%{cena}_P%{plano}_T%{take2}), entregues numa bin por cena.
+
+Use a bin D02 inteira, com as bins de dentro dela. Não me pergunte nada antes do cartão de confirmação. Se o Órbita estiver ocupado ou fechado, ou se a bin não tiver mídia, pare e me diga o motivo numa frase, sem tentar outro caminho.
+
+Quando terminar, responda só com: quantas câmeras, quantos takes casaram, o que ficou órfão, o nome da sequência criada e as bins de cena com quantos subclipes cada uma.

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laboratório de casamento: resultados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head><body>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Baselight · laboratório de casamento · 22/11/2026</p>
+  <h1>Com a conferência do Ciclo, nenhum plano trocado passa calado no Premiere</h1>
+  <div class="barra"></div>
+  <p class="lead">Dez pegadinhas de mídia sintética, montadas no Premiere 2027 e no Media Composer 25.12 e conformadas no Baselight 7.0.3 por três caminhos. Cada plano foi conferido no <strong>render</strong>: o código de barras e a cor da câmera dizem qual original entrou e em que quadro.</p>
+  <div class="numeros">
+    <div class="numero"><b>0</b><span>erros calados no Premiere pelo caminho C</span></div>
+    <div class="numero"><b>1 a 5</b><span>erros calados do Baselight sozinho (Premiere)</span></div>
+    <div class="numero"><b>3</b><span>erros que restam no MC: fonte de outra taxa</span></div>
+    <div class="numero"><b>1</b><span>defeito do Conformar corrigido (nome com acento)</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">A pergunta</p><h2>Quem põe o arquivo certo em cada plano</h2></div>
+  <div class="grade">
+    <div class="card"><span class="selo">A</span><h3>O Baselight sozinho</h3><p><code>bl-conform</code> com os filtros Filename, ClipName ou None. É o que acontece hoje.</p></div>
+    <div class="card acao"><span class="selo">B</span><h3>O Ciclo decide</h3><p>O Conformar casa cada daily com o original (nome, TC, duração como veto; empate vai para o editor) e entrega o caminho resolvido.</p></div>
+    <div class="card acao"><span class="selo">C</span><h3>B mais a conferência</h3><p>Depois do conform, cada plano é comparado com a decisão do Ciclo. Diferente: o arquivo do plano é trocado pelo <code>bl-shots -replace</code>. Sem decisão: offline com marker "[Ciclo]" e o motivo.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Premiere 2027 → xmeml → Baselight</p><h2>O caminho C fecha sem erro calado</h2>
+    <p class="muted">18 planos, conferidos no render. Certo · alerta (o editor fica sabendo) · errado calado.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Caminho</th><th class="c">Certo</th><th class="c">Alerta</th><th class="c">Errado</th><th>Onde erra</th></tr></thead><tbody id="pr"></tbody></table></div>
+  <figure><a href="img/premiere_montagem.jpg"><img src="img/premiere_montagem.jpg" alt="A sequência BL08 CASAMENTO no Premiere 2027: 18 planos na V1, cada um de uma câmera e cor"></a>
+  <figcaption><b>Montagem</b>A sequência do laboratório no Premiere 2027, montada pela ponte, sem mouse. Cada cor de fundo é uma câmera: é por ela que o render denuncia a troca de arquivo.</figcaption></figure>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Media Composer 25.12 → AAF → Baselight</p><h2>No MC, a fonte de outra taxa ainda chega no ponto errado</h2>
+    <p class="muted">Os mesmos planos, montados pela API do MC. O daily com acento não linka no MC 25.12 do Mac: o plano do P5 ficou de fora. A verdade dos planos de outra taxa é o vídeo de referência exportado pelo próprio MC.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Caminho</th><th class="c">Certo</th><th class="c">Alerta</th><th class="c">Errado</th><th>Onde erra</th></tr></thead><tbody id="mc"></tbody></table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Pegadinha a pegadinha</p><h2>O que cada uma mostrou</h2></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>#</th><th>Pegadinha</th><th>Baselight sozinho</th><th>Com o Ciclo</th></tr></thead><tbody id="peg"></tbody></table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O que o Baselight ensinou</p><h2>Quatro comportamentos medidos</h2></div>
+  <div class="provas" id="achados"></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">No Ciclo Assist</p><h2>Um defeito corrigido, dois para decidir</h2></div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">Corrigido</span><h3>Nome com acento no casamento</h3><p>O índice das pastas guardava o nome como o exFAT do Mac lista (NFD), e o projeto busca em NFC: o <code>CORAÇÃO_01</code> ficava sem original. A chave passou a ser uma só (NFC e minúscula), com teste. Suíte do Conformar: 121 de 122, e a falha é a antiga e conhecida.</p></div>
+    <div class="card aviso"><span class="selo ambar">Decisão pendente</span><h3>O ambíguo no casador do MC</h3><p>O <code>media/matcher.py</code> marca o empate, mas devolve o primeiro candidato, e nenhuma parte do Conformar lê a marca. No religar do MC, o P2 iria para o dia errado sem perguntar, contra a regra "empate é do editor". Na rodada, a regra foi aplicada por fora.</p></div>
+    <div class="card aviso"><span class="selo ambar">Decisão pendente</span><h3>A conferência precisa conferir o ponto</h3><p>O caminho C confere o arquivo, e não o quadro. No AAF religado, a taxa continua sendo a do daily, e o original de outra taxa entra fora do ponto. Saídas: conferir o in de cada plano contra o vídeo de referência e corrigir pelo <code>bl-shots</code>, ou o AAF levar a taxa do original.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Próximos passos</p><h2>Do laboratório ao produto</h2></div>
+  <ol class="passos">
+    <li>Decidir os dois consertos pendentes: o ambíguo no casador do MC e a conferência do ponto.</li>
+    <li>Levar ao Conformar a saída para o Baselight: o xmeml com o <code>&lt;file&gt;</code> do original decidido, com o nome como o disco lista, e a conferência C depois do <code>bl-conform</code>.</li>
+    <li>O casador achar o daily renomeado pelo TC e pela duração (P4) e a sequência de imagens como um clipe só (P10).</li>
+    <li>O relatório final dos dois casos (PRODUCAO-C e PRODUCAO-A) com este laboratório.</li>
+  </ol>
+  <p class="muted">Registro: <code>bancodedadosnles/plugins/baselight/README.md</code> (seção BL08) · plano <code>docs/plano/2026-11-22-lab-casamento-baselight.md</code> · bancadas no <code>laboratorio-de-midia</code> (<code>lab/casamento.py</code>, <code>lab/bancadas/*casamento*.py</code>).</p>
+</section>
+
+<footer class="rodape"><span>Ciclo Assist · Conformar → Baselight</span><span>Laboratório BL08 · 22/11/2026</span></footer>
+</main>
+
+<script>{
+const m=(n,t)=>`<i class="marca ${t}">${n}</i>`;
+const linha=r=>`<tr><td>${r[0]}</td><td class="c">${m(r[1],'certo')}</td><td class="c">${m(r[2],'alerta')}</td><td class="c">${m(r[3],r[3]?'errado':'certo')}</td><td>${r[4]}</td></tr>`;
+const PR=[
+ ["A · Filename, dailies na árvore dos originais",15,2,1,"P3 (−1,8 s)"],
+ ["A · Filename, dailies numa pasta só",12,3,3,"P1, P2, P3"],
+ ["A · ClipName",13,2,3,"P1, P2, P3"],
+ ["A · None",12,1,5,"P1, P2, P3, P6, P7 (2 quadros)"],
+ ["B · o original decidido no xmeml",12,5,1,"P1 (o Baselight não obedece ao caminho)"],
+ ["<strong>C · B + conferência + troca + markers</strong>",14,4,0,"—"]];
+const MC=[
+ ["A · Filename",13,2,3,"P3, P7 (dois planos)"],
+ ["A · ClipName",11,2,5,"P1, P2, P3, P7 (dois planos)"],
+ ["A · None",10,2,6,"P1, P2, P3, P6, P7 (dois planos)"],
+ ["<strong>C · decisão do Ciclo + conferência + troca + markers</strong>",10,5,3,"P3 (−1,8 s), P7 (−2,4 s e −18 quadros)"]];
+document.getElementById('pr').innerHTML=PR.map(linha).join('');
+document.getElementById('mc').innerHTML=MC.map(linha).join('');
+const PG=[
+ ["P1","Mesmo nome, TC zerado, durações diferentes","Troca o cartão quando o in existe nos dois (a duração não entra)","A duração separa; o C troca o arquivo do plano"],
+ ["P2","Mesmo nome, TC e duração; imagem diferente","Escolhe um, calado","Offline com marker: o editor escolhe e religa"],
+ ["P3","Proxy 23,976 de um original 59,94","O in do daily vira quadro do original: −1,8 s","Certo no Premiere (o xmeml leva a taxa do original); no AAF do MC, ainda errado"],
+ ["P4","Daily renomeado","Offline","Offline com marker (o casador só procura pelo nome)"],
+ ["P5","Caixa, extensão e acento","Caixa e extensão certas; o acento em NFC fica offline","Certo (nome como o disco lista); no MC 25.12 o daily com acento não linka"],
+ ["P6","Número no fim do nome","None troca o 297 pelo 298","Certo"],
+ ["P7","Rótulo DF × NDF; fonte de 29,97","Premiere: certo no Filename; MC: −2,4 s","Premiere certo; MC errado (a taxa da fonte no AAF)"],
+ ["P8","Reel vazio ou trocado","Não atrapalhou","Certo"],
+ ["P9","Cópia idêntica em duas pastas","Qualquer uma","Qualquer uma, e a decisão diz qual"],
+ ["P10","Sequência DPX que é uma tomada","Casa pelo Filename com a árvore igual","Offline com marker (o casador não vê a pasta como um clipe)"]];
+document.getElementById('peg').innerHTML=PG.map(p=>`<tr><td class="cod">${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td><td>${p[3]}</td></tr>`).join('');
+const AC=[
+ ["Escolhe pelo nome e ignora o caminho","Mesmo com o caminho exato do original no xmeml, o filtro Filename escolhe entre homônimos por conta própria. Só acerta quando os dailies repetem a árvore de pastas dos originais.","medido no render, P1"],
+ ["Usa a taxa que o arquivo declarado tem","Se o xmeml ou o AAF descrevem o daily, o in vira quadro do original de outra taxa. Declarando a taxa, o TC e a duração do original, o ponto sai exato.","P3 e P7"],
+ ["Não acha nome com acento em NFC no exFAT","O caminho tem de ir como o disco lista (NFD no Mac).","P5"],
+ ["Troca o arquivo de um plano sem refazer o conform","O bl-shots -replace troca só aquele plano. A FLAPI continua devolvendo o arquivo antigo logo depois; o render e o bl-shots mostram o novo.","caminho C"]];
+document.getElementById('achados').innerHTML=AC.map((a,i)=>`<div class="prova"><div class="n">${String(i+1).padStart(2,'0')}</div><div class="corpo"><h3>${a[0]}</h3><p class="pergunta">${a[1]}</p><p class="medido">${a[2]}</p></div></div>`).join('');
+}</script>
+</body></html>

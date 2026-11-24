@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Conta — Ciclo Assist</title>
+<!-- ⭐ A seção Conta da janela de configurações (2026-11-07, plano `docs/plano/2026-11-07-aba-conta.md`): a conta Claude
+     DO APP (uma pasta só do Ciclo Assist, separada do `claude` do terminal), entrar e sair pelo login oficial da
+     Anthropic, e o uso das janelas que o último turno contou. ⛔ A página nunca vê credencial: só o que o
+     `claude auth status` informa. A lógica é `cicloassist/conta.py`. -->
+<link rel="stylesheet" href="/static/integracoes.css">
+<link rel="stylesheet" href="/static/conta.css">
+</head>
+<body>
+<main>
+  <h1>Conta</h1>
+  <p class="explica">A conta Claude que o Ciclo Assist usa para conversar e decupar. É só do app: entrar ou sair aqui
+    não mexe no Claude Code do terminal.</p>
+
+  <section class="nle">
+    <header><h2>Conta conectada</h2><span class="selo" id="selo">…</span></header>
+    <ul class="fatos" id="fatos"><li>…</li></ul>
+    <div class="acoes">
+      <button type="button" class="botao principal" id="entrar" hidden>Entrar com a conta Claude</button>
+      <button type="button" class="botao" id="sair" hidden>Sair</button>
+    </div>
+    <p class="recado" id="recado" hidden></p>
+  </section>
+
+  <section class="nle">
+    <header><h2>Uso da assinatura</h2></header>
+    <p class="explica">O Claude conta o uso a cada resposta. Aqui fica o último número que ele contou.</p>
+    <div id="janelas"></div>
+    <p class="explica" id="quando"></p>
+  </section>
+</main>
+<script src="/static/conta.js"></script>
+</body>
+</html>

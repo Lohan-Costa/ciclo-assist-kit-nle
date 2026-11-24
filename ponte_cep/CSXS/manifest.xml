@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ciclo Assist no Premiere Pro: SÓ A CONEXÃO (o desenho do app único, autor, 2026-10-21). Não há painel
+  nem menu: a extensão é INVISÍVEL, sobe sozinha quando o Premiere abre e navega para a ponte servida pelo
+  serviço local (127.0.0.1:7824/premiere/ponte). A interface mora na janela do app.
+  Molde: o De Lá Pra Cá (plugins/premiere/cep). A página servida mantém window.__adobe_cep__ e o
+  evalScript (banco, plugins/premiere-cep/painel-servido-e-identidade.md).
+  Sem o parâmetro do Node: a ponte não precisa dele, e sem ele a página não abre shell.
+-->
+<!--
+  NUNCA dois hifens seguidos dentro de um comentário deste arquivo: o CEP recusa o manifesto inteiro
+  em silêncio (banco, painel-servido-e-identidade.md seção 5). Um teste confere.
+-->
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.ciclomedia.cicloassist.ponte"
+    ExtensionBundleVersion="0.1.0" ExtensionBundleName="Ciclo Assist"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="com.ciclomedia.cicloassist.ponte.ppro" Version="0.1.0" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <Host Name="PPRO" Version="[14.0,99.9]" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="9.0" />
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.ciclomedia.cicloassist.ponte.ppro">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>false</AutoVisible>
+          <StartOn>
+            <Event>com.adobe.csxs.events.ApplicationActivate</Event>
+            <Event>applicationActivate</Event>
+          </StartOn>
+        </Lifecycle>
+        <UI>
+          <Type>Custom</Type>
+          <Geometry>
+            <Size><Height>200</Height><Width>300</Width></Size>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>

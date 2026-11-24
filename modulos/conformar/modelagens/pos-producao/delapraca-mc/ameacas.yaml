@@ -1,0 +1,385 @@
+# Ameaças — De Lá Pra Cá (plugin do Media Composer)
+# Guia de Desenvolvimento Seguro §14 · STRIDE · revisão 2026-08-16
+#
+# estado: mitigado | aceito | aberto
+# Uma ameaça "aceita" traz sempre POR QUE o risco é tolerável — sem isso, "aceito"
+# é só um jeito educado de dizer "ignorado".
+
+sistema: delapraca-mc
+area: pos-producao
+revisao: 2026-08-16
+proxima_revisao: 2027-02-16
+
+ameacas:
+
+  - id: T-01
+    stride: Spoofing
+    titulo: Uma página web qualquer chama o serviço local
+    descricao: >
+      O serviço escuta em 127.0.0.1:7823. Qualquer site aberto no navegador do editor
+      poderia tentar `fetch` contra ele e disparar relink, ler caminhos do acervo ou
+      dirigir o Media Composer.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      Portão por ORIGEM (ADR 0007): `Origin` e `Sec-Fetch-Site` são forbidden headers —
+      nenhuma página consegue forjá-los. Um fetch de site sempre carrega `Origin` de
+      http(s), que é recusado. Travado por 22 casos em tests/test_portao.py.
+    nota: >
+      Token em arquivo foi descartado de propósito: o painel roda em QtWebEngine e NÃO LÊ
+      DISCO, então ele não teria como ler o token — a defesa não caberia na plataforma.
+
+  - id: T-02
+    stride: Tampering
+    titulo: Nome de arquivo de mídia injeta HTML no painel
+    descricao: >
+      O painel monta HTML com o nome dos arquivos encontrados, inclusive dentro de
+      atributos (data-arquivo="..."). Quem nomeia um arquivo no acervo compartilhado não
+      é quem executa o plugin.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      `escapar()` passou a escapar também ASPAS (2026-08-16) — antes só cobria &<>, e um
+      arquivo `a".onerror="alert(1)` fechava o atributo. CSP restritiva como segunda
+      camada. Travado em tests/test_xss_painel.py.
+    achado_em: auditoria contra o Guia, 2026-08-16
+    nota: >
+      No Windows aspas são ilegais em nome de arquivo; no macOS NÃO são, e o painel roda
+      nos dois. Foi por aí que o defeito passou despercebido.
+
+  - id: T-03
+    stride: Tampering
+    titulo: Caminho vindo de fora vira argumento de ffmpeg/MediaInfo (SSRF, arg injection)
+    descricao: >
+      Caminhos chegam do painel, do arrasto do Explorer e agora TAMBÉM do banco de mídias
+      compartilhado. Uma string `http://…` faria a libmediainfo buscar a URL (varredura da
+      rede interna a partir da estação); um nome iniciado por `-` viraria flag do ffprobe.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      `safepath.ensure_local_file` recusa URL, protocolo do ffmpeg e byte nulo; `ff_input`
+      prefixa `file:` (fixa o protocolo e impede que o nome vire flag). O banco chama
+      `ensure_local_file` em `revalidar` antes de qualquer uso.
+
+  - id: T-04
+    stride: Tampering
+    titulo: Banco de mídias envenenado direciona o relink de toda a equipe
+    descricao: >
+      O banco é gravado por várias máquinas num share. Quem escrever um fragmento à mão
+      pode apontar um master para o arquivo errado, e o erro se propaga para todos.
+    impacto: medio
+    estado: aceito
+    justificativa: >
+      O banco é GUIA, não regra: toda entrada passa por revalidação 1:1 (existe? tamanho e
+      mtime batem?) e pelo portão de duração; sobrando dúvida, ele se cala e a varredura
+      decide. O pior caso é apontar para um arquivo REAL e existente do próprio acervo —
+      o mesmo que um editor faria por engano na tela de revisão. E quem tem escrita no
+      share já tem acesso ao acervo: assinar fragmentos não elevaria a barra.
+    revisitar_se: >
+      O banco passar a ser lido por gente de fora da produção, ou a alimentar entrega
+      automática (AAF sem relink) sem ninguém ver na tela.
+
+  - id: T-05
+    stride: Denial of Service
+    titulo: Um trabalho travado deixa o plugin inutilizável
+    descricao: >
+      Uma sessão por vez (ADR 0008). Um relink que não termina bloqueia os próximos.
+    impacto: baixo
+    estado: mitigado
+    mitigacao: >
+      Prazos por chamada (20 s consulta, 300 s arquivo), botão Abortar, e o serviço
+      encerra sozinho 60 s depois de o Media Composer fechar — nunca no meio de um
+      trabalho.
+
+  - id: T-06
+    stride: Information Disclosure
+    titulo: Mensagem de erro entrega detalhe interno ao editor
+    descricao: >
+      Exceções chegam à UI como "TipoDoErro: mensagem", e caminhos absolutos aparecem na
+      tela e no log.
+    impacto: baixo
+    estado: aceito
+    justificativa: >
+      O Guia (§3) pede mensagem genérica porque o destinatário costuma ser um usuário
+      anônimo na internet. Aqui o destinatário é o DONO da máquina, olhando os próprios
+      arquivos, e a mensagem técnica é o que torna o defeito reportável — foi assim que um
+      `NameError` real chegou a nós em minutos. Não há stack trace na UI, só a linha do
+      erro; o traceback fica no log local.
+    revisitar_se: >
+      A interface passar a ser servida para outra máquina, ou o app ganhar telemetria.
+
+  - id: T-07
+    stride: Elevation of Privilege
+    titulo: Dependência comprometida executa código na estação do editor
+    descricao: >
+      requirements.txt usava apenas `>=`: um build futuro resolveria silenciosamente uma
+      versão mais nova, que é o vetor mais comum de ataque de cadeia de suprimentos.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      requirements.lock com versões exatas, E todos os caminhos de instalação apontando
+      para ele: publish.py (build do release), dev.ps1, dev.sh e o pip-audit do CI.
+      gitleaks segue como gate obrigatório no publish.
+    correcao_de_registro: >
+      ⚠️ Esta ameaça esteve marcada como "mitigado" por algumas horas em 2026-08-16
+      apenas por existir o arquivo — enquanto TODOS os caminhos continuavam instalando
+      pelo requirements.txt, que é todo `>=`. Ter o lock no repositório e instalar pelo
+      outro arquivo é a PIOR combinação: parece mitigado e não está, e a própria
+      modelagem passa a mentir. Encontrado por revisão de código no mesmo dia.
+      Lição: mitigação se declara pelo CAMINHO DE EXECUÇÃO, nunca pela existência de um
+      artefato.
+    nota: >
+      A quarentena de 3 dias continua sendo disciplina, não trava — ver T-08.
+
+  - id: T-10
+    stride: Denial of Service
+    titulo: O próprio endurecimento deixar o painel em branco
+    descricao: >
+      `X-Frame-Options` e `frame-ancestors` foram acrescentados sem exercitar o painel
+      num Media Composer rodando. Se a webview hospedar o documento numa moldura, o
+      navegador RECUSA a página e o editor vê um painel vazio, sem mensagem — o loader
+      já navegou e não tem como reportar.
+    impacto: medio
+    estado: aceito
+    justificativa: >
+      Escolhido `sameorigin` em vez de `deny`, e `frame-ancestors 'self' avpi:` — que em
+      Chromium precede o XFO e deixa passar a única moldura que seria legítima (a do
+      próprio painel). Entre um risco marginal (clickjacking em loopback que já exige
+      Origin/Sec-Fetch) e uma interface morta, escolhe-se o risco.
+    acao: >
+      Abrir o painel uma vez no MC 25.6 e confirmar que ele carrega. Se carregar, apertar
+      para `deny` + `frame-ancestors 'none'`.
+    prazo: antes de empacotar a Fase 6
+    lembrete: >
+      ⚠️ Endurecimento não medido é hipótese. Este banco já registra o caso do Órbita em
+      que a correção de segurança quebrou o app e 195 testes verdes não pegaram.
+
+  - id: T-11
+    stride: Denial of Service
+    titulo: Dispensar a varredura empurrou o custo de I/O para dentro do Media Composer
+    descricao: >
+      Com banco conectado, a pasta de mídia virou opcional (2026-08-16). No primeiro uso
+      real o `LinkFile` levou 3m49s onde antes eram segundos, com a mesma mídia — e o
+      Media Composer estourou ACCESS_VIOLATION na sequência.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      A pasta voltou a ser obrigatória (2026-08-17). O banco continua acelerando o
+      CASAMENTO; o que saiu foi só a dispensa da varredura.
+    hipotese_a_medir: >
+      A varredura fazia DOIS trabalhos: casar e, de quebra, puxar o cabeçalho de cada
+      arquivo para o cache do sistema. O `LinkFile` abria os mesmos arquivos logo depois e
+      encontrava tudo quente. Sem ela, o `LinkFile` virou o primeiro leitor e pagou a
+      leitura fria — dentro do Avid, onde é mais caro e ainda bloqueia a API. Ou seja: o
+      atalho não economizava, mudava o custo de lugar.
+    como_medir: >
+      Mesma mídia, cache do SO frio: (a) `LinkFile` com varredura prévia, (b) sem. O
+      número do LinkFile já é logado por arquivo. ⚠️ Refazer só depois de rodar em
+      máquina reiniciada — comparar com cache quente mede outra coisa.
+    licao: >
+      ⭐ Uma etapa pode estar pagando um custo que ninguém contabilizou nela. Antes de
+      remover um passo "redundante", pergunte o que mais ele estava fazendo.
+    evidencia_2026_08_17: >
+      Spike com desenho balanceado mediu `LinkFile` em ~350 ms por arquivo quando a mídia
+      foi lida havia pouco — 44 BRAW dariam ~15 s. O relink que o editor cronometrou em
+      3m49s (sem varredura prévia) implica vários SEGUNDOS por arquivo. A diferença é de
+      uma ordem de grandeza e aponta para leitura fria, não para a bin: no mesmo spike,
+      bin vazia e bin grande custaram o mesmo (1,02×). Reforça a hipótese, ainda sem o
+      teste direto (mesma mídia, cache do SO frio, com e sem varredura).
+
+  - id: T-12
+    stride: Repudiation
+    titulo: Incidente sem rastro — o serviço não gravava log em arquivo
+    descricao: >
+      Até 2026-08-17 o serviço logava só no terminal. No primeiro incidente que exigiu
+      investigação (T-11 + o ACCESS_VIOLATION do MC) não havia nada para dizer quanto cada
+      etapa custou: quem viu o problema estava na sala, quem podia depurá-lo não.
+    impacto: medio
+    estado: mitigado
+    mitigacao: >
+      Log rotativo em `pasta_dados()/logs/delapraca-AAAAMMDD.log` (2 MB × 3). Data no nome
+      para o editor conseguir dizer "foi ontem". Falhar ao abrir o arquivo não impede o
+      serviço de subir.
+
+  - id: T-08
+    stride: Elevation of Privilege
+    titulo: Atualização de dependência sem quarentena de 3 dias
+    impacto: medio
+    estado: aberto
+    acao: >
+      Acrescentar ao publish.yml um passo que compare a data de publicação de cada versão
+      do lock com a data do build e falhe abaixo de 3 dias. Guia §4.
+    prazo: proxima revisao
+
+  - id: T-09
+    stride: Tampering
+    titulo: Bin do editor corrompida por escrita concorrente
+    descricao: >
+      O serviço reescreve a .avb que o Media Composer também manipula.
+    impacto: critico
+    estado: mitigado
+    mitigacao: >
+      Fechar a bin ANTES da sessão do pyavb, gravar num arquivo ao lado e trocar com
+      os.replace depois de fechar o handle (atômico, mesmo volume). Aconteceu de verdade
+      em 2026-08-16 e foi corrigido; registrado em protocolos/avb/escrita.md no banco de
+      NLEs.
+
+  - id: T-13
+    stride: Tampering
+    titulo: Export (Daqui Pra Lá) escreve arquivo fora do lugar ou por cima de outro
+    descricao: >
+      A aba Daqui Pra Lá grava .drt/.json numa pasta escolhida pelo editor, com um nome
+      digitado no painel (com variáveis). É a primeira superfície de ESCRITA em local
+      escolhido — até aqui o painel só escolhia onde LER.
+    impacto: medio
+    estado: mitigado
+    mitigacao: >
+      A pasta vem do seletor nativo do sistema (escolher_pasta), não de texto do painel, e
+      passa por _pasta_valida (absoluta, sem URL, existente). O NOME vira nome, nunca
+      caminho: nomes.export.nome_de_arquivo troca barra, dois-pontos e os demais
+      proibidos por "_" e trata nome reservado do Windows. Nunca sobrescreve: um nome que
+      já existe ganha _2, _3 (rotas._arquivo_livre). Formatos "em breve" são recusados
+      pela rota, não só desabilitados no seletor. Teste: tests/test_export_nome.py.
+
+  - id: T-14
+    stride: Information Disclosure
+    titulo: Caminho de terceiro na bin abre sessão SMB ao ser conferido
+    descricao: >
+      O export lê o caminho de cada mídia do locator da .avb — texto de um arquivo que
+      pode ter vindo de outra produtora. No Windows, um .exists() sobre caminho UNC abre
+      sessão SMB com o host, levando a credencial da máquina do editor.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      avb_bin.segmentos.caminho_confiavel recusa UNC e '..' ANTES de qualquer toque no
+      disco; o master fica "sem arquivo", com o motivo mostrado ao editor. Mesma classe
+      de furo corrigida em mcapi.arquivo_do_master (Source File) em 2026-09-24. Teste que
+      espiona o disco: tests/test_avb_segmentos.py. Banco: matriz-de-plataforma §C.
+
+  # ── Magic Link (ADR 0016 / 0017, 2026-09-24) ─────────────────────────────────
+
+  - id: T-15
+    stride: Tampering
+    titulo: Carta hostil na pasta combinada
+    descricao: >
+      A pasta combinada é de rede e qualquer um com acesso escreve nela. Uma .carta.json
+      pode ser enorme, malformada, trazer caminhos UNC (arquivo_ama, gerenciadas) para
+      forçar sessão SMB na máquina do Resolve, ou nomes com XML/HTML.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      carta_aberta.reader.ler_carta — teto de 64 MB antes do json, só versão 1.x, forma
+      conferida, CartaInvalida legível (a caixa lista a inválida sem quebrar). Só o nível de
+      cima da pasta, só *.carta.json, symlink ignorado. Caminho de dentro da Carta só é
+      usado depois de caminho_confiavel (UNC e '..' recusados ANTES do disco). Nomes: o
+      writer do DRT escapa XML; o script Lua mostra texto em UIManager (sem HTML). Testes:
+      tests/test_carta_ida_e_volta.py §3, tests/test_receber.py (espião de disco).
+
+  - id: T-16
+    stride: Spoofing
+    titulo: Processo ou página chamando as rotas do receptor
+    descricao: >
+      /receber/* aceita cliente SEM Origin (o script do Resolve fala por curl). Sem uma
+      prova, qualquer processo local — ou uma página web — poderia listar e disparar DRTs.
+    impacto: medio
+    estado: mitigado
+    mitigacao: >
+      Token de 256 bits por início do serviço em pasta_dados()/token (O_EXCL, 0600),
+      cabeçalho X-DeLaPraCa-Token comparado com hmac.compare_digest, válido SÓ em
+      /receber/*. Página web continua barrada por Origin antes (e não lê o arquivo).
+      Processo local rodando como o usuário lê o token — o mesmo limite do ADR 0007 (esse
+      processo já dirige o MC sem credencial). Teste: tests/test_receber.py §1.
+
+  - id: T-17
+    stride: Tampering
+    titulo: Nome do arquivo de saída ou comando ditado por texto de fora
+    descricao: >
+      O DRT temporário do receptor e o comando que sobe o serviço poderiam carregar texto
+      da Carta (nome da sequência) ou do servidor para o disco ou para o shell do Lua
+      (io.popen passa por shell).
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      O DRT é nomeado pelo id do envio validado por regex de UUID (sessao_receber.RE_ID).
+      No Lua: rota por lista de PERMITIDOS, token só hexadecimal, corpo por arquivo
+      (--data-binary @), caminho temporário e partes do receptor.json por lista de
+      PROIBIDOS de shell; receptor.json é gravado pela instalação, nunca por rede.
+      Verificado com o fuscript do Resolve (rota com $(calc) e caminho com & recusados).
+
+  - id: T-18
+    stride: Tampering
+    titulo: Tecla do botão Coletar caindo em outro programa
+    descricao: >
+      A coleta digita Ctrl+0 e Ctrl+C (SendInput). A tecla vai para a janela em primeiro
+      plano: se não for o Media Composer, copia outra coisa ou muda o zoom de outro app.
+    impacto: baixo
+    estado: mitigado
+    mitigacao: >
+      teclado.copiar_selecao confere que o executável da janela da frente é o do Media
+      Composer antes de digitar e recusa com texto para o editor. Banco: matriz §F
+      "digitar atalho no NLE".
+
+  # ── Revisão vermelho × azul (2026-09-24) — docs/seguranca/2026-09-24-vermelho-azul-magic-link.md
+
+  - id: T-19
+    stride: Information Disclosure
+    titulo: DNS rebinding passava pelo teste de Host (existia antes do Magic Link)
+    descricao: >
+      O portão aceitava Host que COMEÇASSE com 127.0.0.1/localhost. Uma página em
+      127.0.0.1.atacante.com (resolvendo para 127.0.0.1) faz GET same-origin sem Origin e
+      lia /magic, /export e /receber/caixa.
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      portao.host_local — nome EXATO 127.0.0.1 ou localhost. Teste: test_ataques_magic_link V1.
+
+  - id: T-20
+    stride: Information Disclosure
+    titulo: Caminho da Carta escrito no DRT leva o Resolve a um host SMB do atacante
+    descricao: >
+      O Source Path das colunas do MC viajava na Carta e virava a pasta da referência
+      offline — o MediaFilePath do DRT. Ao importar, o Resolve abriria sessão SMB com o
+      host (vazando o hash NTLM do colorista).
+    impacto: alto
+    estado: mitigado
+    mitigacao: >
+      sessao_receber._pasta_de_referencia (só caminho local seguro); reader._sem_caminhos
+      zera media_ref.local_path/url vindos da Carta. Testes: V2, V3.
+
+  - id: T-21
+    stride: Denial of Service
+    titulo: Carta ou pasta hostil trava o receptor
+    descricao: >
+      Aninhamento absurdo derrubava a caixa inteira; 300 mil segmentos prendiam o writer;
+      milhares de arquivos tornavam cada procura lenta.
+    impacto: medio
+    estado: mitigado
+    mitigacao: >
+      RecursionError → CartaInvalida e caixa isolando cada arquivo; LIMITE_SEGMENTOS /
+      LIMITE_MASTERS; MAX_ARQUIVOS=500 (os mais recentes, com 'cortado'). Testes: V4–V6.
+
+  - id: T-22
+    stride: Spoofing
+    titulo: Servidor impostor na porta 7823 responde ao script do Resolve
+    descricao: >
+      Um programa que ocupe a porta antes do serviço recebe o token e pode devolver um
+      'drt' em UNC ou texto com HTML para a janela do script.
+    impacto: medio
+    estado: parcial
+    mitigacao: >
+      O script só importa <dados>/recebidos/<uuid>.drt (drt_confiavel), pasta do Media
+      Pool de lista fixa, texto sem '<'/'>' (texto_plano). Testes: V9, V10. Pendente:
+      desafio/resposta para o serviço provar que conhece o token; a lista mostrada ainda
+      pode ser falsa.
+
+  - id: T-23
+    stride: Spoofing
+    titulo: Remetente de uma Carta não é provado
+    descricao: >
+      Quem escreve na pasta combinada pode forjar uma Carta 'de EDIT-02' e empurrar uma
+      timeline falsa para o colorista.
+    impacto: baixo
+    estado: aceito
+    mitigacao: >
+      As trancas T-15/T-20 limitam o dano (nada de rede nem de escrita fora de recebidos/).
+      Remédio pendente: assinatura da Carta com chave da produção.

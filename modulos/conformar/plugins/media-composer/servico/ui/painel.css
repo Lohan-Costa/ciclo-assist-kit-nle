@@ -1,0 +1,994 @@
+/* De Lá Pra Cá — painel do Media Composer.
+ *
+ * Tokens e gramática de componentes vêm do design system do Órbita
+ * (DRAMASYNC/plugins/premiere-cep/index.html:11-23 e :88-101). Aqui o tema é dark
+ * FIXO, não adaptativo: o Media Composer não expõe o skin da interface para o painel
+ * (o CEP do Premiere lê `appSkinInfo`; o Panel SDK não tem equivalente).
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg:#2b2b2b; --panel:#333; --panel-2:#242424; --border:#3f3f3f;
+  /* Piso de contraste para todo texto que se lê (regra do autor, 2026-09-07 no Promo Entrega). Aqui:
+     #c3c3c3 em 2026-10-06 ("algumas letras são bem escuras") e, no mesmo dia, #a5a5a5 — o c3 ficou
+     "claro demais". A escala anda junto, para os três níveis continuarem três: título/valor,
+     secundário, o piso. Bordas ficam de fora. */
+  --fg:#e2e2e2; --muted:#bcbcbc; --faint:#a5a5a5;
+  --accent:#3f66a5; --accent-forte:#5183cc; --accent-ink:#fff;
+  --accent-rgb:63,102,165; --accent-forte-rgb:81,131,204; --accent-claro:#9dbdf0;
+  --ok:#7ec97e; --err:#e08080; --warn:#d9a95a;
+  --radius:6px;
+  /* Uma escala de espaçamento só, para o painel não ter seis respiros diferentes. */
+  --s1:6px; --s2:10px; --s3:16px;
+}
+
+* { box-sizing:border-box; }
+/* ⛔ `body` com `height:100%` não cresce com o conteúdo: o padding de baixo (a altura da barra fixa, `ajustarBarra`)
+   ficava no fim da JANELA, não no fim da página, e a barra cobria o último bloco e as opções avançadas (autor,
+   2026-10-19: "parece que estamos perdendo informação"). `min-height` cresce. */
+html { margin:0; height:100%; }
+body { margin:0; min-height:100%; }
+/* O espaço da barra de rolagem fica RESERVADO mesmo sem ela (autor, 2026-10-19: abrir as opções avançadas criava a barra
+   e o layout inteiro mudava de largura). Chrome 80 (casca do Resolve 19) não conhece a propriedade e a ignora. */
+html { scrollbar-gutter:stable; }
+body {
+  background:var(--bg); color:var(--fg);
+  padding:10px 11px 12px;
+  font:13px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  /* A janela do painel é estreita. A página nunca rola na horizontal: quem rola é o
+     container de cada lista. */
+  overflow-x:hidden;
+}
+
+/* ── Cabeçalho ─────────────────────────────────────────────────────────────── */
+.head { display:flex; align-items:flex-start; gap:8px; margin-bottom:var(--s2); }
+.head .marca { flex:1 1 auto; min-width:0; }
+h1 { font-size:15px; margin:0; font-weight:700; letter-spacing:.2px; }
+.sub { color:var(--muted); font-size:11px; margin:2px 0 0; }
+
+/* Estado da conexão: só o ponto e a palavra, sem caixa. */
+.conn { display:inline-flex; align-items:center; gap:5px; font-size:11px;
+        font-weight:500; color:var(--muted); flex:0 0 auto; }
+.ponto { width:8px; height:8px; border-radius:50%; background:var(--faint); flex:0 0 auto; }
+.conn.ok .ponto  { background:var(--ok);  box-shadow:0 0 0 3px rgba(126,201,126,.25); }
+.conn.err .ponto { background:var(--err); box-shadow:0 0 0 3px rgba(224,128,128,.25); }
+.conn.warn .ponto { background:var(--warn); box-shadow:0 0 0 3px rgba(217,169,90,.25); }
+.conn-erro { color:var(--warn); }
+/* o projeto em foco, na janela do app: destaque sem roubar a atenção (autor, 2026-10-18) */
+.conn-projeto { color:#8fb4ec; font-weight:500; }
+
+/* O pino da janela do app (2026-10-18): apagado = solta; aceso (azul) = na frente das outras. */
+.head-dir { display:inline-flex; align-items:center; gap:8px; flex:0 0 auto; }
+.pino { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; padding:0;
+        border:1px solid transparent; border-radius:var(--radius); background:none; color:var(--faint); cursor:pointer; }
+.pino svg { width:15px; height:15px; }
+.pino:hover { color:var(--fg); border-color:var(--border); }
+.pino[aria-pressed="true"] { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+
+/* ── Abas ──────────────────────────────────────────────────────────────────────
+   Abas de verdade (sublinhado), do tamanho do nome + respiro. A engrenagem vai para
+   a ponta direita por margin-left:auto.
+   ⚠️ Qualquer <button> solto dentro do <nav> vira uma terceira aba visual sem querer
+   — é por isso que o seletor é `.tabs > button` e não `nav button`. */
+.tabs { display:flex; align-items:stretch; gap:2px; margin:0 0 var(--s2);
+        border-bottom:1px solid var(--border); }
+.tabs > button { border:0; border-bottom:2px solid transparent; border-radius:0;
+                 background:transparent; color:var(--muted); font-size:12px;
+                 font-weight:600; padding:8px 12px; margin-bottom:-1px; cursor:pointer; }
+.tabs > button:hover:not(.on) { color:var(--fg); }
+.tabs > button.on { color:var(--fg); border-bottom-color:var(--accent-forte); }
+.tabs .engrenagem { margin-left:auto; padding:8px 10px; display:flex; align-items:center; }
+/* 16px e não 14: a engrenagem de contorno precisa do espaço para os dentes
+   aparecerem como dentes. */
+.tabs .engrenagem svg { width:16px; height:16px; display:block; }
+
+/* ── Painéis das abas ──────────────────────────────────────────────────────── */
+section { display:none; }
+section.on { display:block; }
+
+/* ── Botões ────────────────────────────────────────────────────────────────────
+   A largura é do LAYOUT, não do botão: a base é `auto` e quem estica é o container. */
+button { width:auto; padding:9px 14px; margin:0; border:1px solid var(--border);
+         border-radius:var(--radius); background:var(--panel); color:var(--fg);
+         font-size:13px; font-weight:600; cursor:pointer; }
+button:hover:not(:disabled) { border-color:var(--accent-forte); }
+button:disabled { opacity:.45; cursor:default; }
+button.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+button.primary:hover:not(:disabled) { filter:brightness(1.15); }
+button.ghost { background:transparent; color:var(--muted); font-weight:500; }
+button.sm { padding:6px 10px; font-size:11px; font-weight:500; }
+/* Ação destrutiva: a borda vermelha diz o que vai acontecer antes do clique. */
+button.danger { background:transparent; border-color:var(--err); color:var(--err);
+                font-weight:500; padding:6px 10px; font-size:11px; }
+button.danger:hover:not(:disabled) { background:var(--err); color:#2b2b2b; }
+
+.acoes { display:flex; gap:8px; flex-wrap:wrap; margin:var(--s2) 0 0; }
+/* Prontidão: com o motor fora do ar ou não pronto, SÓ o cabeçalho e esta tela (o resto some). */
+body.sem-motor > *:not(.head):not(#prontidao):not(script) { display:none !important; }
+body:not(.sem-motor) #prontidao { display:none; }
+.prontidao #prTexto { margin:var(--s1) 0 0; line-height:1.5; }
+.pr-item { display:flex; gap:8px; margin:var(--s2) 0 0; font-size:11px; line-height:1.45; }
+.pr-item .marca-pr { flex:0 0 auto; font-weight:700; }
+.pr-item.ok .marca-pr { color:var(--ok); }
+.pr-item.err .marca-pr { color:var(--err); }
+.pr-item .gesto { color:var(--warn); display:block; margin-top:2px; }
+.acoes button { flex:1 1 auto; }
+
+/* ── Blocos de conteúdo ────────────────────────────────────────────────────── */
+.bloco { border:1px solid var(--border); border-radius:var(--radius);
+         background:var(--panel-2); padding:var(--s2); margin:0 0 var(--s2); }
+.bloco-titulo { font-size:11px; font-weight:700; color:var(--muted);
+                text-transform:uppercase; letter-spacing:.5px; margin:0 0 var(--s1); }
+.dica { color:var(--faint); font-size:11px; margin:var(--s1) 0 0; }
+
+/* Caminho de arquivo: monoespaçado, selecionável, e truncado sem empurrar o layout.
+   ⚠️ `display:block` é load-bearing: `overflow`/`text-overflow` não têm efeito num
+   inline, e o texto vazava da caixa cortado a seco, sem reticências. `min-width:0`
+   pelo mesmo motivo dentro de um flex — sem ele o item não encolhe abaixo do conteúdo.
+   `direction:rtl` põe as reticências no COMEÇO: o fim de um caminho (a pasta do
+   projeto) diz mais que o começo (/Users/fulano/Documents/…). */
+.caminho { display:block; font:11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+           color:var(--muted); user-select:text; min-width:0; max-width:100%;
+           overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+           direction:rtl; text-align:left; }
+/* O `direction:rtl` reordenaria a pontuação do fim da string; o bdi isola o texto. */
+.caminho bdi { direction:ltr; unicode-bidi:isolate; }
+
+/* ── Estado vazio / em construção ──────────────────────────────────────────── */
+.vazio { color:var(--faint); font-size:12px; text-align:center;
+         padding:var(--s3) var(--s2); line-height:1.6; }
+
+/* ── Alvo de arrasto ──────────────────────────────────────────────────────────
+   O realce acende no BLOCO que aceita o que está sendo arrastado, não na janela inteira.
+   ⭐ O overlay não é enfeite: ele É a explicação de onde soltar, no momento exato em que
+   o editor precisa dela — com o clipe na mão, ninguém lê legenda.
+
+   ⚠️⚠️ Houve aqui um véu de janela inteira (`body.arrastando`), quando só a timeline da
+   bin era aceita. Com DUAS espécies (timeline e caminho de disco) ele passou a mentir:
+   dizia "solte em qualquer lugar" e a ação dependia de onde caísse. Um realce que não
+   corresponde ao que vai acontecer é pior que realce nenhum.
+
+   ⚠️ `pointer-events:none` no véu não é detalhe — um overlay que capture o ponteiro
+   engole o próprio `drop` que ele anuncia, e o resultado é um painel que pisca e não
+   recebe nada.
+
+   ⚠️ E o bloco precisa de `position:relative` mesmo sem realce: sem isso o `::after`
+   ancora no ancestral posicionado mais próximo e o véu aparece por cima do bloco errado. */
+.bloco[data-solta] { position:relative; }
+
+/* Nível 1 — o MAPA: contorno discreto em toda zona que aceita a espécie arrastada.
+   Diz "dá para soltar aqui" sem gritar, e sem competir com a zona sob o cursor. */
+.bloco.pode-soltar {
+  outline:1px dashed var(--accent-forte); outline-offset:2px;
+}
+
+/* Nível 2 — a PROMESSA: véu cheio só na zona sob o cursor.
+   ⚠️⚠️ Este véu já esteve em TODAS as zonas aceitantes ao mesmo tempo. Como um caminho
+   de disco pode ser pasta OU timeline, os dois blocos acendiam iguais e o editor via dois
+   convites enfáticos para um gesto que só podia ir a um lugar — o realce virava pergunta
+   em vez de resposta. Quem sabe o que está sendo arrastado é ele; a interface só precisa
+   perguntar ao cursor. */
+.bloco.solta-aqui::after {
+  content:attr(data-rotulo);
+  position:absolute; top:0; right:0; bottom:0; left:0; z-index:50; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+  padding:var(--s2); text-align:center;
+  font-size:12px; font-weight:700; color:var(--accent-ink);
+  background:rgba(var(--accent-rgb),.22);
+  border:2px dashed var(--accent-forte); border-radius:var(--radius);
+  backdrop-filter:blur(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloco.solta-aqui::after { backdrop-filter:none; }
+}
+
+/* Despejo cru (o último arrasto, nos Ajustes). Monoespaçado e rolável: o valor está em
+   ler o payload INTEIRO numa foto da tela. */
+.cru { font:10px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+       color:var(--muted); background:var(--panel-2); border:1px solid var(--border);
+       border-radius:var(--radius); padding:6px 8px; margin:0;
+       max-height:40vh; overflow:auto; white-space:pre-wrap; word-break:break-all; }
+
+/* ── Mensagem ──────────────────────────────────────────────────────────────── */
+.msg { font-size:11px; margin:var(--s2) 0 0; min-height:1em; }
+.msg.ok { color:var(--ok); }
+.msg.er { color:var(--err); }
+
+/* ── Rodapé ────────────────────────────────────────────────────────────────── */
+.rodape { display:flex; align-items:center; gap:8px; margin-top:var(--s3);
+          padding-top:var(--s2); border-top:1px solid var(--border);
+          font-size:10px; color:var(--faint); }
+.rodape .versao { margin-left:auto; font-variant-numeric:tabular-nums; }
+
+/* ── Passos do fluxo ───────────────────────────────────────────────────────
+   ⚠️ `[hidden]` precisa vencer o `display` do estado ligado. Sem esta linha um
+   elemento escondido continua na tela, e o atributo parece não funcionar. */
+.passo[hidden], [hidden] { display:none !important; }
+
+/* ── Campos ────────────────────────────────────────────────────────────────
+   ⚠️ `min-width:0` num item de flex é load-bearing: sem ele o input não encolhe
+   abaixo do próprio conteúdo e empurra o botão para fora da janela. */
+input[type=text], input[type=number], select, textarea {
+  width:100%; min-width:0; padding:7px 9px;
+  background:var(--panel-2); border:1px solid var(--border);
+  border-radius:var(--radius); color:var(--fg);
+  font:12px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+textarea { resize:vertical; box-sizing:border-box; }
+input[type=text]:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent-forte); }
+input[type=text]::placeholder, textarea::placeholder { color:var(--faint); }
+select option:disabled { color:var(--faint); }
+
+/* ── Variáveis do nome (aba Daqui Pra Lá) ───────────────────────────────────
+   Cada botão insere a TAG FECHADA `%{campo}` — a forma sem ambiguidade do motor de nomes
+   do Órbita (banco, `transversal/nomes-por-padrao-wildcard.md`). */
+.chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:var(--s1); }
+.chips button { padding:3px 8px; font-size:10px; font-weight:600; border-radius:20px;
+                background:transparent; border:1px solid var(--border); color:var(--muted); }
+.chips button:hover { border-color:var(--accent-forte); color:var(--fg); }
+.previa-ok { color:var(--ok); }
+.previa-er { color:var(--err); }
+
+.linha { display:flex; gap:var(--s1); align-items:center; margin-top:var(--s1); }
+.linha input { flex:1 1 auto; }
+
+/* ── Segmented ─────────────────────────────────────────────────────────── */
+.seg { display:flex; border:1px solid var(--border); border-radius:var(--radius);
+       overflow:hidden; margin-bottom:var(--s2); }
+.seg button { flex:1 1 0; border:0; border-radius:0; background:transparent;
+              color:var(--muted); font-size:11px; font-weight:600; padding:6px 8px; }
+.seg button.on { background:var(--accent); color:var(--accent-ink); }
+.seg button:not(.on):hover { color:var(--fg); }
+
+/* ── Checkbox ──────────────────────────────────────────────────────────── */
+.chk { display:flex; gap:8px; align-items:flex-start; margin:0 0 var(--s1);
+       cursor:pointer; font-size:12px; }
+.chk input { margin:2px 0 0; flex:0 0 auto; accent-color:var(--accent-forte); }
+.chk span { display:block; }
+.chk em { display:block; font-style:normal; font-size:10px; color:var(--faint);
+          margin-top:1px; }
+
+/* ── Lista de pastas ───────────────────────────────────────────────────── */
+.lista-pastas:empty { display:none; }
+.pasta { display:flex; gap:6px; align-items:center; padding:4px 0;
+         border-bottom:1px solid var(--border); }
+.pasta:last-child { border-bottom:0; }
+/* Início e fim do caminho (autor, 2026-10-18): a raiz (`D:\`) fica inteira e o resto corta pelo COMEÇO —
+   "D:\…\01 MIDIAS\CHARTS". Sem `gap` aqui dentro: a raiz e o resto são um texto só. */
+.caminho-dupla { display:flex; align-items:baseline; flex:1 1 auto; min-width:0; }
+.caminho-raiz { flex:0 0 auto; font:11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color:var(--muted); }
+.caminho-dupla .caminho { flex:1 1 auto; }
+/* ⚠️ O `✕` é classe SOLTA, não `.pasta .x`. Escopado à lista de pastas, o mesmo botão
+   usado noutro lugar caía no estilo padrão de `button` e saía enorme — foi o que
+   aconteceu com o de desconectar o banco. Um botão discreto tem de ser discreto onde
+   quer que ele apareça. */
+.x { flex:0 0 auto; padding:2px 6px; font-size:11px; line-height:1; border:0;
+     background:transparent; color:var(--faint); }
+.x:hover { color:var(--err); }
+
+/* ── Placar ────────────────────────────────────────────────────────────── */
+.placar { display:flex; gap:var(--s1); flex-wrap:wrap; margin-bottom:var(--s2); }
+.pill { font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px;
+        border:1px solid var(--border); color:var(--muted); }
+.pill.ok   { border-color:var(--ok);   color:var(--ok); }
+.pill.warn { border-color:var(--warn); color:var(--warn); }
+.pill.err  { border-color:var(--err);  color:var(--err); }
+
+.filtros { justify-content:space-between; margin-bottom:var(--s1); }
+.filtros .seg { margin:0; flex:1 1 auto; }
+
+/* ── Lista de masters ──────────────────────────────────────────────────────
+   Rola dentro do próprio container: a janela é estreita e a PÁGINA nunca deve
+   rolar na horizontal. */
+.lista { max-height:46vh; overflow-y:auto; overflow-x:hidden;
+         border:1px solid var(--border); border-radius:var(--radius);
+         background:var(--panel-2); }
+.item { padding:7px 9px; border-bottom:1px solid var(--border); font-size:12px; }
+.item:last-child { border-bottom:0; }
+.item-topo { display:flex; gap:6px; align-items:baseline; }
+.item-nome { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis;
+             white-space:nowrap; font-weight:600; }
+.item-seg { flex:0 0 auto; font-size:10px; color:var(--faint);
+            font-variant-numeric:tabular-nums; }
+.item-alvo { font-size:10px; color:var(--muted); margin-top:2px;
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item-motivo { font-size:10px; color:var(--warn); margin-top:2px; }
+.item-motivo.motivo-casado { color:var(--muted); }   /* casado, com o porquê à vista (reel, cópias, imagem) */
+.item.resolvido .item-nome::before { content:"● "; color:var(--ok); }
+.item.sugerido  .item-nome::before { content:"● "; color:var(--warn); }
+.item.aberto    .item-nome::before { content:"● "; color:var(--err); }
+.item-acoes { display:flex; gap:6px; margin-top:5px; flex-wrap:wrap; }
+.item-acoes button { padding:3px 8px; font-size:10px; font-weight:600; }
+/* A janela de conflito (autor, 2026-11-22): o daily à esquerda, os candidatos ao lado, o porquê em cada um. */
+.conflito { display:flex; gap:var(--s3); margin-top:var(--s2); align-items:flex-start; }
+.conflito figure { margin:0; }
+.conflito img { display:block; width:200px; height:113px; object-fit:cover; background:var(--panel-2);
+  border-radius:var(--radius); border:1px solid var(--border); }
+.conf-daily figcaption, .conf-cand figcaption { font-size:10px; color:var(--muted); margin-top:4px; max-width:200px;
+  overflow-wrap:anywhere; }
+.conf-daily.vazio { font-size:10px; color:var(--faint); max-width:200px; }
+.conf-daily img { border-color:var(--accent-forte); }
+.conf-cands { display:flex; gap:var(--s2); flex-wrap:wrap; }
+.conf-cand.usado img { outline:2px solid var(--ok); }
+.conf-cand button { margin-top:5px; padding:3px 8px; font-size:10px; font-weight:600; }
+.conf-usado { margin-top:5px; font-size:10px; color:var(--ok); font-weight:600; }
+.provas { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.prova { font-size:10px; padding:1px 5px; border-radius:3px; border:1px solid var(--border); }
+.prova.sim { color:var(--ok); border-color:var(--ok); }
+.prova.nao { color:var(--err); border-color:var(--err); }
+.prova.talvez { color:var(--warn); border-color:var(--warn); }
+.prova.neutra { color:var(--muted); }
+/* Chrome 80 (o QtWebEngine do MC) não tem `gap` em flex: a reserva por margem, como o resto do painel */
+html.sem-flex-gap .conflito > * + * { margin-left:16px; }
+html.sem-flex-gap .conf-cands > * + * { margin-left:10px; }
+html.sem-flex-gap .provas > * + * { margin-left:4px; }
+
+/* ── Barra de progresso ────────────────────────────────────────────────────
+   Requisito, não enfeite: o LinkFile em massa leva ~750 ms por arquivo, e um
+   minuto e meio sem sinal de vida parece travamento. */
+.barra { height:6px; background:var(--panel-2); border-radius:3px; overflow:hidden;
+         margin:var(--s1) 0; }
+.barra-preenche { height:100%; width:0; background:var(--accent-forte);
+                  transition:width .3s ease; }
+.prog-linha { font-size:10px; color:var(--muted); gap:8px; }
+.prog-linha .caminho { flex:1 1 auto; }
+.prog-linha span:last-child { flex:0 0 auto; font-variant-numeric:tabular-nums; }
+/* O app está usando o Resolve: o editor espera (etapas 6–10). Bem visível, de propósito. */
+.alerta-espera { display:flex; gap:8px; align-items:flex-start; background:#4a3410; color:#f6dfae;
+                 border:1px solid #d9a23a; border-radius:6px; padding:8px 10px; margin-bottom:var(--s1);
+                 font-size:11.5px; line-height:1.4; }
+.alerta-espera b { display:block; color:#ffe9bd; font-size:12px; }
+.alerta-ic { flex:0 0 auto; font-weight:700; color:#d9a23a; font-size:15px; line-height:1.1; }
+html.sem-flex-gap .alerta-espera > * + * { margin-left:8px; }
+/* Etapa sem contagem (o Resolve importando, o DRT sendo escrito): a barra se MOVE em vez de
+   fingir uma porcentagem — diz "trabalhando", não "quanto falta". */
+.barra.indeterminada .barra-preenche { width:30%; transition:none;
+                                       animation:barra-vai 1.4s ease-in-out infinite; }
+@keyframes barra-vai { from { transform:translateX(-100%); } to { transform:translateX(340%); } }
+.prog-atual { display:flex; flex-direction:column; gap:2px; margin-top:var(--s1);
+              font-size:11px; min-height:3.2em; }
+.prog-atual-o-que { color:var(--muted); }
+.prog-atual-nome { font-family:var(--mono, ui-monospace, Menlo, Consolas, monospace);
+                   overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prog-atual-pasta { color:var(--muted); font-size:10px; overflow:hidden; text-overflow:ellipsis;
+                    white-space:nowrap; direction:rtl; text-align:left; }
+.prog-atual span:empty { display:none; }
+.previa-prog { display:flex; flex-direction:column; gap:4px; margin-top:var(--s1); }
+.previa-prog .prog-atual { min-height:0; margin-top:0; }
+html.sem-flex-gap .previa-prog > * + * { margin-top:4px; }
+@media (prefers-reduced-motion: reduce) {
+  .barra-preenche { transition:none; }
+  .barra.indeterminada .barra-preenche { animation:none; width:100%; opacity:.45; }
+}
+
+/* ── Assinatura do autor ───────────────────────────────────────────────────
+   Botão, não link: a webview do MC não navega para fora, então quem abre o
+   navegador é o serviço (rota `/link/abrir`, com lista fechada de destinos). */
+.autor { font:inherit; color:var(--muted); font-weight:600; padding:0; border:0;
+         background:none; cursor:pointer;
+         text-decoration:underline; text-underline-offset:2px; }
+.autor:hover { color:var(--fg); border-color:transparent; }
+
+/* ── Opções avançadas ──────────────────────────────────────────────────────
+   Fechado por padrão: os defaults servem ao caso comum, e quem precisa mexer
+   sabe o que procura. */
+.avancado { border:1px solid var(--border); border-radius:var(--radius);
+            background:var(--panel-2); margin:0 0 var(--s2); }
+.avancado > summary { list-style:none; cursor:pointer; padding:8px var(--s2);
+                      font-size:11px; font-weight:700; color:var(--muted);
+                      text-transform:uppercase; letter-spacing:.5px;
+                      display:flex; align-items:center; gap:6px; }
+.avancado > summary::-webkit-details-marker { display:none; }
+.avancado > summary::before { content:"▸"; font-size:9px; transition:transform .15s; }
+.avancado[open] > summary::before { transform:rotate(90deg); }
+.avancado > summary:hover { color:var(--fg); }
+.avancado-corpo { padding:0 var(--s2) var(--s2); }
+@media (prefers-reduced-motion: reduce) {
+  .avancado > summary::before { transition:none; }
+}
+
+/* ── Vista de revisão dedicada (?vista=revisao) ────────────────────────────
+   Janela própria, aberta pelo APLICATIVO (1100×700, redimensionável) a pedido do botão
+   "abrir em janela maior" do painel. Aqui há largura: a lista mostra o nome do master e
+   o do arquivo lado a lado, que era o que não cabia na janela estreita do fluxo.
+
+   ⚠️ Isto já era o desenho antes, mas só valia no papel. A janela vinha de um SEGUNDO
+   `uiItem` do manifesto, e `windowSize` é campo de TOPO — não existe tamanho por item.
+   As duas janelas nasciam com os mesmos 400×560, então a média-consulta de 560px abaixo
+   **nunca disparava** e a "janela larga" era tão estreita quanto a outra. O CSS estava
+   certo; quem não entregava largura era o manifesto. */
+/* ⚙ Configurações do app (`?vista=configuracoes`): só o bloco de cache e logs. */
+body.vista-config .tabs,
+body.vista-config #paneDeLaPraCa,
+body.vista-config #paneDaquiPraLa,
+body.vista-config #paneAjustes { display:none; }
+body.vista-config #paneConfig { display:block; }
+/* Os Ajustes na janela de configurações do Ciclo Assist (`?ajustes=1`): só o `#paneAjustes`, sem a régua de subabas. */
+body.vista-ajustes .tabs, body.vista-ajustes #mcAcoesBarra { display:none !important; }
+/* ⭐ A janela larga (autor, 2026-11-07: "diagramar melhor os settings"): os blocos em grade — duas colunas a partir de
+   ~640 px — com o respiro da janela de configurações. Só aqui: o painel da aba segue empilhado. */
+body.vista-ajustes #paneAjustes.on { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+  gap:16px; align-items:start; padding:22px 28px 28px; }
+body.vista-ajustes #paneAjustes .bloco { margin:0; }
+/* …e o `#paneConfig` logo abaixo, na mesma grade: o local e o teto do cache, o diagnóstico, os logs e o Salvar. O cartão
+   "Cache e logs" dos Ajustes repetiria o de cá; a Versão é a do De Lá Pra Cá avulso (o GitHub dele), não a do módulo. */
+body.vista-ajustes #paneConfig { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+  gap:16px; align-items:start; padding:0 28px 28px; }
+body.vista-ajustes #paneConfig .bloco { margin:0; }
+body.vista-ajustes #paneConfig > .acoes { grid-column:1 / -1; justify-content:flex-end; margin:0; }
+body.vista-ajustes #ajBlocoCache, body.vista-ajustes #cfBlocoVersao { display:none; }
+/* ⭐ Fora da janela de configurações do Ciclo Assist (autor, 2026-11-07): Media Composer (a conexão já está no topo do
+   app), Último arrasto e Diagnóstico — ferramentas de bancada, não ajustes do editor. Seguem no painel avulso. */
+body.vista-ajustes #ajBlocoMC, body.vista-ajustes #ajBlocoArrasto, body.vista-ajustes #cfBlocoDiag { display:none !important; }
+.cf-teto { display:flex; align-items:center; margin:var(--s2) 0 0; font-size:12px; }
+.cf-teto input { width:72px; margin:0 6px 0 0; }   /* margem, não `gap`: o Chrome 80 do Resolve 19 */
+.cache-antigo { margin:var(--s2) 0 0; }
+
+body.vista-revisao .tabs,
+body.vista-revisao .rodape,
+body.vista-revisao #paneDaquiPraLa,
+body.vista-revisao #paneAjustes { display:none; }
+body.vista-revisao #paneDeLaPraCa { display:block; }
+body.vista-revisao .lista { max-height:none; flex:1 1 auto; }
+body.vista-revisao { display:flex; flex-direction:column; height:100vh; }
+body.vista-revisao #paneDeLaPraCa,
+body.vista-revisao #passoRevisao { display:flex; flex-direction:column; flex:1 1 auto;
+                                   min-height:0; }
+
+/* ── O convite à revisão (painel estreito) ─────────────────────────────────
+   No painel o passo de revisão é RESUMO + PORTA, não lista: os dois nomes de arquivo que
+   o editor precisa comparar não cabem em 400px, e fingir que cabem é o que fazia a
+   revisão parecer feita sem ter sido. */
+.convite { margin:var(--s2) 0 0; }
+/* ⛔ O convite é um <section>, e `section { display:none }` (as abas, lá em cima) o escondia: no AAF do Resolve o passo
+   de revisão ficava só com o placar — sem resumo, sem "Revisar mídias" (2026-10-19, PRODUCAO-A pela janela do app). */
+section.convite:not([hidden]) { display:block; }
+.convite-resumo { margin:0 0 var(--s2); font-size:13px; font-weight:600; }
+.convite-nota { margin:6px 0 0; font-size:11px; color:var(--muted); line-height:1.5; }
+/* Largura total: é o que faz um botão sem acento continuar lendo como convite, e não
+   como um controle secundário espremido a um canto. */
+.convite > button { width:100%; }
+
+/* A lista e os filtros são da janela larga. Aqui eles saem da tela — mas continuam no
+   DOM, porque é a MESMA página nas duas superfícies. */
+body:not(.vista-revisao) #passoRevisao .filtros .seg,
+body:not(.vista-revisao) #passoRevisao #listaMasters { display:none; }
+
+/* Com largura, o alvo vai para o lado do nome em vez de embaixo. */
+@media (min-width:560px) {
+  .item-topo { align-items:baseline; }
+  .item-alvo { display:inline-block; margin:0 0 0 4px; max-width:46%;
+               vertical-align:bottom; }
+  .item { display:grid; grid-template-columns:1fr auto; gap:2px 10px;
+          align-items:baseline; }
+  .item-topo { grid-column:1; }
+  .item-alvo { grid-column:2; grid-row:1; text-align:right; max-width:100%; }
+  .item-motivo, .item-acoes { grid-column:1 / -1; }
+}
+
+/* Janela de verdade larga: a lista vira duas colunas. O que se ganha não é estética — é
+   quantas pendências cabem na tela ao mesmo tempo, que é o gargalo real de quem está
+   decidindo master por master. Só na vista dedicada: o painel dentro do Media Composer
+   nunca chega a esta largura, e uma coluna dupla lá espremeria os dois nomes. */
+@media (min-width:900px) {
+  body.vista-revisao .lista {
+    column-count:2;
+    column-gap:var(--s2);
+  }
+  /* ⚠️ `break-inside` é obrigatório com `column-count`: sem ele um item é partido ao
+     meio entre as colunas — o nome do master numa, os botões na outra. */
+  body.vista-revisao .lista > .item {
+    break-inside:avoid;
+    -webkit-column-break-inside:avoid;
+  }
+}
+
+/* ── Campo rotulado (rótulo em cima, dica embaixo) ─────────────────────────── */
+.campo { display:block; margin:var(--s2) 0 0; }
+.campo > span { display:block; font-size:11px; color:var(--muted); margin:0 0 4px; }
+.campo > em { display:block; font-style:normal; font-size:10px; color:var(--faint);
+              margin-top:4px; line-height:1.4; }
+/* "(opcional)" ao lado do rótulo: precisa ser lido, mas não competir com ele. */
+.leve { color:var(--faint); font-weight:400; }
+
+/* ── Banco de mídias ───────────────────────────────────────────────────────────
+   Bloco próprio (o 3), pelos mesmos motivos do HTML. Aqui só o que o nome do banco pede:
+   ele é o dado da seção, então tem peso de dado — e quebra em vez de ser cortado, porque
+   um nome de produção truncado não identifica nada. */
+.banco-nome { flex:1 1 auto; font-weight:600; overflow-wrap:anywhere; }
+#bancoDesligado .dica, #bancoLigado .dica { margin:0 0 var(--s1); }
+#bancoLigado .dica { margin:var(--s1) 0 0; }
+.aviso-leve { color:var(--warn); }
+
+/* Aviso dentro de um campo: não é erro global, é uma ressalva sobre esta escolha. */
+.aviso { font-size:10px; line-height:1.45; color:var(--warn); margin:6px 0 0;
+         padding:6px 8px; border:1px solid var(--warn); border-radius:var(--radius);
+         background:rgba(217,169,90,.08); }
+button.perigo { background:var(--warn); border-color:var(--warn); color:#2b2b2b; }
+
+/* Estado do preset: uma frase e, quando preciso, o botão de instalar ao lado. */
+.estado-preset { flex:1 1 auto; min-width:0; font-size:11px; color:var(--muted);
+                 overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.estado-preset.ok::before { content:"● "; color:var(--ok); }
+.estado-preset.pendente { color:var(--warn); }
+.estado-preset.pendente::before { content:"● "; color:var(--warn); }
+
+/* ── alvo do arrasto e timeline escolhida ─────────────────────────────────────
+   A lista de sequences saiu (2026-08-16): a timeline entra só por arrasto, que é 1:1
+   com o gesto do editor. Este bloco é o que ficou no lugar dela. */
+.alvo-drop {
+  border: 1px dashed var(--borda, #3a3a44);
+  border-radius: 6px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.alvo-drop .dica { margin: 0; }
+.escolhido {
+  margin: 6px 0 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ── filtros de relink parcial, lado a lado ───────────────────────────────────
+   Ficam FORA das opções avançadas de propósito: relink parcial é decisão de trabalho
+   do editor, não ajuste fino escondido.
+   ⚠️ A classe é `filtros-relink`, não `filtros`: já existe um `.linha.filtros` no passo
+   de revisão, e reusar o nome mudaria o layout DELE sem ninguém pedir. */
+.filtros-relink {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 2px;
+}
+.filtros-relink .chk { flex: 1 1 0; min-width: 0; }
+.filtros-relink .chk em { display: block; color: var(--faint); font-style: normal; font-size: .85em; }
+
+/* ══ O MESMO painel em todos os NLEs ════════════════════════════════════════════
+   O painel é servido pelo app e cada NLE o abre com `?nle=…` (o `.avpi` do Avid, a casca
+   Workflow Integration do Resolve). O que só um NLE sabe fazer é marcado `data-so`, e some
+   nos outros — não fica cinza. Ver `NLE` no painel.js. */
+/* O modo Premiere (2026-10-19) mostra o que é de QUEM RECEBE (marcado "resolve") e esconde o do MC. */
+body:not([data-nle="resolve"]):not([data-nle="premiere"]):not([data-nle="baselight"]) [data-so="resolve"],
+body[data-nle="resolve"] [data-so="mc"],
+body[data-nle="premiere"] [data-so="mc"],
+body[data-nle="baselight"] [data-so="mc"] { display:none !important; }
+/* O Baselight (2026-11-22): só recebe — sem "sequência aberta" (não há montagem nele) e o Atualizar é a etapa 5 */
+body:not([data-nle="baselight"]) [data-so="baselight"],
+body[data-nle="baselight"] #rcBtnSeqAberta,
+body[data-nle="baselight"] #rcAvProjeto,
+body[data-nle="baselight"] [data-modo="atualizar"] { display:none !important; }
+/* "drt" = só onde o app ESCREVE a timeline do Resolve (sinais, notas, áudio, Compound): no Premiere elas não fazem nada
+   (autor, 2026-10-24) */
+body:not([data-nle="resolve"]) [data-so="drt"] { display:none !important; }
+.conn-tambem { color:var(--muted); font-weight:400; }
+
+/* ── Receber (Resolve) ─────────────────────────────────────────────────────── */
+.rc-lista { max-height:30vh; }
+.rc-lista:empty::before { content:"nada aqui"; display:block; padding:10px;
+                          color:var(--faint); font-size:11px; text-align:center; }
+.rc-item { display:flex; gap:8px; align-items:center; }
+.rc-item .rc-texto { flex:1 1 auto; min-width:0; }
+.rc-item .item-nome { display:block; }
+.rc-item button { flex:0 0 auto; padding:5px 10px; font-size:11px; }
+.rc-item.trazido { color:var(--faint); }   /* cor, não opacidade: o piso vale */
+.origem { font-size:9px; font-weight:700; letter-spacing:.5px; padding:2px 5px;
+          border-radius:3px; margin-right:6px; vertical-align:1px;
+          background:var(--panel); color:var(--muted); border:1px solid var(--border); }
+.origem.avid     { background:#3f66a5; border-color:#3f66a5; color:#fff; }
+.origem.resolve  { background:#b8641f; border-color:#b8641f; color:#fff; }
+.origem.premiere { background:#6f52b8; border-color:#6f52b8; color:#fff; }
+.origem.cor      { background:#a8437a; border-color:#a8437a; color:#fff; }
+.origem.vfx      { background:#2f8a7a; border-color:#2f8a7a; color:#fff; }
+#rcFeito p { margin:0 0 4px; font-size:12px; }
+#rcFeito .dica { margin-top:2px; }
+
+/* ── Três caminhos: arquivo em cima, Magic Link embaixo (organograma de 2026-09-25) ── */
+.em-breve { font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+            color:var(--warn); margin-left:4px; vertical-align:1px; }
+.sub-titulo { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+              color:var(--faint); margin:10px 0 4px; }
+.ml-sep { display:flex; align-items:center; font-size:10px; font-weight:700;
+          letter-spacing:.8px; text-transform:uppercase; color:var(--ok); margin:14px 0 6px; }
+.ml-sep::before, .ml-sep::after { content:""; flex:1 1 auto; height:1px; background:var(--border); }
+.ml-sep::before { margin-right:8px; }
+.ml-sep::after { margin-left:8px; }
+/* ── A tabela do Magic Link (receber) ─────────────────────────────────────────
+   Uma linha por envio, SEM quebra (autor, 2026-09-25). O que não cabe ROLA PARA O LADO: a
+   largura da tabela é a soma das colunas (`aplicarLarguras`), e a caixa rola nos dois
+   sentidos. As colunas se redimensionam pela divisa do cabeçalho (`.alca`). Só a coluna do
+   botão (Importar) fica FIXA à direita — `position:sticky` em célula de tabela existe no
+   Chrome 80 do Resolve. */
+.ml-barra select { flex:1 1 auto; min-width:0; }
+.tabela-envios { margin-top:8px; border:1px solid var(--border); border-radius:var(--radius);
+                 background:var(--panel-2); max-height:46vh; overflow:auto; }
+#mlTabela { border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:12px; }
+#mlTabela th, #mlTabela td { white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+                             padding:6px 8px; border-bottom:1px solid var(--border);
+                             vertical-align:middle; }
+#mlTabela th { position:sticky; top:0; z-index:1; background:var(--panel); text-align:left;
+               font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+               color:var(--muted); }
+#mlTabela th[data-ordem] { cursor:pointer; user-select:none; padding-right:12px; }
+#mlTabela th[data-ordem]:hover, #mlTabela th.ordem-ativa { color:var(--fg); }
+#mlTabela th[data-ordem]::after { content:attr(data-seta); margin-left:3px; }
+/* A divisa: uma faixa de 7 px na borda direita do cabeçalho, com o cursor de redimensionar. */
+#mlTabela .alca { position:absolute; top:0; right:0; width:7px; height:100%; cursor:col-resize;
+                  border-right:1px solid var(--border); }
+#mlTabela .alca:hover, body.redimensionando #mlTabela .alca { border-right-color:var(--accent-forte); }
+body.redimensionando, body.redimensionando * { cursor:col-resize !important; user-select:none; }
+#mlTabela tr:last-child td { border-bottom:0; }
+#mlTabela tr.importado td:not(.col-acao) { color:var(--faint); }   /* cor, não opacidade: o piso vale */
+#mlTabela tr.carregado td { background:rgba(var(--accent-forte-rgb),.16); }   /* o envio que está no cartão do bloco 1 */
+#mlTabela tr.vazia td { text-align:center; color:var(--faint); font-size:11px; padding:10px; }
+#mlTabela td.col-nome { font-weight:600; }
+#mlTabela td.col-comentario, #mlTabela td.col-remetente, #mlTabela td.col-sequencia { color:var(--muted); }
+#mlTabela .col-tipo .origem { margin-right:0; }
+/* A coluna fixa: gruda na direita da caixa, com fundo próprio para cobrir o que rola por baixo. */
+#mlTabela .col-acao { position:sticky; right:0; text-align:right; background:var(--panel-2);
+                      border-left:1px solid var(--border); }
+#mlTabela th.col-acao { z-index:2; background:var(--panel); }
+#mlTabela .col-acao button { padding:4px 10px; font-size:11px; white-space:nowrap; }
+.oculto { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+.botoes-canal:empty { display:none; }
+.seg button:disabled { opacity:1; color:var(--faint); cursor:default; }   /* "em breve" se lê: o piso vale */
+#ajPapel { margin:4px 0 8px; }
+
+/* ══ Chrome 80 (o Electron do Resolve 19) ══════════════════════════════════════
+   ⚠️ O Resolve hospeda o painel no Chromium MAIS VELHO dos nossos NLEs (medido
+   2026-09-25: Electron 8.0.1 / Chrome 80). Lá `gap` em FLEX não existe (Chrome 84) e a
+   declaração some calada: botões colados, sem erro. Continua escrito acima — os outros NLEs
+   o usam — e aqui mora a reserva, ligada só quando o painel.js DETECTA que falta
+   (`html.sem-flex-gap`). Pelo mesmo motivo não há `color-mix` (Chrome 111) nem `inset`
+   (Chrome 87) neste arquivo: `tests/test_painel_chrome80.py` recusa a volta deles. */
+html.sem-flex-gap .head > * + *,
+html.sem-flex-gap .rodape > * + *,
+html.sem-flex-gap .acoes > * + *,
+html.sem-flex-gap .pr-item > * + *,
+html.sem-flex-gap .chk > * + *,
+html.sem-flex-gap .rc-item > * + *,
+html.sem-flex-gap .prog-linha > * + * { margin-left:8px; }
+html.sem-flex-gap .prog-atual > * + * { margin-top:2px; }
+html.sem-flex-gap .linha > * + *,
+html.sem-flex-gap .pasta > * + *,
+html.sem-flex-gap .placar > * + *,
+html.sem-flex-gap .item-topo > * + *,
+html.sem-flex-gap .item-acoes > * + *,
+html.sem-flex-gap .avancado > summary > * + * { margin-left:6px; }
+html.sem-flex-gap .conn > * + * { margin-left:5px; }
+html.sem-flex-gap .head-dir > * + * { margin-left:8px; }
+html.sem-flex-gap .chips > * + * { margin-left:4px; }
+html.sem-flex-gap .tabs > * + * { margin-left:2px; }
+html.sem-flex-gap .filtros-relink > * + * { margin-left:10px; }
+/* Redesenho do Importar (2026-10-05). */
+html.sem-flex-gap .drop-alvo > * + * { margin-top:4px; }
+html.sem-flex-gap .carga-topo > * + *,
+html.sem-flex-gap .acordeao > summary > * + *,
+html.sem-flex-gap .chk-linha > * + * { margin-left:8px; }
+
+/* ── Código de cores dos Sinais do Import (Ajustes) ─────────────────────────────
+   Grade com `gap` (e não flex gap): o Chrome 80 do Resolve não tem gap em flex. */
+.cor-cat { display:grid; gap:4px; padding:var(--s1) 0; border-top:1px solid var(--border); }
+.cor-cat:first-child { border-top:0; padding-top:0; }
+.cor-nome { margin:0; font-weight:600; }
+.cor-nome em { font-style:normal; font-weight:400; color:var(--muted); }
+.cor-escolhas { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.cor-escolha { display:grid; gap:2px; min-width:0; }
+.cor-rot { font-size:10px; color:var(--faint); }
+.cor-linha { display:grid; grid-template-columns:14px minmax(0,1fr); gap:6px; align-items:center; }
+.cor-amostra { width:14px; height:14px; border-radius:3px; border:1px solid rgba(0,0,0,.45); }
+.cor-amostra.mk { width:11px; height:11px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); }
+.cor-cat .dica { margin:0; }
+.cores-palavra { display:grid; gap:2px; margin:var(--s2) 0 0; font-size:11px; color:var(--muted); }
+
+/* ── Atualizar timeline: o resumo que decide antes de mexer ─────────────────────── */
+.at-campo { display:grid; gap:2px; font-size:11px; color:var(--muted); margin:0 0 var(--s1); }
+.at-campo .linha { margin-top:0; }
+.at-campo .linha select { flex:1 1 auto; }
+.at-campo .linha button { flex:0 0 auto; }
+.at-medida { position:relative; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden; margin:var(--s1) 0 2px; }
+.at-medida i { position:absolute; top:0; bottom:0; left:0; background:var(--ok); }
+.at-medida i.warn { background:var(--warn); }
+.at-medida i.err { background:var(--err); }
+.at-medida b { position:absolute; top:0; bottom:0; width:1px; background:var(--fg); opacity:.5; }
+.at-marcas { display:flex; justify-content:space-between; font-size:10px; color:var(--faint); margin-bottom:var(--s1); }
+.at-linha { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; font-size:12px; padding:2px 0; }
+.at-linha span:last-child { font-variant-numeric:tabular-nums; }
+.col-acao button + button { margin-left:4px; }
+
+/* ── Cache em destaque e versão nova (organograma de 2026-10-05) ────────────────────────────
+   O número que importa é o maior texto do bloco; o cache antigo fica logo abaixo dele. Margens, não
+   `gap` em flex: o Chrome 80 do Resolve 19. */
+.uso-linha { display:flex; align-items:baseline; justify-content:space-between; margin:var(--s1) 0 0; }
+.uso-grande { font-size:20px; font-weight:600; color:var(--fg); font-variant-numeric:tabular-nums; }
+.uso-de { font-size:11px; color:var(--faint); margin-left:8px; font-variant-numeric:tabular-nums; }
+.uso-barra { height:6px; margin:6px 0 0; border-radius:3px; background:var(--panel-2);
+             border:1px solid var(--border); overflow:hidden; }
+.uso-barra span { display:block; height:100%; width:0; background:var(--ok); }
+.uso-barra span.cheio { background:var(--warn); }
+.cache-antigo .aviso { font-size:11px; }
+.cache-antigo .aviso b { color:var(--warn); }
+.cf-sub { font-size:11px; color:var(--muted); margin:var(--s3) 0 4px; }
+.caminho.caminho-inteiro { white-space:normal; overflow-wrap:anywhere; direction:ltr; overflow:visible;
+                           text-overflow:clip; }
+.ver-linha { display:flex; align-items:center; justify-content:space-between; font-size:12px; margin:var(--s1) 0 0; }
+.ver-tag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:999px; margin-left:8px; }
+.ver-tag.em_dia { background:rgba(126,201,126,.15); color:var(--ok); }
+.ver-tag.nova { background:rgba(var(--accent-forte-rgb),.2); color:var(--accent-claro); }
+.ver-tag.erro { background:rgba(217,169,90,.15); color:var(--warn); }
+.ver-tag.desligado { background:var(--panel-2); color:var(--faint); }
+.cf-check { display:flex; align-items:center; font-size:12px; margin:var(--s2) 0 0; cursor:pointer; }
+.cf-check input { margin:0 8px 0 0; }
+.rodape .versao-nova { font:inherit; font-size:10px; color:#9dbdf0; background:none; padding:0; border:0;
+                       margin-left:8px; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.rodape .versao-nova:hover { color:var(--fg); border-color:transparent; background:none; }
+
+/* ══ Redesenho do Importar (aprovado pelo autor em 2026-10-05) ═══════════════════════════════════
+   Canvas: https://claude.ai/artifact/Py51N8kGcERArsuAbD8yeQ — área de soltar, cartão do que foi
+   carregado, Magic Link e opções avançadas em acordeão, interruptores, a pergunta dos originais. */
+
+/* Barra de rolagem fina (autor: "uma barra fininha que não ocupe tanto espaço"): vale para a página e
+   para as caixas que rolam para o lado (a tabela do Magic Link). Chrome 80 do Resolve 19 lê
+   `::-webkit-scrollbar`; o `scrollbar-width` é dos Chromium novos e do QtWebEngine. */
+/* Visível de verdade (autor, 2026-10-05: com 18% de branco "não vi os scroll"): o polegar cinza-claro sobre o
+   trilho escuro. Os Chromium novos usam `scrollbar-color` e ignoram o `::-webkit-scrollbar`; o Chrome 80, o
+   contrário — as duas regras dizem a mesma coisa. */
+* { scrollbar-width:thin; scrollbar-color:#6a6a6a rgba(255,255,255,.04); }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:rgba(255,255,255,.04); }
+::-webkit-scrollbar-thumb { background:#6a6a6a; border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#8a8a8a; }
+::-webkit-scrollbar-corner { background:transparent; }
+
+/* A área de soltar: um botão (Tab e Enter abrem o seletor), tracejado; o realce do arrasto continua
+   sendo o do BLOCO (`.solta-aqui`). */
+.drop-alvo { width:100%; display:flex; flex-direction:column; align-items:center; gap:4px;
+             padding:20px 14px; margin:var(--s2) 0 0; border:1.5px dashed #5a5a5a; border-radius:8px;
+             background:var(--bg); color:var(--muted); font-weight:400; text-align:center; }
+.drop-alvo:hover:not(:disabled) { border-color:var(--accent-forte); color:var(--fg); }
+.drop-alvo strong { color:var(--fg); font-size:13px; }
+.drop-alvo span { font-size:12px; }
+.drop-alvo .drop-formatos { font-size:10px; color:var(--faint); margin-top:2px; }
+
+/* O cartão do que foi carregado: nome, de onde, a leitura rápida e, numa bin, a escolha da sequência. */
+.carga { border:1px solid #4a4a4a; border-radius:8px; background:#2f2f2f; padding:var(--s2);
+         margin:var(--s2) 0 0; }
+.carga-topo { display:flex; align-items:flex-start; gap:8px; }
+.carga-texto { flex:1 1 auto; min-width:0; }
+.carga-nome { margin:0; font-weight:600; overflow-wrap:anywhere; }
+.carga-de { margin:2px 0 0; font-size:11px; color:var(--faint); overflow-wrap:anywhere; }
+button.carga-tirar { border:0; background:none; color:var(--muted); font-size:16px; line-height:1;
+                     padding:2px 6px; font-weight:400; }
+button.carga-tirar:hover:not(:disabled) { color:var(--fg); }
+.fatos { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px 12px; margin:var(--s2) 0 0; }
+.fatos div { min-width:0; }
+.fatos dt { font-size:10px; color:var(--faint); text-transform:uppercase; letter-spacing:.5px; }
+.fatos dd { margin:0; font-variant-numeric:tabular-nums; }
+/* Altura máxima com rolagem própria (autor: "a lista vai crescer independe de quantos arquivos existirem"). */
+.seqs { border:1px solid var(--border); border-radius:var(--radius); max-height:250px; overflow-y:auto; }
+.seq { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid #3a3a3a;
+       background:var(--bg); cursor:pointer; }
+.seq:last-child { border-bottom:0; }
+.seq input { margin:0 10px 0 0; accent-color:var(--accent-forte); flex:0 0 auto; }
+.seq.sel { background:rgba(var(--accent-forte-rgb),.16); }
+.seq-texto { display:flex; flex-direction:column; min-width:0; }
+.seq-nome { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.seq-info { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+button.link { border:0; background:none; padding:0; margin:var(--s2) 0 0; color:#9dbdf0; font-weight:500;
+              font-size:12px; text-decoration:underline; text-underline-offset:2px; }
+button.link:hover:not(:disabled) { color:var(--fg); }
+
+/* Acordeão (Magic Link, opções avançadas): `<details>`, fechado até o clique. */
+.acordeao > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+                      font-size:12px; font-weight:600; color:var(--fg); padding:8px 2px; }
+.acordeao > summary::-webkit-details-marker { display:none; }
+.acordeao > summary::after { content:"▸"; margin-left:auto; color:var(--muted); font-size:15px; line-height:1;
+                             transition:transform .15s; }
+.acordeao[open] > summary::after { transform:rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .acordeao > summary::after { transition:none; } }
+.ml-acordeao { border-top:1px solid var(--border); margin:var(--s2) 0 0; padding-top:2px; }
+.selo { background:var(--ok); color:#1d2a1d; border-radius:9px; font-size:10px; font-weight:700; padding:1px 7px; }
+.avancadas { border:1px solid var(--border); border-radius:var(--radius); background:var(--panel-2);
+             padding:2px var(--s2) var(--s1); margin:0 0 var(--s2); }
+.grupo { margin:8px 0 2px; font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+         color:var(--faint); }
+
+/* A opção com o interruptor À DIREITA (autor): o texto ocupa a linha, a chave fica na ponta. É o mesmo
+   `<input type=checkbox>` de antes (`.checked` não mudou), só pintado de interruptor. */
+.op { display:flex; align-items:center; padding:8px 0; border-bottom:1px solid #353535; cursor:pointer; }
+.op:last-child { border-bottom:0; }
+.op-texto { flex:1 1 auto; min-width:0; }
+.op-texto em { display:block; font-style:normal; font-size:11px; color:var(--faint); line-height:1.4; margin-top:1px; }
+input.chave { -webkit-appearance:none; appearance:none; position:relative; flex:0 0 auto; margin:0 0 0 12px;
+              width:34px; height:20px; border-radius:10px; background:#4a4a4a; cursor:pointer;
+              transition:background .15s; }
+input.chave::after { content:""; position:absolute; top:2px; left:2px; width:16px; height:16px;
+                     border-radius:50%; background:#cfcfcf; transition:left .15s; }
+input.chave:checked { background:var(--accent); }
+input.chave:checked::after { left:16px; background:#fff; }
+input.chave:focus-visible { outline:2px solid var(--accent-forte); outline-offset:2px; }
+input.chave:disabled { opacity:.45; cursor:default; }
+@media (prefers-reduced-motion: reduce) { input.chave, input.chave::after { transition:none; } }
+
+/* A barra de AÇÕES fixa no rodapé da janela (autor, 2026-10-06). O `body` ganha embaixo a altura dela
+   (`ajustarBarra`), então ela nunca cobre o fim da página. */
+.barra-acoes { position:fixed; left:0; right:0; bottom:0; z-index:20; background:var(--bg);
+               border-top:1px solid var(--border); box-shadow:0 -6px 16px rgba(0,0,0,.35);
+               padding:10px 11px 12px; }
+.acoes-montar { display:flex; }
+/* O rodapé fixo (organograma de 2026-10-18): os botões em cima; "Idealizado por" no centro e a versão à direita. */
+.acoes-mc .acoes { margin:0; }
+.acoes-mc .primary { width:100%; padding:11px 14px; font-size:14px; }
+.barra-assinatura { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;
+                    margin-top:8px; font-size:11px; color:var(--muted); }
+.barra-acoes > .barra-assinatura:first-child { margin-top:0; }
+.barra-assinatura .assinatura { margin:0; text-align:center; white-space:nowrap; }
+.barra-versao { justify-self:end; display:flex; align-items:center; gap:6px; font-variant-numeric:tabular-nums; }
+html.sem-flex-gap .barra-versao > * + * { margin-left:6px; }
+.barra-versao .versao-nova { font:inherit; font-size:10px; color:#9dbdf0; background:none; padding:0; border:0; }
+.acoes-montar button { flex:1 1 0; }
+.acoes-montar .primary { flex:2 1 0; margin-left:var(--s1); padding:11px 14px; font-size:14px; }
+/* A área de soltar COMPACTA (originais, vídeo de referência; 2026-10-06): o ícone à esquerda, o texto à
+   direita — a mesma linguagem da do arquivo, numa altura que cabe no meio do fluxo. */
+.drop-alvo.drop-baixo { flex-direction:row; align-items:center; text-align:left; padding:12px 14px; }
+.drop-alvo.drop-baixo > svg { flex:0 0 auto; margin-right:12px; }
+.drop-texto { display:flex; flex-direction:column; min-width:0; }
+.drop-texto > span { font-size:11px; color:var(--faint); margin-top:2px; }
+/* A zona da referência mora DENTRO do bloco 1: o realce dela é o da própria área (não o véu do bloco). */
+.zona-ref.solta-aqui .drop-alvo, .zona-ref.solta-aqui .ref-cartao { border-color:var(--accent-forte);
+  border-style:solid; background:rgba(var(--accent-forte-rgb),.14); }
+.ref-cartao { border:1px solid #4a4a4a; border-radius:8px; background:var(--bg); padding:var(--s2); }
+.ref-selo { display:inline-block; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+            color:var(--ok); border:1px solid rgba(126,201,126,.5); border-radius:9px; padding:1px 7px; margin-bottom:4px; }
+.ref-selo.escolhida { color:#9dbdf0; border-color:rgba(157,189,240,.5); }
+#rcRefSom { margin-top:var(--s1); }
+
+/* O ⓘ da dica flutuante ao lado de um título (o texto mora no `title`). */
+.info { display:inline-block; width:15px; height:15px; line-height:13px; margin-left:6px; border-radius:50%;
+        border:1px solid var(--muted); color:var(--muted); font:italic 700 10px Georgia, serif; text-align:center;
+        text-transform:none; letter-spacing:0; vertical-align:1px; cursor:help; }
+.info:hover, .info:focus { color:var(--fg); border-color:var(--fg); outline:none; }
+.lista-pastas { margin-top:var(--s1); }
+
+/* ══ A lista de mídias (autor, 2026-10-06): Nome e Codec, zebrada, seleção múltipla, × por linha. */
+.midias { border:1px solid var(--border); border-radius:var(--radius); background:var(--panel-2);
+          padding:0 var(--s2) var(--s1); margin-top:var(--s2); }
+.midias-conta { font-size:11px; font-weight:400; color:var(--muted); margin-left:8px; }
+.midia-ponto { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:1px; }
+.midia-ponto.ok { background:var(--ok); }
+.midia-ponto.warn { background:var(--warn); }
+.midia-ponto.err { background:var(--err); }
+button.midia-x { border:0; background:none; color:var(--muted); font-size:14px; line-height:1; padding:3px 6px;
+                 font-weight:400; border-radius:4px; }
+button.midia-x:hover:not(:disabled) { color:var(--fg); background:rgba(255,255,255,.08); }
+.tab-midias button.midia-x { padding:0 4px; margin:-2px 4px 0 -4px; font-size:13px; }   /* o × na célula Encontrado */
+.midias-rodape { display:flex; justify-content:flex-end; align-items:center; margin:var(--s1) 0 2px; }
+.midias-rodape button.sm { margin-left:auto; }
+.so-offline { display:flex; align-items:center; font-size:11px; color:var(--muted); cursor:pointer; }
+.so-offline input.chave { margin:0 8px 0 0; }
+.midias-rodape button.link { margin:var(--s1) 0 2px; font-size:11px; color:var(--muted); }
+.midias-rodape button.link:hover:not(:disabled) { color:var(--fg); }
+
+/* A análise do "antes de montar", dentro do cartão do bloco 1, no lugar da lista de sequências. */
+.antes-montar { margin-top:var(--s2); }
+.antes-montar > .avancado { margin:var(--s2) 0 0; }
+.antes-montar > .sub-titulo:first-child { margin-top:0; }
+.acoes-importar { margin:0; }
+/* margem e não `gap`: flex-gap só no Chrome 84+ (o do Resolve 19 é o 80) */
+.acoes-importar button { width:100%; display:block; }
+.acoes-importar button + button { margin-top:var(--s1); }
+.acoes-importar .primary { padding:11px 14px; font-size:14px; }
+
+/* A pergunta dos originais: um véu por cima do painel, nunca aberto sozinho (só no clique do Importar). */
+.veu { position:fixed; top:0; right:0; bottom:0; left:0; z-index:50;   /* `inset`: só no Chrome 87+ */ background:rgba(0,0,0,.6); display:flex; align-items:center;
+       justify-content:center; padding:20px; }
+.dialogo { background:var(--panel); border:1px solid #4a4a4a; border-radius:10px; padding:16px;
+           max-width:380px; box-shadow:0 12px 40px rgba(0,0,0,.5); }
+.dialogo h2 { margin:0 0 8px; font-size:15px; }
+.dialogo p { margin:0 0 12px; color:#cfcfcf; }
+.chk-linha { display:flex; align-items:center; gap:8px; font-size:12px; color:#cfcfcf; cursor:pointer; }
+.chk-linha input { margin:0; accent-color:var(--accent-forte); }
+.dialogo .acoes { justify-content:flex-end; }
+.dialogo .acoes button { flex:0 0 auto; }
+
+/* Botões mais arredondados (autor, 2026-10-05: o "Montar assim" ficou "quadradão"). O seletor de abas
+   (`.seg button`, raio 0) é mais específico e continua reto por dentro. */
+button { border-radius:8px; }
+/* O contorno de foco: o laranja era o padrão do navegador, aceso pelo foco que o painel põe no botão da
+   pergunta e pelo clique no acordeão. Fica um contorno azul, só para quem navega pelo teclado
+   (`:focus-visible`; o Chrome 80 não o conhece e fica sem contorno nenhum). */
+button:focus, summary:focus, input:focus, select:focus { outline:none; }
+button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible {
+  outline:2px solid var(--accent-forte); outline-offset:2px; }
+
+/* As sub-abas da página (Importar / relinkar · Atualizar), antes dos blocos (autor, 2026-10-12). */
+.seg.sub-abas { margin:0 0 var(--s2); }
+
+/* A resposta a um gesto, dentro do bloco dele — nunca rolar a página (autor, 2026-10-12). */
+.msg-bloco { margin:var(--s2) 0; font-size:12px; color:var(--muted); }
+.msg-bloco.erro { color:var(--erro, #e06c6c); }
+
+/* O filtro das timelines de uma bin de fora (autor, 2026-10-12). */
+.busca-seq { width:100%; box-sizing:border-box; margin:var(--s2) 0 6px; }
+
+/* ── Lista de mídias do MC e "Ficaram de fora" (organograma "Ler Sequência e Relink Manual", 2026-10-13) ──────────
+   A tabela rola para os DOIS lados dentro da caixa (o painel não); a 1ª coluna (a situação) é estreita e fixa; as
+   outras têm largura pela alça do título e trocam de lugar arrastando o título (`criarTabela` no painel.js). */
+.mc-lista-topo { display:flex; align-items:baseline; gap:8px; }
+.mc-lista-topo .bloco-titulo { margin:0; }
+html.sem-flex-gap .mc-lista-topo > * + * { margin-left:8px; }
+.filtro-pills { display:flex; flex-wrap:wrap; gap:4px; margin:var(--s1) 0; }
+html.sem-flex-gap .filtro-pills > * + * { margin-left:4px; }
+.filtro-pills:empty { display:none; }
+.filtro-pills .pill { background:transparent; cursor:pointer; line-height:1.3; }
+.filtro-pills .pill:hover { color:var(--fg); }
+.filtro-pills .pill.on { background:rgba(255,255,255,.10); box-shadow:0 0 0 1px currentColor inset; }
+.pill.todas { color:var(--fg); }
+.pill.man { border-color:#8fb4f0; color:#8fb4f0; }
+.pill.ign { border-color:#777; color:var(--faint); }
+.pill.onl { border-color:var(--ok); color:var(--ok); border-style:dashed; }
+.tab-caixa { border:1px solid var(--border); border-radius:var(--radius); max-height:300px; overflow:auto;
+             background:var(--panel-2); }
+.tab-caixa:focus { outline:none; }
+.tab-caixa:focus-visible { outline:2px solid var(--accent-forte); outline-offset:1px; }
+.tab-midias { border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:12px; }
+.tab-midias th { position:sticky; top:0; z-index:1; background:var(--panel); text-align:left; font-weight:600;
+                 color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--border); white-space:nowrap;
+                 overflow:hidden; text-overflow:ellipsis; user-select:none; cursor:grab; }
+.tab-midias th.st, .tab-midias td.st { padding:5px 0; text-align:center; cursor:default; }
+.tab-midias td.st .midia-ponto { margin:0; }
+.tab-midias th .bola { width:10px; height:10px; padding:0; border-radius:50%; border:0; background:#f2f2f2;
+                       cursor:pointer; vertical-align:middle; }
+.tab-midias th .bola.on { box-shadow:0 0 0 2px var(--panel), 0 0 0 3px #f2f2f2; }
+.tab-midias th .bola:focus-visible { outline:2px solid var(--accent-forte); outline-offset:2px; }
+.tab-midias .alca { position:absolute; top:0; right:0; bottom:0; width:7px; cursor:col-resize; }
+.tab-midias .alca::after { content:""; position:absolute; top:6px; bottom:6px; right:2px; width:1px; background:var(--border); }
+.tab-midias .alca:hover::after { width:2px; background:var(--accent-forte); }
+.tab-midias th.arrastando { opacity:.45; }
+.tab-midias th .seta { margin-left:4px; }
+.tab-midias th.alvo-esq { box-shadow:inset 2px 0 0 var(--accent-forte); }
+.tab-midias th.alvo-dir { box-shadow:inset -2px 0 0 var(--accent-forte); }
+.tab-midias td { padding:5px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:default; }
+.tab-midias td .mono { font-family:var(--mono, ui-monospace, Menlo, Consolas, monospace); font-size:11px; color:var(--muted); }
+.tab-midias tbody tr:nth-child(even) td { background:rgba(255,255,255,.035); }
+.tab-midias tbody tr.sel td { background:rgba(var(--accent-forte-rgb),.32); }
+.tab-midias tbody tr.ign td:not(.st) { color:var(--faint); }
+.tab-midias tbody tr.ign td[data-col="nome"] bdi { text-decoration:line-through; text-decoration-color:#777; }
+.tab-midias tr.vazia td { text-align:center; color:var(--faint); padding:12px; white-space:normal; }
+.midia-ponto.man { background:#8fb4f0; }
+.midia-ponto.ign { background:#777; }
+/* já online sem casamento (Avid MediaFiles / link do projeto): anel verde — online, mas não relinkada por nós */
+.midia-ponto.onl { background:transparent; box-shadow:0 0 0 1.5px var(--ok) inset; }
+.mc-manual { margin:var(--s1) 0 0; padding:7px 9px; border-radius:var(--radius); font-size:11px; line-height:1.45; }
+.mc-manual.aceito { border:1px solid #8fb4f0; background:rgba(143,180,240,.12); }
+.mc-manual.recusado { border:1px solid var(--err); background:rgba(224,128,128,.12); }
+.mc-lista-acoes { display:flex; flex-wrap:wrap; gap:6px; margin-top:var(--s1); }
+html.sem-flex-gap .mc-lista-acoes > * + * { margin-left:6px; }
+.mc-lista.fora { margin-top:var(--s2); }
+
+/* Fechar com trabalho em andamento (organograma de 2026-10-19): a pergunta no topo da janela, por cima de tudo. */
+.fechar-aviso { position:fixed; top:0; left:0; right:0; z-index:50; padding:12px max(16px, env(safe-area-inset-left, 0px));
+                background:var(--panel); border-bottom:2px solid var(--err); box-shadow:0 6px 18px rgba(0,0,0,.35);
+                display:grid; gap:8px; }
+.fechar-aviso p { margin:0; font-size:13px; line-height:1.45; }
+.fechar-acoes { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+html.sem-flex-gap .fechar-acoes > * + * { margin-left:8px; }
+.fechar-acoes .perigo { border-color:var(--err); color:var(--err); }
+
+/* ⭐ Embutido no guarda-chuva do Ciclo Assist (`?embutido=1`, `painel.js`): a moldura é dele. */
+.embutido .head, .embutido #tabAjustes, .embutido .barra-assinatura { display: none !important; }
+/* ⭐ As subabas têm a MESMA medida nos três apps do guarda-chuva — e esta é a régua (autor, 2026-10-21). Embutido, só
+   o sublinhado da ativa muda para o verde-água das abas do guarda-chuva, o mesmo no Órbita e no Assist. */
+.embutido .tabs > button.on { border-bottom-color:#4cc4b8; }
+/* ⭐ E a cor de AÇÃO é a do guarda-chuva (autor, 2026-10-29): sozinho o app é azul; embutido, verde-água — a mesma
+   troca no Órbita. Só as variáveis mudam: todo azul do painel passa por elas (os fundos translúcidos pelo `-rgb`,
+   porque `color-mix` não existe no Chrome 80). `.origem.avid` fica de fora de propósito: é a etiqueta da origem. */
+.embutido { --accent:#2a7f77; --accent-forte:#4cc4b8; --accent-ink:#fff;
+            --accent-rgb:42,127,119; --accent-forte-rgb:76,196,184; --accent-claro:#9fe3dc; }
+
+/* A marca da pasta indicada (autor, 2026-10-25): a Avid MediaFiles (gerenciada) e a pasta tirada do Avid (fora). */
+.pasta-tag { flex:none; align-self:center; margin-left:6px; padding:2px 6px; border-radius:3px;
+             font-size:10.5px; letter-spacing:.04em; white-space:nowrap; }
+.pasta-tag.avid { background:#4a3a78; color:#e0d4ff; }
+.pasta-tag.fora { background:#4a2f2c; color:#f0b3ab; }

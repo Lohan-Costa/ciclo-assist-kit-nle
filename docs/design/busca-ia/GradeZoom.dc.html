@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+body { margin: 0; background: #1a1a1a; }
+a { color: #4cc4b8; } a:hover { color: #7fd8cf; }
+.painel { width: 440px; height: 620px; overflow: hidden; display: flex; flex-direction: column;
+  background: #232323; color: #ececec; font: 13px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; }
+.topo { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid #3d3d3d; background: #2b2b2b; }
+.marca { display: flex; align-items: center; gap: 8px; }
+.ponto { width: 7px; height: 7px; border-radius: 50%; background: #4cc4b8; }
+.topo h1 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .3px; }
+.versao { color: #a3a3a3; font-size: 10px; }
+.abas { flex: none; display: flex; align-items: stretch; gap: 2px; padding: 0 8px;
+  border-bottom: 1px solid #3d3d3d; background: #2b2b2b; }
+.aba { border-bottom: 2px solid transparent; padding: 7px 10px 6px; font-size: 11.5px; color: #a3a3a3; }
+.aba.ativa { color: #ececec; border-bottom-color: #4cc4b8; }
+.espaco { flex: 1 1 auto; }
+.engrenagem { padding: 5px 7px; color: #a3a3a3; display: flex; align-items: center; }
+.tela { flex: 1 1 auto; overflow: hidden; padding: 12px 12px 18px; display: flex; flex-direction: column; gap: 8px; }
+.busca { display: flex; align-items: center; gap: 7px; background: #1d1d1d; border: 1px solid #3d3d3d;
+  border-radius: 5px; padding: 6px 8px; }
+.busca.foco { border-color: #4cc4b8; }
+.busca .q { flex: 1 1 auto; min-width: 0; font-size: 12px; color: #ececec; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.busca .q.vazio { color: #a3a3a3; }
+.busca svg { flex: none; color: #a3a3a3; }
+.dica { margin: -3px 0 0; font-size: 10.5px; color: #a3a3a3; }
+.fontes { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.chip { display: flex; align-items: center; gap: 5px; border: 1px solid #3d3d3d; border-radius: 11px;
+  padding: 2px 8px; font-size: 10.5px; color: #c4c4c4; }
+.chip b { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #a3a3a3; }
+.chip.ligado { border-color: #4cc4b8; background: #1b3634; color: #ececec; }
+.chip.ligado b { color: #4cc4b8; }
+.chip.desligado { border-style: dashed; color: #a3a3a3; }
+.chip.avid { border-color: #4cc4b8; background: #1b3634; color: #ececec; padding: 2px 4px 2px 8px; }
+.chip.avid b { color: #4cc4b8; }
+.chip .x { color: #a3a3a3; font-size: 13px; line-height: 1; padding: 0 3px; }
+.vista { margin-left: auto; display: flex; align-items: center; gap: 7px; }
+.seg { display: flex; border: 1px solid #3d3d3d; border-radius: 5px; overflow: hidden; }
+.seg span { display: flex; align-items: center; padding: 3px 6px; color: #a3a3a3; }
+.seg span.on { background: #3a3a3a; color: #ececec; }
+.seg span + span { border-left: 1px solid #3d3d3d; }
+.zoom { display: flex; align-items: center; gap: 5px; color: #a3a3a3; }
+.trilho { width: 52px; height: 3px; background: #3d3d3d; border-radius: 2px; position: relative; }
+.trilho i { position: absolute; left: 0; top: 0; height: 100%; background: #4cc4b8; border-radius: 2px; }
+.trilho b { position: absolute; top: -4px; width: 11px; height: 11px; margin-left: -5px; border-radius: 50%; background: #ececec; }
+.cobertura { font-size: 10.5px; color: #a3a3a3; line-height: 1.45; }
+.cobertura em { font-style: normal; color: #c4c4c4; }
+.resultados { display: flex; flex-direction: column; gap: 6px; }
+.res { display: flex; gap: 9px; background: #2b2b2b; border: 1px solid #333333; border-radius: 5px; padding: 7px 8px; }
+.res.sel { border-color: #4cc4b8; background: #1f302e; }
+.coluna-thumb { flex: none; display: flex; flex-direction: column; gap: 4px; width: 104px; }
+.thumb { flex: none; width: 104px; height: 58px; border-radius: 3px; position: relative; overflow: hidden; background: #111; }
+.thumb svg { display: block; }
+.tc { position: absolute; left: 3px; bottom: 3px; font: 9.5px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: #ececec; background: rgba(0,0,0,.66); padding: 2px 3px; border-radius: 2px; }
+.corpo { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.linha1 { display: flex; align-items: baseline; gap: 6px; }
+.nome { flex: 1 1 auto; min-width: 0; font-size: 11.5px; color: #ececec; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.especie { flex: none; font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: #a3a3a3; }
+.bin { font-size: 10px; color: #a3a3a3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.porque { display: flex; flex-wrap: wrap; gap: 4px; }
+.motivo { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #c4c4c4;
+  border: 1px solid #3d3d3d; border-radius: 9px; padding: 0 6px 0 5px; }
+.motivo svg { color: #a3a3a3; }
+.trecho { font-size: 10.5px; color: #c4c4c4; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.trecho mark { background: none; color: #ececec; font-weight: 600; text-decoration: underline; text-decoration-color: #4cc4b8; text-underline-offset: 2px; }
+.mais { font-size: 10px; color: #a3a3a3; }
+.momentos { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 10px; color: #c4c4c4;
+  font-variant-numeric: tabular-nums; }
+.passo { display: flex; align-items: center; justify-content: center; width: 22px; height: 18px;
+  border: 1px solid #3d3d3d; border-radius: 4px; color: #ececec; background: #343434; }
+.passo.off { color: #a3a3a3; background: transparent; border-style: dashed; }
+.rodape { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.dica-clique { flex: 1 1 auto; font-size: 10px; color: #a3a3a3; }
+.botao { background: #343434; border: 1px solid #3d3d3d; border-radius: 5px; padding: 4px 8px; font-size: 10.5px; color: #ececec; white-space: nowrap; }
+.botao.forte { border-color: #4cc4b8; color: #4cc4b8; background: transparent; }
+.aviso-asr { font-size: 10.5px; color: #a3a3a3; border-top: 1px solid #333333; padding-top: 7px; line-height: 1.45; }
+.ocorr { display: flex; flex-direction: column; gap: 1px; margin-top: 2px; }
+.oc { display: flex; gap: 7px; font-size: 10.5px; color: #c4c4c4; line-height: 1.4; padding: 1px 4px; margin: 0 -4px; border-radius: 3px; }
+.oc.atual { background: #2c4744; color: #ececec; }
+.oc code { flex: none; font: 10px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #a3a3a3; }
+.oc.atual code { color: #4cc4b8; }
+.vazio { font-size: 11.5px; color: #c4c4c4; line-height: 1.5; margin: 6px 0 0; }
+.vazio b { color: #ececec; font-weight: 600; }
+.progresso { height: 3px; background: #343434; border-radius: 2px; overflow: hidden; }
+.progresso i { display: block; height: 100%; background: #4cc4b8; }
+.andamento { display: flex; align-items: center; gap: 8px; font-size: 10.5px; color: #a3a3a3; }
+.andamento span { flex: 1 1 auto; }
+.acoes { display: flex; gap: 6px; margin-top: 3px; }
+.grade { display: grid; gap: 7px; }
+.cel { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cel .thumb { width: 100%; }
+.cel .nome { font-size: 10.5px; }
+.cel .icones { position: absolute; right: 3px; top: 3px; display: flex; gap: 2px; }
+.cel .icones i { display: flex; background: rgba(0,0,0,.66); border-radius: 2px; padding: 2px; color: #ececec; }
+.cel.sel .thumb { outline: 2px solid #4cc4b8; outline-offset: -2px; }
+.cel .setas { position: absolute; left: 0; right: 0; top: 50%; margin-top: -9px; display: flex; justify-content: space-between; padding: 0 3px; }
+.cel .setas i { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,.66); color: #ececec; }
+.cel .conta { position: absolute; right: 3px; bottom: 3px; font: 9.5px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: #ececec; background: rgba(0,0,0,.66); padding: 2px 3px; border-radius: 2px; }
+</style>
+</helmet>
+<div class="painel">
+<div class="topo"><div class="marca"><span class="ponto"></span><h1>Ciclo Assist</h1></div><span class="versao">0.3.0</span></div>
+<div class="abas"><span class="aba">Claude</span><span class="aba ativa">Busca IA</span><span class="aba">Vetores</span><span class="espaco"></span><span class="engrenagem"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span></div>
+<div class="tela"><div class="busca foco"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><span class="q">close noturno no consultório</span></div><div class="fontes"><span class="chip ligado"><b>Imagem</b>165</span><span class="chip ligado"><b>Fala</b>17</span><span class="chip ligado"><b>Decupagem</b>172</span><span class="vista"><span class="zoom"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect></svg><span class="trilho"><i style="width:80%"></i><b style="left:80%"></b></span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg></span><span class="seg"><span class="" title="Lista"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"></path><circle cx="4.5" cy="6" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="18" r="1"></circle></svg></span><span class="on" title="Grade"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1"></rect><rect x="13" y="4" width="7" height="7" rx="1"></rect><rect x="4" y="13" width="7" height="7" rx="1"></rect><rect x="13" y="13" width="7" height="7" rx="1"></rect></svg></span></span></span></div><div class="grade" style="grid-template-columns: repeat(auto-fill, minmax(190px, 1fr))"><div class="cel sel"><div class="thumb" style="height:112px"><svg viewBox="0 0 104 58" width="100%" height="112" preserveAspectRatio="xMidYMid slice"><rect width="104" height="58" fill="#1c1712"></rect><rect x="0" y="38" width="104" height="20" fill="#2a2119"></rect><circle cx="80" cy="16" r="9" fill="#6b4a26" opacity=".55"></circle><ellipse cx="44" cy="34" rx="15" ry="19" fill="#4a3526"></ellipse><circle cx="44" cy="20" r="9" fill="#7a5a44"></circle></svg><span class="icones"><i><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 16l5-5 4 4 3-3 6 6"></path></svg></i><i><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 11h14M5 16h9"></path></svg></i></span><span class="conta">1/3</span><span class="setas"><i><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></i><i><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></i></span><span class="tc">01:02:14:08</span></div><span class="nome">C07 T03 PERSONAGEM-F CLOSE</span></div><div class="cel"><div class="thumb" style="height:112px"><svg viewBox="0 0 104 58" width="100%" height="112" preserveAspectRatio="xMidYMid slice"><rect width="104" height="58" fill="#15130f"></rect><rect x="64" y="8" width="26" height="18" fill="#3a2d1e"></rect><ellipse cx="34" cy="40" rx="20" ry="22" fill="#3d2c22"></ellipse><circle cx="34" cy="22" r="10" fill="#6e513e"></circle></svg><span class="icones"><i><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 16l5-5 4 4 3-3 6 6"></path></svg></i></span><span class="tc">01:04:51:12</span></div><span class="nome">C07 T05 PERSONAGEM-F OMBRO</span></div><div class="cel"><div class="thumb" style="height:112px"><svg viewBox="0 0 104 58" width="100%" height="112" preserveAspectRatio="xMidYMid slice"><rect width="104" height="58" fill="#5d5347"></rect><rect x="0" y="40" width="104" height="18" fill="#473f36"></rect><rect x="8" y="10" width="22" height="16" fill="#7c6f5f"></rect><ellipse cx="70" cy="38" rx="17" ry="20" fill="#3b332c"></ellipse><circle cx="70" cy="22" r="8" fill="#9a806c"></circle></svg><span class="icones"><i><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 11h14M5 16h9"></path></svg></i><i><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 16l5-5 4 4 3-3 6 6"></path></svg></i></span><span class="conta">1/2</span><span class="tc">00:12:03:00</span></div><span class="nome">A001_C009</span></div><div class="cel"><div class="thumb" style="height:112px"><svg viewBox="0 0 104 58" width="100%" height="112" preserveAspectRatio="xMidYMid slice"><rect width="104" height="58" fill="#1a1511"></rect><rect x="0" y="40" width="104" height="18" fill="#2a2119"></rect><circle cx="22" cy="14" r="8" fill="#6b4a26" opacity=".5"></circle><ellipse cx="62" cy="36" rx="19" ry="21" fill="#4a3526"></ellipse><circle cx="62" cy="19" r="11" fill="#7a5a44"></circle></svg><span class="icones"><i><svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 16l5-5 4 4 3-3 6 6"></path></svg></i></span><span class="tc">01:03:40:20</span></div><span class="nome">C07 T04 PERSONAGEM-F CLOSE 2</span></div></div><div class="res sel" style="margin-top:2px"><div class="corpo"><div class="linha1"><span class="nome">C07 T03 PERSONAGEM-F CLOSE</span><span class="especie">subclipe</span></div><div class="bin">CENAS › C07 · 01:02:14:08 · momento 1 de 3</div><div class="trecho">Close de uma mulher de blusa vermelha, luz baixa e quente; quadros ao fundo, abajur aceso.</div><div class="rodape"><span class="dica-clique">duplo clique abre na Source neste TC</span><span class="botao">Levar ao chat</span></div></div></div></div></div>
+</x-dc>
+</body>
+</html>

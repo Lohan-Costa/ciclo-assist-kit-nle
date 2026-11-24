@@ -1,0 +1,9 @@
+/* ⚠️ A altura (30 px) é a `ALTURA_DO_RODAPE` do `lib.rs`. */
+:root { color-scheme: dark; --fundo: #1c1c1c; --tinta-2: #a3a3a3; --link: #8fb3ea; --linha: #333; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 30px; overflow: hidden; background: var(--fundo); }
+footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+         border-top: 1px solid var(--linha); font: 12px/1 "Segoe UI", system-ui, sans-serif; color: var(--tinta-2); }
+p { margin: 0; white-space: nowrap; }
+button { background: none; border: 0; padding: 0; font: inherit; color: var(--link); cursor: pointer; }
+.versao { justify-self: end; font-variant-numeric: tabular-nums; }

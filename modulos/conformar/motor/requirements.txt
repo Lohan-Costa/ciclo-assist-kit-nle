@@ -1,0 +1,9 @@
+# -*- coding: utf-8 -*-
+# Relinker — Dependências do sidecar Python
+# Python 3.11+
+#
+# Fonte única é ../requirements.txt (o serviço embute o motor e herda estas
+# dependências, mais o cliente gRPC). Duas listas quase idênticas divergem
+# silenciosamente quando só uma é atualizada — por isso este arquivo aponta
+# para a outra em vez de duplicar.
+-r ../requirements.txt

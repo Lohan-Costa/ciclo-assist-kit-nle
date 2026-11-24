@@ -1,0 +1,228 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Mídias"
+    },
+    {
+      "id": "page-2",
+      "name": "Ingestão e reconectar"
+    },
+    {
+      "id": "page-3",
+      "name": "Bancos"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "1 · Lista com árvore",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "BuscaInteligente.dc.html",
+      "title": "2 · Busca inteligente na lista",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "Cobertura.dc.html",
+      "title": "3 · Busca inteligente sem resultado",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "Familia.dc.html",
+      "title": "4 · Família da mídia (+ vínculo)",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "Entidades.dc.html",
+      "title": "5 · Entidades",
+      "x": 0,
+      "y": 1240,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "LevarAoNLE.dc.html",
+      "title": "6 · Levar ao NLE",
+      "x": 1560,
+      "y": 1240,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "Vazio.dc.html",
+      "title": "7 · Banco novo",
+      "x": 3120,
+      "y": 1240,
+      "w": 1440,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "Ingestao.dc.html",
+      "title": "8 · Ingestão e fila",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-2"
+    },
+    {
+      "file": "Reconectar.dc.html",
+      "title": "9 · Reconectar",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-2"
+    },
+    {
+      "file": "Bancos.dc.html",
+      "title": "10 · Bancos local e remoto",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-3"
+    },
+    {
+      "file": "Permissoes.dc.html",
+      "title": "11 · Usuários e permissões",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-3"
+    },
+    {
+      "file": "Somar.dc.html",
+      "title": "12 · Somar bancos",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "page": "page-3"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "nota-main",
+      "x": 0,
+      "y": 936,
+      "w": 900,
+      "text": "A lista É a árvore (estrutura da lista do Premiere): rótulo de cor antes do nome (laranja nas pastas, pode ficar vazio), pastas que abrem no lugar, e colunas redimensionáveis — a alça azul entre Duração e TC mostra a borda sendo puxada. Clique no cabeçalho ordena; de novo, inverte. Duas buscas: o filtro de metadados, simples, e a busca inteligente, que responde na própria lista. Arrastar uma pasta da lista para a conversa recorta a busca nela.",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-buscainteligente",
+      "x": 1560,
+      "y": 936,
+      "w": 900,
+      "text": "Sem ir ao chat: a árvore se reduz às pastas e mídias que casam, e cada mídia abre os momentos achados (TC, o trecho, a camada que achou). A faixa diz em quanto do banco a busca procurou. Ordenado por TC início.",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-cobertura",
+      "x": 3120,
+      "y": 936,
+      "w": 900,
+      "text": "Nada achado com a busca por frase alcançando 9% do banco: a tela diz isso, diz onde a etapa roda e quanto falta.",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-familia",
+      "x": 4680,
+      "y": 936,
+      "w": 900,
+      "text": "Original, proxy e transcode gerenciado do Avid. Cada membro diz COMO foi ligado (nome, pasta, comparação 1:1) e se está confirmado ou inferido. Embaixo à direita, o lugar reservado para o som direto casado (futuro).",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-entidades",
+      "x": 0,
+      "y": 2176,
+      "w": 900,
+      "text": "Personagens, pessoas, locais, objetos e bordões por produção. Aparição vem de roteiro ancorado, claquete ou anotação; as inferidas esperam confirmação.",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-levaraonle",
+      "x": 1560,
+      "y": 2176,
+      "w": 900,
+      "text": "Quatro destinos. Escolher qual membro da família vai, como organizar, o que acompanha. O que está offline fica de fora — dito antes de gerar.",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-vazio",
+      "x": 3120,
+      "y": 2176,
+      "w": 900,
+      "text": "Banco local recém-criado. Quatro portas: observar pasta, Avid MediaFiles (à parte), arquivos soltos, somar outro banco.",
+      "page": "page-1"
+    },
+    {
+      "id": "nota-ingestao",
+      "x": 0,
+      "y": 936,
+      "w": 900,
+      "text": "Pastas observadas com etapas por pasta e porta de entrada. Fila persistente dizendo em que máquina roda cada etapa; o perfil desta máquina e o que foi pulado aqui.",
+      "page": "page-2"
+    },
+    {
+      "id": "nota-reconectar",
+      "x": 1560,
+      "y": 936,
+      "w": 900,
+      "text": "Guiado pelo usuário: aponta uma pasta, o conteúdo decide sozinho (188), nome/TC/duração só sugerem (21). Variação achada não é a mídia perdida — vai para a família.",
+      "page": "page-2"
+    },
+    {
+      "id": "nota-bancos",
+      "x": 0,
+      "y": 936,
+      "w": 900,
+      "text": "Mesmo formato, dois modos. Local: pasta sem amarras. Remoto: servidor com permissões. Somar local → remoto; exportar remoto → local.",
+      "page": "page-3"
+    },
+    {
+      "id": "nota-permissoes",
+      "x": 1560,
+      "y": 936,
+      "w": 900,
+      "text": "Quatro papéis cumulativos, por pessoa, e o registro do que cada um fez — inclusive o que foi recusado. Como o banco sabe quem é quem ainda está por decidir no spec.",
+      "page": "page-3"
+    },
+    {
+      "id": "nota-somar",
+      "x": 3120,
+      "y": 936,
+      "w": 900,
+      "text": "O que entra, o que funde, o que conflita. Conflito lado a lado com a procedência de cada versão; a que perde vai para o histórico, anotação manual sempre soma.",
+      "page": "page-3"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

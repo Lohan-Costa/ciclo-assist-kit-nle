@@ -1,0 +1,1952 @@
+/* O painel do Ciclo Assist dentro do Media Composer.
+ *
+ * ⚠️ A janela nasce com 440×620 e pode chegar a 340 de largura (windowSize no
+ * manifesto). Tudo aqui é dimensionado para caber nessa faixa — nada de layout que
+ * dependa de largura de desktop.
+ *
+ * ⚠️ Sempre escuro, sem `prefers-color-scheme`: o painel vive DENTRO de uma aplicação
+ * escura. Um painel claro no meio do Media Composer não é preferência do usuário, é um
+ * buraco branco na interface dele. */
+
+:root {
+  color-scheme: dark;
+
+  --fundo:        #232323;
+  --fundo-2:      #2b2b2b;
+  --fundo-3:      #343434;
+  --linha:        #3d3d3d;
+  --linha-suave:  #333333;
+
+  /* ⛔ Decisão do editor (2026-09-13): **nenhum texto abaixo de #a3a3a3.** O terceiro tom
+     era #7b7b7b e sumia sobre o #2b2b2b em fonte de 10 px — foi apontado duas vezes, no
+     cartão de aprovação e depois nos mockups da Busca IA. Quem precisar de "mais apagado"
+     usa tamanho ou peso, não uma tinta abaixo do piso. */
+  --tinta:        #ececec;
+  --tinta-2:      #c4c4c4;
+  --tinta-3:      #a3a3a3;
+
+  --realce:       #4cc4b8;
+  --realce-fundo: #1b3634;
+
+  /* ⭐ A cor do que vem de FORA do Media Composer. Duas origens chegam pelo mesmo gesto
+     (ver `servico/arrastados.py`), e elas têm consequências diferentes: o mob do MC o
+     plugin alcança pela ponte gRPC, o arquivo do Explorer só existe porque o editor
+     arrastou aquele arquivo. A cor diz de qual das duas se trata sem ninguém ler o rótulo.
+     ⚠️ Violeta, e não âmbar/vermelho: esses dois já querem dizer "tem problema aqui"
+     (`--alerta`, `--erro`), e material de fora é NORMAL. */
+  --externo:       #9d8df1;
+  --externo-fundo: #2a2640;
+  --alerta:       #d8a54a;
+  --erro:         #e07d72;
+
+  --raio: 5px;
+}
+
+* { box-sizing: border-box; }
+
+/* ⛔⛔ **`hidden` tem de ganhar do `display`, e isto é um defeito MEDIDO em 2026-09-11.**
+   O JavaScript troca de tela escrevendo `el.hidden = true` — é o que deixa o painel
+   ganhar abas sem que o JS saiba CSS. Só que o `hidden` do navegador é um mero
+   `display:none` de folha padrão, e QUALQUER `display` de autor o vence: `.conversa`,
+   `.status` e `.compositor` são `display:flex`, então a conversa, a barra de status e a
+   caixa de texto ficavam NA TELA por baixo das configurações. O sintoma parece bug da
+   tela nova — foi assim que apareceu, quando a aba Vetores nasceu e veio com a conversa
+   colada em cima. */
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--tinta);
+  font: 13px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+
+/* ── topo ──────────────────────────────────────────────────────────────── */
+
+.topo {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--linha);
+  background: var(--fundo-2);
+}
+
+.marca { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+.topo h1 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+
+.versao {
+  color: var(--tinta-3);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ponto {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--tinta-3);
+  flex: none;
+}
+.ponto[data-estado="ligando"] { animation: pulsa 1.5s ease-in-out infinite; }
+.ponto[data-estado="pronto"]  { background: var(--realce); }
+.ponto[data-estado="pensando"]{ background: var(--alerta); animation: pulsa 1s ease-in-out infinite; }
+.ponto[data-estado="erro"]    { background: var(--erro); }
+
+@keyframes pulsa { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .ponto { animation: none !important; opacity: .8 } }
+
+/* ── aviso de limite de uso ────────────────────────────────────────────── */
+
+.aviso {
+  flex: none;
+  margin: 8px 12px 0;
+  padding: 7px 10px;
+  border-left: 2px solid var(--alerta);
+  background: #332c1c;
+  color: #e7d5ac;
+  font-size: 11.5px;
+  border-radius: 0 var(--raio) var(--raio) 0;
+}
+
+/* ⛔ O aviso GRAVE não some sozinho: ele diz que a tela e o serviço estão fora de
+   compasso, e tudo que o editor tentar dali em diante vai falhar de um jeito que parece
+   bug do produto. */
+.aviso.grave {
+  border-left-color: var(--erro);
+  background: #3a2422;
+  color: #f0c9c4;
+}
+
+/* ── abas ──────────────────────────────────────────────────────────────────
+   ⭐ Uma aba só, hoje. A barra existe para as próximas — e a engrenagem mora no canto
+   oposto porque ela não é um irmão das abas de produto: é a chave de fenda. */
+
+.abas {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--linha);
+  background: var(--fundo-2);
+}
+
+.abas .espaco { flex: 1 1 auto; }
+
+.abas .aba {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 7px 10px 6px;
+  font-size: 11.5px;
+  color: var(--tinta-3);
+}
+.abas .aba:hover { color: var(--tinta-2); }
+.abas .aba.ativa { color: var(--tinta); border-bottom-color: var(--realce); }
+
+.abas .engrenagem {
+  background: none;
+  border: 0;
+  padding: 5px 7px;
+  color: var(--tinta-3);
+  display: flex;
+  align-items: center;
+}
+.abas .engrenagem:hover { color: var(--tinta-2); }
+.abas .engrenagem.ativa { color: var(--realce); }
+
+/* ── uma tela que não é a conversa ─────────────────────────────────────────
+   ⚠️ Rola sozinha e some inteira: `hidden` no elemento, e não `display:none` em classe —
+   é o que deixa o JS trocar de tela sem saber CSS. */
+
+.tela {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 12px 18px;
+}
+
+.tela h2 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--tinta-3);
+}
+.tela h2 + .explica { margin-top: 0; }
+.tela h2:not(:first-child) { margin-top: 22px; }
+
+.tela .explica {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--tinta-2);
+}
+
+.config-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.config-rot {
+  flex: none;
+  width: 48px;
+  font-size: 11px;
+  color: var(--tinta-3);
+}
+
+.config-linha input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 11.5px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--tinta);
+  background: var(--fundo);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 6px 8px;
+}
+.config-linha input:disabled { color: var(--tinta-3); background: var(--fundo-2); }
+
+.config-valor {
+  font: 11px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--tinta-2);
+  word-break: break-all;
+}
+
+.config-nota {
+  margin: 0 0 10px 56px;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+}
+
+.config-acoes { display: flex; gap: 7px; margin-left: 56px; }
+
+.botao {
+  background: var(--fundo-3);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 6px 11px;
+  font-size: 11.5px;
+  color: var(--tinta);
+}
+.botao:hover { border-color: var(--tinta-3); }
+.botao.compacto { flex: none; padding: 6px 9px; font-size: 11px; }
+.botao:disabled { color: var(--tinta-3); border-color: var(--linha-suave);
+                  background: transparent; cursor: default; }
+
+/* ⛔ O botão que apaga NÃO nasce vermelho: vermelho o tempo todo vira paisagem. Ele fica
+   discreto até ser armado, e aí muda de cara junto com o texto ("Apagar mesmo?"). */
+.botao.perigo { color: var(--tinta-2); }
+.botao.perigo:hover { color: var(--erro); border-color: var(--erro); }
+.botao.perigo.armado {
+  color: var(--erro);
+  border-color: var(--erro);
+  background: transparent;
+}
+
+.config-recado {
+  margin: 9px 0 0 56px;
+  font-size: 11px;
+  color: var(--realce);
+  line-height: 1.45;
+}
+.config-recado.ruim { color: var(--erro); }
+
+/* ── a aba Busca ───────────────────────────────────────────────────────────
+   ⭐⭐ Aqui a lista é de CARTÕES, e não a tabela da aba Vetores — de propósito. A Vetores
+   responde "o que falta processar", que é comparar números em muitas colunas; esta
+   responde "é este o plano?", que é OLHAR. Um resultado sem miniatura obrigaria o editor
+   a carregar cada clipe no Avid para saber se acertou.
+   ⛔ E nada abaixo de `--tinta-3` (#a3a3a3), como no painel inteiro. */
+
+.bus-linha {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.bus-frase {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 11.5px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--tinta);
+  background: var(--fundo);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 5px 8px;
+}
+.bus-frase::placeholder { color: var(--tinta-3); }
+
+/* ⚠️ `wrap`: cinco selects não cabem em 340 px numa linha só, e cortá-los faria o editor
+   escolher "cont…" sem saber entre contra-plongée e conjunto. */
+.bus-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+  margin-bottom: 9px;
+}
+.bus-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 96px;
+  min-width: 0;
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.bus-campo select { width: 100%; min-width: 0; }
+
+.bus-barra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bus-resumo {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+}
+
+/* ⚠️ O recorte do projeto em destaque, porque ele MUDA a resposta: sem a frase, um
+   "não achei" recortado se lê como "não existe". */
+.bus-escopo {
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--alerta);
+  background: var(--fundo-2);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--tinta-2);
+}
+
+.bus-resultados {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bus-achado {
+  display: flex;
+  /* ⚠️ `wrap` por causa dos parecidos: eles são `flex: 1 1 100%` e, sem isto, o flex os
+     punha AO LADO do texto — medido na primeira tela (2026-09-20). Eles abrem ABAIXO, e
+     dentro do cartão que os pediu: fora dele, o editor perde de vista de qual plano são. */
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 8px;
+  background: var(--fundo-2);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio);
+}
+
+/* ⚠️ Largura fixa e `object-fit: cover`: o acervo mistura 16:9 e 4:3, e uma miniatura que
+   muda de largura por linha faz a coluna de texto dançar enquanto se rola. */
+.bus-quadro {
+  flex: none;
+  width: 84px;
+  height: 48px;
+  object-fit: cover;
+  background: var(--fundo);
+  border-radius: 3px;
+}
+.bus-quadro.pequeno { width: 56px; height: 32px; }
+
+/* ⚠️ `flex-basis: 0`, e não `auto`: com `auto` a base é o conteúdo, e num cartão que
+   pode QUEBRAR (`flex-wrap`, por causa dos parecidos) o texto descia para baixo da
+   miniatura em 400 px — o cartão virava um bloco alto de duas linhas. Medido. */
+.bus-corpo {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bus-titulo {
+  margin: 0 0 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--tinta);
+  overflow-wrap: anywhere;
+}
+
+.bus-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 4px;
+}
+.bus-etiqueta {
+  padding: 1px 5px;
+  font-size: 9.5px;
+  color: var(--realce);
+  background: var(--realce-fundo);
+  border-radius: 3px;
+}
+
+.bus-trecho {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--tinta-2);
+  overflow-wrap: anywhere;
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+.bus-trecho > span { flex: 1 1 0; min-width: 0; }
+/* ⭐ A setinha de abrir a descrição: à esquerda, como pediu o editor. Área de toque maior
+   que o glifo, sem borda — é um detalhe do texto, não um botão de ação. */
+.bus-seta {
+  flex: none;
+  width: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font-size: 11px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.bus-seta:hover, .bus-trecho.aberto .bus-seta { color: var(--tinta); }
+
+.bus-acoes { margin: 6px 0 0; }
+
+.bus-vazio {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--tinta-3);
+}
+
+/* Os parecidos abrem DENTRO do cartão que os pediu: fora dele, o editor perderia de vista
+   de qual plano eles são parecidos. */
+.bus-parecidos {
+  flex: 1 1 100%;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--linha-suave);
+}
+.bus-nota-parecidos {
+  margin: 0 0 6px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--tinta-3);
+}
+.bus-recado-parecido {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--alerta);
+}
+.bus-parecido {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+}
+.bus-parecido-nome {
+  display: block;
+  font-size: 10.5px;
+  color: var(--tinta-2);
+  overflow-wrap: anywhere;
+}
+.bus-parecenca {
+  display: block;
+  font-size: 10px;
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ⛔⛔ O que o dicionário de intenção acrescentou. Discreto, mas SEMPRE visível quando
+   houver: sem a frase, "13 achados" para "drone" esconde que nenhum deles tem a palavra
+   que o editor escreveu. */
+.bus-expansao {
+  margin: -2px 0 8px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--tinta-3);
+}
+.bus-expansao b { color: var(--tinta-2); font-weight: 500; }
+
+/* ⭐ De onde veio o resultado: imagem (alguém OLHOU) ou fala (alguém DISSE) — o editor
+   decide o que abrir antes de clicar, porque as duas se conferem de jeitos diferentes
+   (uma no monitor, outra ouvindo).
+
+   ⛔ Distinguidas pela FORMA (contorno vazado), e não por cor. Violeta já quer dizer
+   "veio de fora do Media Composer" nos chips de anexo, e um segundo significado para a
+   mesma cor no mesmo painel é pior que cor nenhuma. ⚠️ E, pintadas iguais às dos campos
+   fechados, "imagem" e "fala" se leem como se fossem VALORES de enquadramento. */
+.bus-etiqueta.bus-origem {
+  color: var(--tinta-3);
+  background: transparent;
+  border: 1px solid var(--linha);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-size: 9px;
+  padding: 0 4px;
+}
+.bus-etiqueta.bus-origem[data-origem="fala"] { color: var(--tinta-2); }
+
+/* As falas que casaram, dentro do cartão da mídia. */
+.bus-falas {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--linha-suave);
+}
+.bus-falas-titulo {
+  margin: 0 0 3px;
+  font-size: 10px;
+  color: var(--tinta-3);
+}
+.bus-fala {
+  display: flex;
+  gap: 7px;
+  margin: 0 0 2px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+/* ⚠️ Tabular e largura fixa: mm:ss em coluna, senão o texto das falas dança a cada linha. */
+.bus-quando {
+  flex: none;
+  width: 34px;
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+.bus-fala-texto { color: var(--tinta-2); min-width: 0; overflow-wrap: anywhere; }
+/* ⭐ Quem fala (a lapela). Tinta nunca abaixo de --tinta-3; o nome que filtra ganha sublinhado. */
+.bus-quem {
+  flex: none;
+  margin-left: auto;
+  padding-left: 6px;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+  white-space: nowrap;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bus-quem.filtra { cursor: pointer; text-decoration: underline dotted; }
+.bus-quem.filtra:hover { color: var(--realce); }
+.bus-filtro-falante {
+  font: inherit;
+  color: var(--realce);
+  background: none;
+  border: 1px solid var(--realce);
+  border-radius: 3px;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+/* A confirmação do duplo clique — some sozinha depois de alguns segundos. */
+.bus-recado-carregar {
+  flex: 1 1 100%;
+  margin: 6px 0 0;
+  font-size: 10.5px;
+  color: var(--realce);
+}
+.bus-recado-carregar.ruim { color: var(--alerta); }
+
+/* ── a aba Vetores ─────────────────────────────────────────────────────────
+   ⚠️ Até 2026-09-13 a lista era de CARTÕES, com o argumento de que cinco colunas em
+   340 px viram cinco palavras cortadas. O editor decidiu por tabela: 358 mídias em cartões
+   de três linhas eram uma rolagem sem fim, e o corte se resolve com rolagem horizontal e
+   nome preso à esquerda (ver `.vet-rolagem`). */
+
+.vet-barra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.vet-resumo {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+}
+
+.vet-acervo {
+  display: flex;
+  flex-wrap: wrap;    /* ⚠️ 340 px não cabe select + dois botões numa linha */
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.vet-acervo select {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.vet-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.vet-nota {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--tinta-3);
+}
+
+/* ⚠️ Armado e desarmado, como o botão que apaga: refazer o acervo inteiro são horas de
+   CPU, e um clique sem querer não pode custar isso. Ele se desarma ao disparar. */
+.vet-refazer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+  cursor: pointer;
+}
+.vet-refazer input { accent-color: var(--alerta); margin: 0; }
+/* A vigia não é perigosa como o "refazer": ligada, ela só adianta trabalho gratuito. */
+.vet-vigia { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.vet-refazer.vigia input { accent-color: var(--realce); }
+.vet-acoes.armado .botao { color: var(--alerta); border-color: var(--alerta); }
+.vet-acoes.armado .vet-refazer { color: var(--alerta); }
+
+/* ⚠️ O preço aparece ANTES do clique, e por isso tem cor de aviso: é o único botão do
+   produto que gasta a assinatura do editor. */
+.vet-preco {
+  margin: 0 0 10px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--alerta);
+  background: #332c1c;
+  border-radius: 0 var(--raio) var(--raio) 0;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #e7d5ac;
+}
+
+.vet-andamento { margin-bottom: 10px; }
+
+.vet-progresso {
+  height: 3px;
+  background: var(--fundo-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.vet-progresso i { display: block; height: 100%; }
+.vet-progresso i b {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--realce);
+  transition: width .2s linear;
+}
+
+.vet-andamento-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+.vet-andamento-texto {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+}
+
+.vet-filtro {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.vet-filtro input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 11.5px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--tinta);
+  background: var(--fundo);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 5px 8px;
+}
+
+.vet-corte {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+  text-align: center;
+}
+
+/* ── a tabela de mídias ────────────────────────────────────────────────────
+   ⭐⭐ Decisão do editor (2026-09-13): lista com COLUNAS ordenáveis, compacta, e não
+   cartão. ⚠️ Em 340–440 px as colunas não cabem: a caixa rola nos dois sentidos, com o nome
+   preso à esquerda e o cabeçalho preso ao topo, e a barra horizontal SEMPRE visível. */
+
+.vet-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.vet-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--linha);
+  border-radius: 11px;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  color: var(--tinta-2);
+}
+.vet-tag b { font-weight: 400; font-size: 10px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+.vet-tag:hover { border-color: var(--tinta-3); }
+.vet-tag[aria-pressed="true"] { border-color: var(--realce); background: var(--realce-fundo); color: var(--tinta); }
+.vet-tag[aria-pressed="true"] b { color: var(--realce); }
+
+.vet-rolagem {
+  overflow: auto;
+  /* ⚠️ Com -110 px a barra horizontal ficava abaixo da dobra a 440×620 (visto no print),
+     e as colunas da direita pareciam não existir. Assim ela fica à vista com as
+     etiquetas no topo da aba. */
+  max-height: calc(100vh - 175px);
+  min-height: 160px;
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio);
+  background: var(--fundo-2);
+  overscroll-behavior: contain;
+}
+/* Em 340 px as etiquetas quebram em quatro linhas: a caixa encolhe junto, senão a barra
+   horizontal volta para baixo da dobra. */
+@media (max-width: 380px) {
+  .vet-rolagem { max-height: calc(100vh - 205px); }
+}
+/* ⚠️ O QtWebEngine é Chromium: sem estas regras a barra é a overlay fina, que só aparece
+   ao passar o mouse — e aí as colunas da direita parecem não existir. */
+.vet-rolagem::-webkit-scrollbar { width: 10px; height: 10px; }
+.vet-rolagem::-webkit-scrollbar-track { background: var(--fundo); }
+.vet-rolagem::-webkit-scrollbar-thumb {
+  background: #5a5a5a; border-radius: 5px; border: 2px solid var(--fundo);
+}
+.vet-rolagem::-webkit-scrollbar-thumb:hover { background: #767676; }
+.vet-rolagem::-webkit-scrollbar-corner { background: var(--fundo); }
+
+.vet-tabela {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 11px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.vet-tabela th, .vet-tabela td {
+  padding: 3px 8px;
+  white-space: nowrap;
+  text-align: left;
+  border-bottom: 1px solid var(--linha-suave);
+  color: var(--tinta-2);
+}
+.vet-tabela .num { text-align: right; }
+.vet-tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0;
+  background: var(--fundo-3);
+  border-bottom: 1px solid var(--linha);
+}
+.vet-tabela thead th button {
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--tinta-3);
+  text-align: inherit;
+  white-space: nowrap;
+}
+.vet-tabela thead th button:hover { color: var(--tinta); }
+.vet-tabela thead th button[data-ordem] { color: var(--tinta); }
+.vet-tabela thead th button[data-ordem="asc"]::after  { content: " \25B4"; color: var(--realce); }
+.vet-tabela thead th button[data-ordem="desc"]::after { content: " \25BE"; color: var(--realce); }
+
+/* O nome fica preso à esquerda nas duas partes, e ganha fundo próprio para as colunas
+   rolarem POR BAIXO dele. */
+.vet-tabela th:first-child, .vet-tabela td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--fundo-2);
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-right: 1px solid var(--linha-suave);
+}
+.vet-tabela thead th:first-child { z-index: 3; background: var(--fundo-3); }
+.vet-tabela td.nome { color: var(--tinta); }
+.vet-tabela td.nome.sem-nome {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+}
+.vet-tabela tbody tr:hover td { background: var(--fundo-3); }
+.vet-tabela tbody tr.sem-analise td.nome { color: var(--tinta-2); }
+
+.vet-tabela td[data-estado="ok"] { color: var(--realce); }
+.vet-tabela td[data-estado="refazer"] { color: var(--alerta); }
+.vet-tabela td[data-estado="nao"] { color: var(--tinta-3); }
+
+.vet-vazio {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--tinta-3);
+}
+
+/* ── conversa ──────────────────────────────────────────────────────────── */
+
+.conversa {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conversa::-webkit-scrollbar { width: 9px; }
+.conversa::-webkit-scrollbar-thumb {
+  background: var(--fundo-3);
+  border-radius: 5px;
+  border: 2px solid var(--fundo);
+}
+
+/* boas-vindas */
+
+.boas-vindas { margin: auto 0; }
+.oi { margin: 0 0 12px; color: var(--tinta-2); font-size: 12.5px; }
+.exemplos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.exemplo {
+  width: 100%;
+  text-align: left;
+  background: var(--fundo-2);
+  border: 1px solid var(--linha-suave);
+  border-radius: var(--raio);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--tinta-2);
+}
+.exemplo:hover { border-color: var(--realce); color: var(--tinta); }
+
+/* mensagens */
+
+.msg { display: flex; flex-direction: column; gap: 5px; }
+
+.msg .quem {
+  font-size: 10px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.msg .texto { white-space: pre-wrap; word-break: break-word; }
+
+.msg .texto strong { font-weight: 600; color: #fff; }
+
+/* Nome de bin e caminho vêm marcados como código pelo modelo. Aqui eles precisam
+   quebrar: um caminho do Avid não cabe em 400 px e não pode empurrar o painel. */
+.msg .texto code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11.5px;
+  background: var(--fundo-3);
+  padding: 1px 4px;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+.msg.de-mim .texto {
+  background: var(--fundo-3);
+  border-radius: var(--raio);
+  padding: 8px 10px;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.msg.de-erro .texto { color: var(--erro); }
+
+/* ⭐ O cursor de digitação: prova visual de que a resposta está CHEGANDO, não que já
+   chegou. É o que distingue "pintando token a token" de "apareceu tudo de uma vez". */
+/* ⚠️⚠️ `:not(.pensando)` — os dois queriam o MESMO `::after`.
+   O cursor de digitação e as reticências de "pensando" são ambos `::after` do mesmo
+   elemento, e o cursor ganhava por vir depois: na tela saía a palavra "pensando" com um
+   retângulo verde piscando ao lado, sem reticência nenhuma. Enquanto o texto não começa
+   não há o que cursor nenhum acompanhar — quem fala ali são as reticências. */
+.msg.pintando .texto:not(.pensando)::after {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 13px;
+  margin-left: 2px;
+  background: var(--realce);
+  vertical-align: text-bottom;
+  animation: pisca 1s steps(2) infinite;
+}
+@keyframes pisca { 50% { opacity: 0 } }
+
+/* ── as ferramentas, num toggle ──────────────────────────────────────────────
+   ⭐ Colapsado por padrão: trinta chamadas empurravam a conversa para fora da tela, e o
+   editor rolava para achar a resposta no meio do maquinário.
+   ⚠️ Mas não some da vista — a linha de atividade fica, dizendo o que acontece agora. */
+
+.ferramentas {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-left: 2px solid var(--realce);
+  border-radius: 0 var(--raio) var(--raio) 0;
+  background: var(--realce-fundo);
+  padding: 5px 9px;
+}
+
+.ferramentas .cabeca {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font-size: 11px;
+  color: var(--realce);
+}
+.ferramentas .cabeca:hover { color: var(--tinta); }
+.ferramentas .seta { font-size: 9px; width: 8px; flex: none; }
+
+/* ⭐⭐ As linhas do que JÁ FOI FEITO, em português, visíveis enquanto o turno corre.
+   Um verbo e um alvo — "Ouve o take C07_P02-T002" —, no lugar de `transcrever · bin ·
+   item`, que era verdadeiro e ilegível para quem edita. No fim do turno elas se recolhem
+   atrás do resumo: ver o agora, sem guardar o histórico na frente da conversa. */
+.ferramentas .feitos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ferramentas .feito {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tinta-2);
+}
+.ferramentas .feito .pino { color: var(--realce); font-size: 7px; flex: none; }
+
+/* A atividade de AGORA. Recolhe-se ao fim do turno: o que sobra é o resumo. */
+.ferramentas .atividade {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--tinta-2);
+  padding-left: 14px;
+}
+
+/* ⚠️ Só o TEXTO encolhe. A porcentagem e o relógio são curtos e não podem ser os
+   cortados: são eles que dizem que a coisa está andando. */
+.ferramentas .atividade .o-que {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ferramentas .atividade .quanto {
+  flex: none;
+  color: var(--realce);
+  font-variant-numeric: tabular-nums;
+}
+/* ⭐ O relógio do turno: "faz 40s" é uma informação — o editor decide se espera olhando
+   ou se vai buscar um café. "Está pensando" não é. */
+.ferramentas .atividade .relogio {
+  flex: none;
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ⭐⭐ A barra existe para uma pergunta só: **isto está andando ou travou?**
+   ⚠️ Ela aparece só quando há fração de verdade. Uma barra que anda sozinha porque o
+   código não sabe o andamento é pior que nenhuma: ela promete um fim que ninguém mediu. */
+.ferramentas .barra {
+  height: 3px;
+  margin: 4px 0 1px 14px;
+  background: var(--fundo-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ferramentas .barra i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--realce);
+  transition: width .25s ease-out;
+}
+
+.ferramentas .lista {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 3px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* ⚠️ Dentro do toggle a linha perde a moldura: ela já está DENTRO da caixa verde, e
+   repetir borda e fundo a cada item vira uma escada de retângulos. */
+.ferramentas .ferramenta {
+  background: none;
+  border-left: 0;
+  border-radius: 0;
+  padding: 1px 0 1px 14px;
+}
+
+.ferramenta {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--tinta-2);
+  background: var(--realce-fundo);
+  border-left: 2px solid var(--realce);
+  border-radius: 0 var(--raio) var(--raio) 0;
+  padding: 5px 9px;
+}
+
+.ferramenta b { color: var(--realce); font-weight: 600; font-size: 11px; }
+
+.ferramenta .arg {
+  color: var(--tinta-3);
+  font-size: 10.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── "está acontecendo alguma coisa" ───────────────────────────────────────
+   ⭐⭐ Três lugares usam esta mesma reticência, e por um motivo só: **silêncio numa
+   interface parece travamento.** O editor espera segundos entre a pergunta e o primeiro
+   token, dezenas durante uma transcrição, e alguns enquanto a bin é escrita — em todos,
+   uma tela parada o faz clicar de novo ou fechar o painel no meio do turno.
+
+   ⚠️ `content` animado, e não um GIF nem três `<span>`: é uma regra de CSS, não pesa, e
+   morre sozinha quando o elemento sai. */
+.reticencias::after {
+  content: "";
+  animation: reticencias 1.2s steps(4, end) infinite;
+}
+@keyframes reticencias {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+}
+
+/* ⚠️ Quem pediu menos movimento continua vendo que há algo em curso — as reticências
+   ficam paradas nos três pontos, em vez de sumirem. */
+@media (prefers-reduced-motion: reduce) {
+  .reticencias::after { content: "..."; animation: none; }
+}
+
+/* O "pensando" que nasce com o envio, antes do primeiro token. */
+.msg .texto.pensando { color: var(--tinta-3); font-style: italic; }
+
+/* ── a barra de status ─────────────────────────────────────────────────────
+   ⭐ Quatro coisas, cada uma respondendo a uma pergunta que o editor faz ANTES de pedir
+   um corte: quem está respondendo, quanto da conversa já foi, quanto da assinatura já
+   foi, e quando ela vira. Por isso fica acima do compositor: é contexto para a próxima
+   pergunta, não resultado da anterior. */
+
+.status {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;          /* ⚠️ os medidores caem para baixo em vez de espremer o modelo */
+  align-items: center;
+  gap: 4px 8px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--linha-suave);
+  background: var(--fundo-2);
+  font-size: 10.5px;
+}
+
+/* ⭐ O que o editor CONTROLA fica à esquerda, junto: o modelo e o automático são a mesma
+   decisão — como ele quer que o Ciclo Assist trabalhe agora. O que ele apenas OLHA vai
+   para a SEGUNDA linha, alinhado à esquerda (autor, 2026-11-04): à direita ele ora ficava
+   na linha do modelo, ora caía sozinho e ficava solto à direita — dois padrões. */
+.status .medidores {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  flex-basis: 100%;         /* sempre a linha de baixo */
+}
+
+.status .modelo {
+  background: var(--fundo);
+  color: var(--tinta-2);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 3px 5px;
+  font-size: 10.5px;
+  max-width: 45%;
+}
+.status .modelo:hover { color: var(--tinta); border-color: var(--tinta-3); }
+
+.status .botao-oficina {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 3px 9px;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.status .botao-oficina:hover { color: var(--tinta); border-color: var(--realce); }
+
+/* ⛔ O automático some a confirmação de TODA escrita. O botão tem de parecer uma chave
+   ligada — não um rótulo a mais na barra. */
+.status .toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--linha);
+  border-radius: 11px;
+  padding: 3px 9px 3px 6px;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+}
+.status .toggle .luz {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--tinta-3);
+}
+.status .toggle:hover { color: var(--tinta-2); border-color: var(--tinta-3); }
+.status .toggle.ligado { color: var(--alerta); border-color: var(--alerta); }
+.status .toggle.ligado .luz { background: var(--alerta); }
+
+.medidores { color: var(--tinta-3); }
+.medidor { display: flex; align-items: center; gap: 4px; }
+.medidor .rot { color: var(--tinta-3); }
+
+/* A barrinha. ⚠️ Largura fixa e pequena: ela é um sinal de relance, não um gráfico —
+   num painel de 400 px, duas barras e o texto já ocupam a linha inteira. */
+.medidor i {
+  display: block;
+  width: 42px; height: 4px;
+  background: var(--fundo-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.medidor i b { display: block; height: 100%; width: 0; background: var(--realce); }
+.medidor em { font-style: normal; font-variant-numeric: tabular-nums; }
+
+/* ⭐ O semáforo. Verde até 75%, amarelo até 90%, vermelho daí em diante — a leitura de
+   qualquer medidor de recurso, sem nada novo para o editor aprender. */
+.medidor[data-faixa="verde"]   em { color: var(--realce); }
+.medidor[data-faixa="amarelo"] i b { background: var(--alerta); }
+.medidor[data-faixa="amarelo"] em { color: var(--alerta); }
+.medidor[data-faixa="vermelho"] i b { background: var(--erro); }
+.medidor[data-faixa="vermelho"] em { color: var(--erro); }
+
+.medidores .reset { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* A ação que aconteceu sem perguntar, porque o editor pediu assim. */
+.automatico {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--tinta-2);
+  background: #332c1c;
+  border-left: 2px solid var(--alerta);
+  border-radius: 0 var(--raio) var(--raio) 0;
+  padding: 5px 9px;
+}
+.automatico b { color: var(--alerta); font-size: 10px; text-transform: uppercase;
+                letter-spacing: .06em; flex: none; }
+
+/* ⭐ As ações automáticas em sequência viram UM grupo: só a última à vista, e a seta à
+   esquerda (com quantas há antes dela) abre o histórico. Uma linha só não tem seta. */
+.automaticos { display: flex; align-items: stretch; gap: 4px; }
+.aut-lista { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.automaticos:not(.aberto) .aut-lista > .automatico:not(:last-child) { display: none; }
+.aut-seta {
+  display: none;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  min-width: 30px;
+  align-self: stretch;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--alerta);
+  background: #332c1c;
+  border: 0;
+  border-radius: var(--raio) 0 0 var(--raio);
+  cursor: pointer;
+}
+.automaticos.varias .aut-seta { display: inline-flex; }
+.aut-seta::before { content: "▸"; font-size: 11px; transition: transform .12s; }
+.automaticos.aberto .aut-seta::before { transform: rotate(90deg); }
+.automaticos.aberto .aut-seta { align-self: flex-start; min-height: 30px; }
+.aut-seta:hover { color: var(--tinta); }
+
+/* O painel falando de si mesmo — nem o editor, nem o modelo. */
+.msg.de-sistema .texto { color: var(--alerta); font-size: 11.5px; }
+
+/* ── o que foi arrastado ───────────────────────────────────────────────────
+   ⭐ Etiquetas acima da caixa de texto: o editor arrasta a sequência, o take, o roteiro —
+   e VÊ o que vai junto da pergunta antes de mandar. */
+
+.anexos {
+  /* Linha inteira, e com TETO: passando de três fileiras de chips, ela rola em vez de
+     empurrar a conversa e a caixa de texto para fora da tela. */
+  flex: 1 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 86px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.anexos-barra {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.anexos-dobra, .anexos-tirar {
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  font-size: 10.5px;
+  color: var(--tinta-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.anexos-dobra:hover, .anexos-tirar:hover { color: var(--tinta-2); }
+.anexos-tirar { margin-left: auto; }
+.anexos-dobra .seta { font-size: 9px; width: 8px; flex: none; }
+
+.anexo {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  background: var(--realce-fundo);
+  border: 1px solid var(--realce);
+  border-radius: 11px;
+  padding: 2px 4px 2px 8px;
+  font-size: 10.5px;
+  color: var(--tinta);
+}
+.anexo b {
+  color: var(--realce);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  flex: none;
+}
+.anexo .nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.anexo i { color: var(--alerta); font-style: normal; flex: none; }
+.anexo .tirar {
+  background: none;
+  border: 0;
+  padding: 0 3px;
+  color: var(--tinta-3);
+  font-size: 13px;
+  line-height: 1;
+  flex: none;
+}
+.anexo .tirar:hover { color: var(--erro); }
+
+/* ⭐ De fora do Avid: mesma forma, outra cor. ⚠️ Tem de vir ANTES do `.ruim`: a
+   especificidade é a mesma (0,2,0) e quem ganha é a ordem — problema sempre vence origem. */
+.anexo[data-origem="externo"] {
+  background: var(--externo-fundo);
+  border-color: var(--externo);
+}
+.anexo[data-origem="externo"] b { color: var(--externo); }
+
+/* A contagem na barra usa as mesmas duas cores, para a legenda nascer de graça. */
+.anexos-conta-avid   { color: var(--realce); }
+.anexos-conta-externo { color: var(--externo); }
+
+/* O anexo que o serviço não vai conseguir usar — dito AGORA, não depois do turno. */
+.anexo.ruim { border-color: var(--alerta); background: #332c1c; }
+.anexo.ruim b { color: var(--alerta); }
+
+/* ⚠️ O realce do arrasto fica no BODY: o alvo é a janela inteira, porque mirar numa
+   caixinha de 400 px com o mouse carregado de clipe é pedir para errar. */
+body.recebendo .compositor {
+  border-top-color: var(--realce);
+  box-shadow: inset 0 2px 0 var(--realce);
+}
+/* ⭐ O realce já diz a origem ANTES de soltar, e segue a mesma precedência do
+   `aoSoltar`: havendo MIME do Avid, é do Avid; só então é de fora. Se a cor do realce
+   discordasse da cor do chip, ela viraria mentira no meio do gesto. */
+body.recebendo.de-fora .compositor {
+  border-top-color: var(--externo);
+  box-shadow: inset 0 2px 0 var(--externo);
+}
+body.recebendo.de-fora::after {
+  color: var(--externo);
+  background: var(--externo-fundo);
+}
+body.recebendo::after {
+  content: "solte aqui";
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  padding: 5px;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--realce);
+  background: var(--realce-fundo);
+  pointer-events: none;
+}
+
+/* ── compositor ────────────────────────────────────────────────────────── */
+
+.compositor {
+  flex: none;
+  display: flex;
+  /* ⚠️⚠️ `wrap` + `flex-basis: 100%` nos anexos: sem isso eles são um IRMÃO da caixa de
+     texto na mesma linha, crescem com cada chip e espremem a pergunta até sumir. Foi o
+     que aconteceu em campo com dez subclipes (2026-09-11). */
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 7px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--linha);
+  background: var(--fundo-2);
+}
+
+#entrada {
+  /* ⛔ `min-width` de verdade: a caixa de texto é a razão de o painel existir e não pode
+     encolher para caber outra coisa. */
+  flex: 1 1 auto;
+  min-width: 120px;
+  resize: none;
+  max-height: 132px;
+  background: var(--fundo);
+  color: var(--tinta);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 8px 10px;
+  font: inherit;
+  line-height: 1.45;
+}
+#entrada:focus { border-color: var(--realce); outline: none; }
+#entrada::placeholder { color: var(--tinta-3); }
+
+#enviar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--realce);
+  color: #10201f;
+}
+#enviar:disabled { background: var(--fundo-3); color: var(--tinta-3); cursor: default; }
+
+/* ── o menu ☰ do compositor: atalhos de prompt ─────────────────────────────
+ *
+ * ⭐ O primeiro componente flutuante do painel. `position: fixed` com as coordenadas do
+ * botão (o JS as põe): o `body` é `overflow:hidden` e a conversa rola, e qualquer outro
+ * posicionamento seria recortado por um dos dois. Abre PARA CIMA: o compositor é o rodapé. */
+
+#abrirMenu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--tinta-2);
+}
+#abrirMenu:hover, #abrirMenu[aria-expanded="true"] { color: var(--tinta); border-color: var(--tinta-3); }
+
+.menu-pop {
+  position: fixed;
+  z-index: 20;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0;
+  background: var(--fundo-2);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
+.menu-sep { height: 1px; margin: 5px 0; background: var(--linha); }
+.menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 12px;
+}
+.menu-item:hover, .menu-item:focus-visible { background: var(--fundo-3); outline: none; }
+.menu-item:disabled { color: var(--tinta-3); background: transparent; cursor: default; }
+.menu-distintivo { display: block; color: var(--tinta-3); font-size: 11px; }
+.menu-item.perigo { color: var(--tinta-2); }
+.menu-item.perigo.armado { color: var(--erro); }
+.menu-linha { display: flex; align-items: stretch; }
+.menu-linha .menu-item { flex: 1 1 auto; min-width: 0; overflow: hidden;
+                         text-overflow: ellipsis; white-space: nowrap; }
+.menu-linha .menu-tirar {
+  flex: none;
+  width: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--tinta-3);
+  font-size: 14px;
+}
+.menu-linha .menu-tirar:hover { color: var(--erro); }
+.menu-vazio { padding: 7px 12px; font-size: 11.5px; color: var(--tinta-3); line-height: 1.45; }
+.menu-forma { display: flex; flex-direction: column; gap: 7px; padding: 6px 12px 4px; }
+.menu-forma label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--tinta-2); }
+.menu-forma input, .menu-forma textarea {
+  background: var(--fundo);
+  color: var(--tinta);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+.menu-forma-botoes { display: flex; justify-content: flex-end; gap: 6px; }
+.menu-erro { margin: 0; font-size: 11px; color: var(--erro); line-height: 1.4; }
+.menu-pop[data-modo="forma"] > :not(.menu-forma) { display: none; }
+
+/* ── o portão de aprovação ─────────────────────────────────────────────────
+ *
+ * ⚠️ Ele NÃO se parece com uma mensagem do chat, e isso é deliberado: uma pergunta que
+ * exige decisão não pode ser lida como mais uma linha de conversa. Borda inteira,
+ * fundo próprio, e os botões grandes o bastante para não errar o clique. */
+
+.aprovacao {
+  border: 1px solid var(--alerta);
+  border-radius: var(--raio);
+  background: #2e2a20;
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perguntas .pergunta { display: flex; flex-direction: column; gap: 4px; }
+.perguntas .enunciado { font-size: 12.5px; color: var(--tinta); }
+/* ⚠️ `.exemplo` já existe no painel (com caixa e fundo): sem zerar, o exemplo parecia uma segunda caixa de resposta. */
+.perguntas .exemplo { font-size: 11.5px; color: var(--tinta-3); word-break: break-word; background: none; border: 0; padding: 0; margin: 0; cursor: default; }
+.perguntas .resposta {
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  padding: 5px 7px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 12.5px;
+}
+.perguntas .resposta:focus { outline: none; border-color: var(--realce); }
+.perguntas .opcoes { display: flex; flex-wrap: wrap; gap: 5px; }
+.perguntas .opcoes button {
+  padding: 2px 8px;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.perguntas .opcoes button:hover { border-color: var(--realce); color: var(--realce); }
+
+.aprovacao .cabeca {
+  font-weight: 600;
+  color: #e7d5ac;
+  font-size: 12.5px;
+}
+
+.aprovacao .campo {
+  display: flex;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--tinta-2);
+  word-break: break-word;
+}
+
+.aprovacao .campo .rot {
+  flex: none;
+  color: var(--tinta-3);
+  min-width: 62px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding-top: 1px;
+}
+
+.aprovacao .acoes { display: flex; gap: 7px; margin-top: 2px; }
+
+.aprovacao .acoes button {
+  flex: 1 1 auto;
+  padding: 7px 10px;
+  border-radius: var(--raio);
+  border: 1px solid var(--linha);
+  background: var(--fundo-3);
+  font-size: 12px;
+}
+.aprovacao .acoes .permitir {
+  background: var(--realce);
+  border-color: var(--realce);
+  color: #10201f;
+  font-weight: 600;
+}
+.aprovacao .acoes .recusar:hover { border-color: var(--erro); color: var(--erro); }
+.aprovacao .acoes .salvar-receita { flex: 0 0 auto; }
+.aprovacao .acoes .salvar-receita:hover:not(:disabled) { border-color: var(--realce); color: var(--realce); }
+.aprovacao .aviso-receita { font-size: 12px; color: var(--tinta-2); margin-top: 6px; }
+.aprovacao .acoes button:disabled { color: var(--tinta-3); cursor: default; }
+/* ⛔ Texto apagado sobre o verde-água ficava ilegível (visto pelo autor no "Enviar 0 de 5"): desabilitado muda o fundo junto. */
+.aprovacao .acoes .permitir:disabled { background: var(--fundo-3); border-color: var(--linha); color: var(--tinta-2); }
+
+/* Depois de decidida ela vira registro do que foi resolvido, e sai do caminho. */
+.aprovacao.decidida { border-color: var(--linha); background: var(--fundo-2); }
+.aprovacao.decidida .cabeca { color: var(--tinta-2); font-weight: 400; }
+.aprovacao .veredito { font-size: 11.5px; color: var(--tinta-3); }
+.aprovacao[data-decisao="sim"] .veredito { color: var(--realce); }
+.aprovacao[data-decisao="nao"] .veredito { color: var(--erro); }
+.aprovacao[data-decisao="falhou"] .veredito { color: var(--erro); }
+
+/* ⚠️ O clique não é instantâneo: escrever a bin e abrir no Avid leva segundos. Sem este
+   estado o cartão ficaria parado, e o editor clicaria de novo. */
+.aprovacao .veredito.trabalhando { color: var(--tinta-2); }
+
+/* ⭐ O pedido que atravessou um Reload do painel, ou o fechamento do Media Composer.
+   Ele não tem conversa em volta para se explicar — a etiqueta faz esse papel. */
+.aprovacao .de-antes {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--tinta-3);
+  margin-bottom: 2px;
+}
+
+/* A lista de itens dentro de um pedido de aprovação — tipicamente o plano de cortes.
+   ⭐ O editor aprova corte a corte: cada item é uma linha própria, e a prosa do
+   `porque` ganha a linha dela, porque é o que ele lê para decidir. */
+
+.aprovacao .itens {
+  list-style: decimal;
+  margin: 2px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.aprovacao .itens li { font-size: 11.5px; color: var(--tinta-2); }
+.aprovacao .itens li::marker { color: var(--tinta-3); }
+.aprovacao .itens .cab { color: var(--tinta); word-break: break-word; }
+.aprovacao .itens .prosa {
+  color: var(--tinta-2);
+  margin-top: 1px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* ⭐ O corte a corte do plano, em duas colunas: à ESQUERDA por que este take, à DIREITA o
+   que se ouve. São as duas perguntas que o editor faz item a item — em texto corrido elas
+   se misturavam num parágrafo só, na mesma cor. */
+.aprovacao .itens .duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 2px;
+}
+
+/* ⚠️ A régua fica na COLUNA, não entre os itens: é ela que separa a justificativa da
+   fala quando as duas quebram em várias linhas e os blocos deixam de ser retângulos
+   óbvios. */
+.aprovacao .itens .fala { border-left: 1px solid var(--linha); padding-left: 9px; }
+
+.aprovacao .itens .porque,
+.aprovacao .itens .fala {
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* ⚠️⚠️ **Contraste, não decoração.** Isto era `--tinta-3` (#7b7b7b sobre #2b2b2b): ~4:1,
+   pouco para 11,5 px, e foi a primeira coisa que o editor apontou no teste de campo — a
+   justificativa é o texto que ele mais lê no cartão, e era o mais apagado dele. */
+.aprovacao .itens .porque { color: var(--tinta-2); }
+.aprovacao .itens .fala { color: var(--tinta); font-style: italic; }
+
+/* A procedência é para CONFERIR, não para ler em cada linha — é a única que encolhe. */
+.aprovacao .itens .procedencia {
+  color: var(--tinta-3);
+  font-size: 10px;
+  margin-top: 3px;
+  letter-spacing: .03em;
+}
+
+/* ⭐ O corte em L/J ganha destaque próprio: é a diferença entre o que o editor pediu e o
+   que ele vai ver na timeline, e some se ficar no meio dos outros números. */
+.aprovacao .itens .lj {
+  color: var(--realce);
+  background: var(--realce-fundo);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+
+/* ── o rodapé de cada resposta ─────────────────────────────────────────────
+ *
+ * ⭐ Pedido do editor em 2026-09-12: "ao fim de cada mensagem, quanto tempo levou e
+ *   quantos tokens foram consumidos". Os dois números já chegavam e eram destruídos
+ *   junto com a linha de atividade, milissegundos depois de ficarem úteis. */
+.msg .rodape {
+  font-size: 10px;
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+/* ── "esta conversa já vem de antes" ───────────────────────────────────────── */
+.fio-aviso {
+  margin: 0 0 10px;
+  padding: 7px 9px;
+  /* ⚠️ `--alerta`, e não um `--aviso` que nunca existiu: o fallback escondia o erro
+     pintando um dourado que não é o da paleta (achado no Assist anterior, 2026-09-19). */
+  border-left: 2px solid var(--alerta);
+  background: var(--fundo-2, rgba(127, 127, 127, .08));
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--tinta-2);
+}
+.fio-aviso b { color: var(--tinta); }
+.fio-aviso button {
+  margin-left: 6px;
+  padding: 1px 6px;
+  font: inherit;
+  color: var(--tinta);
+  background: transparent;
+  border: 1px solid var(--borda, rgba(127, 127, 127, .4));
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* Parar fica ao lado de enviar, e some quando não há o que parar. */
+#pararConversa {
+  align-self: flex-end;
+  padding: 6px;
+  color: var(--tinta-2);
+  background: transparent;
+  border: 1px solid var(--borda, rgba(127, 127, 127, .4));
+  border-radius: 4px;
+  cursor: pointer;
+}
+#pararConversa:hover { color: var(--tinta); }
+
+/* ⭐⭐ A preferência por subclipe (2026-09-21). É PREFERÊNCIA, não exclusão: o bruto
+   continua na lista, mais abaixo, e o resumo diz quantos ficaram sob o corte. */
+.bus-preferir {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 8px;
+  font-size: 10.5px;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+.bus-preferir input { margin: 0; }
+
+/* A bin do recorte, sob o nome dele. ⚠️ O editor copia o mesmo subclipe entre bins de
+   trabalho (medido: um deles em 6), e é por isso que aqui cabe uma contagem. */
+.bus-onde {
+  margin: 0 0 4px;
+  font-size: 10px;
+  color: var(--tinta-3);
+  overflow-wrap: anywhere;
+}
+
+/* ⭐ A espécie em destaque: é a informação que decide se o editor clica. */
+.bus-etiqueta.bus-especie {
+  color: var(--realce);
+  background: var(--realce-fundo);
+  font-weight: 600;
+}
+/* ⚠️ Âmbar nas duas ressalvas, que é o que âmbar já quer dizer no painel inteiro:
+   "tem alguma coisa aqui antes de você confiar". */
+.bus-etiqueta.bus-repetido,
+.bus-etiqueta.bus-herdado {
+  color: var(--alerta);
+  background: transparent;
+  border: 1px solid var(--alerta);
+}
+
+.bus-quantos-recortes { color: var(--tinta-3); }
+
+/* "ainda estou lendo os subclipes" — some sozinho quando o índice fica pronto. */
+.bus-indice {
+  margin: -2px 0 8px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--alerta);
+}
+
+/* ⭐⭐ A linha da fala virou BOTÃO (2026-09-21): clicar carrega no Source o item que a
+   contém. ⚠️ Ela tem de continuar PARECENDO uma linha de texto — botão com cara de botão
+   numa lista de falas vira uma parede de caixas. */
+.bus-fala {
+  display: flex;
+  gap: 7px;
+  width: 100%;
+  margin: 0 0 2px;
+  padding: 1px 3px;
+  font: 11px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.bus-fala:hover { background: var(--fundo-3); }
+.bus-fala:hover .bus-quando { color: var(--realce); }
+
+/* ⚠️ O timecode é mais largo que o mm:ss, e tabular para as linhas ficarem em coluna. */
+.bus-quando.tc { width: 78px; }
+
+/* A timeline onde o item é usado. Tinta própria: não é campo da decupagem nem espécie. */
+.bus-etiqueta.bus-timeline {
+  color: var(--tinta-2);
+  background: var(--fundo-3);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ⭐ A claquete lida: fica perto do título porque é a IDENTIDADE do take no set.
+   Ilegível em âmbar — achou e não leu é um aviso, não um dado. */
+.bus-claquete { border-color: var(--realce); color: var(--tinta); }
+.bus-claquete.ilegivel { border-color: var(--alerta); color: var(--alerta); }
+/* ⛔ A leitura que a conferência reprovou (rolo que não bate, ou o exemplo da
+   instrução copiado): mesma tinta do ilegível, porque é a mesma notícia — este
+   número não confere. */
+.bus-claquete.duvidosa { border-color: var(--alerta); color: var(--alerta); }
+
+/* O pino da janela do app (só com `?casca=app`). ⛔ Desligado muda de TINTA, nunca de opacity (o piso #a3a3a3). */
+.topo .pino { margin-left: auto; background: none; border: 0; padding: 4px; color: var(--tinta-3); cursor: pointer; }
+.topo .pino:hover { color: var(--tinta-2); }
+.topo .pino[aria-pressed="true"] { color: var(--realce); }
+
+/* O seletor de editor da janela do app. */
+.topo .qual-nle { margin-left: auto; background: var(--fundo-2, #2a2a2a); color: var(--tinta-2); border: 1px solid #444;
+                  border-radius: 4px; font: inherit; font-size: 12px; padding: 2px 4px; }
+.topo .qual-nle:not([hidden]) + .pino { margin-left: 6px; }
+
+/* ⭐ Embutido no guarda-chuva (`?embutido=1`): a moldura é dele. Some o que ele já mostra — a marca e a versão, o
+   pino e a engrenagem —, e o topo inteiro quando o seletor de editor também está escondido. */
+.embutido .topo .marca, .embutido .topo .versao, .embutido .topo .pino, .embutido .abas .engrenagem { display: none !important; }
+.embutido .topo:has(#qualNle[hidden]) { display: none; }
+/* A janela de configurações do app (`?ajustes=1`): só a tela de configurações. */
+.so-ajustes .topo, .so-ajustes .abas, .so-ajustes .compositor { display: none !important; }
+/* ⭐ A janela larga (autor, 2026-11-07): margens da janela de configurações, uma coluna legível (no máximo ~680 px) e
+   cada seção separada por uma linha. Só aqui: a engrenagem da aba segue igual. */
+.so-ajustes #telaConfig { padding: 22px 28px 28px; max-width: 740px; }
+.so-ajustes #telaConfig h2 { font-size: 12px; letter-spacing: .4px; }
+.so-ajustes #telaConfig h2:not(:first-child) { margin-top: 26px; padding-top: 18px; border-top: 1px solid #333; }
+.embutido .topo .qual-nle { margin-left: 0; }
+
+/* ⭐⭐ As SUBABAS no guarda-chuva têm a MESMA medida nos três apps (autor, 2026-10-21: "o De Lá Pra Cá tem o melhor
+   espaçamento, o Assistir é muito colado"). A régua é a do De Lá Pra Cá: a barra recuada 11 px com a linha de 1 px e
+   10 px antes do conteúdo; o botão de 12 px em negrito com 8 × 12 px de respiro; a ativa clara e sublinhada no
+   verde-água das abas do guarda-chuva. ⚠️ As três cópias (aqui, no Sincronizar e no De Lá Pra Cá) andam juntas. */
+.embutido .abas { margin: 10px 11px 10px; padding: 0; gap: 2px; border-bottom: 1px solid #3f3f3f; background: none; }
+.embutido .abas .aba { padding: 8px 12px; margin-bottom: -1px; font: 600 12px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
+                       color: #bcbcbc; border-bottom: 2px solid transparent; }
+.embutido .abas .aba:hover { color: #e2e2e2; }
+.embutido .abas .aba.ativa { color: #e2e2e2; border-bottom-color: #4cc4b8; }
+
+/* ── o FLUXO (F1, fluxo.js) ───────────────────────────────────────────────
+   ⭐ O quadro fica logo acima da caixa de texto, à vista o fluxo inteiro: o editor precisa ver o
+   que está acontecendo para poder interromper (autor, 2026-10-31). A borda diz o estado. */
+.fluxo-quadro {
+  margin: 0 0 10px;
+  border: 1px solid var(--realce);
+  border-radius: var(--raio);
+  background: var(--fundo-2);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--tinta-2);
+  max-height: 42vh;
+  overflow-y: auto;
+}
+.fluxo-quadro[data-estado="esperando"],
+.fluxo-quadro[data-estado="interrompido"] { border-color: var(--erro); }
+.fluxo-quadro[data-estado="pausado"] { border-color: var(--alerta); }
+.fluxo-quadro[data-estado="pronto"],
+.fluxo-quadro[data-estado="cancelado"] { border-color: var(--linha); }
+.fluxo-cab { display: flex; align-items: baseline; gap: 6px; }
+.fluxo-seta { background: none; border: none; color: var(--tinta-2); padding: 0 2px; cursor: pointer; }
+.fluxo-nome { font-weight: 600; color: var(--tinta); flex: 1 1 auto; word-break: break-word; }
+.fluxo-estado { color: var(--tinta-3); white-space: nowrap; }
+.fluxo-agora { color: var(--realce); }
+.fluxo-passos { margin: 0; padding-left: 4px; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.fluxo-p { display: flex; flex-wrap: wrap; gap: 6px; }
+.fluxo-p .marca { width: 12px; flex: none; text-align: center; color: var(--tinta-3); }
+.fluxo-p[data-estado="feito"] .marca { color: var(--realce); }
+.fluxo-p[data-estado="correndo"] .marca { color: var(--realce); }
+/* ⭐ O passo em curso em destaque (a linha inteira); o feito, com o ✓ verde-água. */
+.fluxo-p[data-estado="correndo"] { color: var(--realce); font-weight: 600; }
+.fluxo-p[data-estado="cancelado"] .marca,
+.fluxo-p[data-estado="cancelado"] .motivo { color: var(--alerta); }
+.fluxo-p[data-estado="falhou"] .marca,
+.fluxo-p[data-estado="falhou"] .motivo { color: var(--erro); }
+.fluxo-p .motivo, .fluxo-p .aviso-p { flex-basis: 100%; padding-left: 18px; color: var(--tinta-3); word-break: break-word; }
+.fluxo-p .aviso-p { color: var(--alerta); }
+.fluxo-recado { color: var(--erro); }
+.fluxo-acoes { display: flex; gap: 6px; flex-wrap: wrap; position: sticky; bottom: -8px; margin: 0 -10px -8px;
+               padding: 6px 10px 8px; background: var(--fundo-2); }
+.fluxo-quadro[data-estado="cancelado"] .fluxo-estado { color: var(--erro); }
+.fluxo-acoes .perigo:hover { border-color: var(--erro); color: var(--erro); }
+.fluxo-nota { font-size: 11px; color: var(--tinta-3); }
+.aprovacao .fluxo-passo .op { color: var(--tinta); }
+.menu-titulo { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--tinta-3); padding: 4px 10px 2px; }
+.receita-forma .receita-campo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11.5px; }
+.receita-forma .receita-campo .rot { flex-basis: 100%; color: var(--tinta-3); font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; }
+.receita-forma input, .receita-forma select {
+  flex: 1 1 160px; min-width: 0; background: var(--fundo); color: var(--tinta);
+  border: 1px solid var(--linha); border-radius: var(--raio); padding: 5px 7px; font-size: 12px;
+}
+
+/* ⭐ Os campos de CAMINHO das receitas: a lista do escolhido + o botão; o arrasto acende a caixa. */
+.receita-caminhos { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  border: 1px dashed var(--linha); border-radius: var(--raio); padding: 6px; }
+.receita-caminhos.realce { border-color: var(--externo); background: var(--externo-fundo); }
+.receita-itens { flex: 1 1 160px; display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.receita-item { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; background: var(--externo-fundo);
+  border: 1px solid var(--externo); border-radius: var(--raio); padding: 2px 4px 2px 7px; font-size: 11.5px;
+  color: var(--tinta); word-break: break-all; }
+.receita-tirar { background: none; border: none; color: var(--tinta-2); cursor: pointer; padding: 0 3px; }
+.receita-vazio { color: var(--tinta-3); font-size: 11.5px; }
+.receita-erro { color: var(--erro); font-size: 11.5px; flex-basis: 100%; }
+.receita-timeline { flex: 1 1 100%; display: flex; font-size: 11.5px; color: var(--tinta-2); }
+.receita-timeline select { flex: 1 1 auto; }
+
+/* ── a aba FLUXOS (2026-11-03) ───────────────────────────────────────────── */
+/* A tela é uma coluna: o quadro preso no alto, a conversa ocupando o resto (as boas-vindas no meio). */
+.tela-fluxos { display: flex; flex-direction: column; padding-top: 0; }
+.fluxos-quadro-lugar { flex: none; background: var(--fundo); max-height: 70vh; overflow-y: auto; padding: 0 12px; }
+.fluxo-pergunta { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.fluxo-pergunta .rot { color: var(--tinta); }
+.fluxo-pergunta textarea, .fluxo-pergunta input[type="text"] { width: 100%; box-sizing: border-box; font: inherit; color: var(--tinta); background: var(--fundo); border: 1px solid var(--borda, #4a4a4a); border-radius: 4px; padding: 4px 6px; }
+.fluxo-pergunta textarea { min-height: 40px; resize: vertical; }
+.fluxo-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.fluxo-regra { padding: 5px 7px; border: 1px solid var(--borda, #4a4a4a); border-radius: 4px; overflow-wrap: anywhere; }
+.fluxo-marca { display: flex; align-items: center; gap: 6px; }
+.fluxos-quadro-lugar.ativo { padding-top: 12px; }
+.fluxos-quadro-lugar.ativo .fluxo-quadro { margin-bottom: 4px; }
+.fluxos-conversa { display: flex; flex-direction: column; gap: 12px; flex: 1 0 auto; padding-top: 14px; }
+.fluxos-conversa > .boas-vindas[hidden] { display: none; }
+.exemplo .sub { display: block; margin-top: 2px; font-size: 11px; color: var(--tinta-3); }
+.fluxo-escolha { display: flex; gap: 6px; margin-top: 6px; }
+.fluxo-escolha .botao { flex: 1 1 0; }
+.fluxos-todos { background: none; border: none; color: var(--tinta-2); font-size: 11.5px; padding: 6px 2px;
+                cursor: pointer; text-decoration: underline; }
+.fluxos-todos:hover { color: var(--realce); }
+.fluxos-dica { margin: 10px 0 0; font-size: 11.5px; color: var(--tinta-3); }
+/* ⭐ A barra do passo que informa quanto andou (o sync do Sincronizar): a mesma régua do chat — só aparece
+   com fração de verdade. */
+.fluxo-barra { height: 4px; background: var(--fundo-3); border-radius: 2px; overflow: hidden; }
+.fluxo-barra i { display: block; height: 100%; width: 0; background: var(--realce); transition: width .25s ease-out; }
+.fluxo-receita { border: 1px solid var(--linha); border-radius: var(--raio); background: var(--fundo-2);
+                 padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
+                 font-size: 11.5px; color: var(--tinta-2); }
+.fluxo-receita-cab { display: flex; align-items: baseline; gap: 6px; width: 100%; }
+/* O ponto no botão da aba: correndo = realce; parado ou interrompido = erro; pausado = alerta. */
+.aba[data-estado]::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+                           margin-left: 5px; vertical-align: middle; background: var(--realce); }
+.aba[data-estado="correndo"]::after { background: var(--realce); }
+.aba[data-estado="esperando"]::after, .aba[data-estado="interrompido"]::after { background: var(--erro); }
+.aba[data-estado="pausado"]::after { background: var(--alerta); }
+
+/* A conversa redesenhada depois de a tela recomeçar (Reload, serviço religado): onde ela acaba. */
+.historico-fim{margin:6px 0 2px;text-align:center;font-size:11px;color:var(--tinta-3)}
+
+/* F4: a oferta de guardar o trabalho do chat como fluxo. */
+.oferta-fluxo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0;padding:8px 10px;
+  border:1px solid var(--realce);border-radius:6px;font-size:12.5px}
+.oferta-fluxo span{flex:1 1 220px}
+.oferta-fluxo .acoes{flex:none;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-left:auto}
+.exemplo.novo{border-color:var(--realce)}

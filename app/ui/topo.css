@@ -1,0 +1,36 @@
+/* O topo do guarda-chuva. ⚠️ A altura (36 + 40 = 76 px) é a `ALTURA_DO_TOPO` do `lib.rs`: as duas andam juntas. */
+:root { color-scheme: dark; --fundo: #1c1c1c; --tinta: #e6e6e6; --tinta-2: #a3a3a3; --realce: #4cc4b8; --ambar: #e0a84a;
+        --linha: #333; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 76px; overflow: hidden; background: var(--fundo); }
+body { font: 13px/1 "Segoe UI", system-ui, sans-serif; color: var(--tinta); -webkit-user-select: none; user-select: none; }
+.conexao { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 14px; }
+.conexao .texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--tinta-2); }
+.conexao .texto.no-ar { color: var(--tinta); }
+.ponto { width: 8px; height: 8px; border-radius: 50%; background: #666; flex: none; }
+.ponto.no-ar { background: var(--realce); }
+.ponto.fora { background: var(--ambar); }
+.abas { display: flex; align-items: stretch; height: 40px; border-bottom: 1px solid var(--linha); }
+.abas [data-aba] {
+  flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--tinta-2);
+  font: inherit; font-weight: 600; letter-spacing: .2px; cursor: pointer; padding: 0 4px;
+}
+.abas [data-aba]:hover { color: var(--tinta); }
+.abas [data-aba][aria-selected="true"] { color: var(--tinta); border-bottom-color: var(--realce); }
+.icone { flex: none; display: grid; place-items: center; width: 36px; background: none; border: 0; color: var(--tinta-2);
+         cursor: pointer; }
+.icone:hover { color: var(--tinta); }
+.icone svg { width: 16px; height: 16px; }
+/* Ligado: quadrado de cantos arredondados, com o pino vazado por cima, o formato do Órbita (autor, 2026-11-08). O
+   `margin-right` negativo alinha o quadrado de 26 px com a engrenagem, na coluna de 36 px de baixo. */
+.pino { width: 26px; height: 26px; margin-right: -1px; border: 1px solid transparent; border-radius: 5px; }
+.pino[aria-pressed="true"], .pino[aria-pressed="true"]:hover { color: #fff; background: #2a7f77; border-color: #2a7f77; }
+/* O aviso dos motores (o supervisor): âmbar e clicável quando um não subiu; discreto enquanto religa. */
+.aviso { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: none;
+         border: 1px solid var(--linha); border-radius: 10px; padding: 2px 9px; color: var(--tinta-2);
+         font: 12px/1.4 "Segoe UI", system-ui, sans-serif; cursor: default; }
+.aviso.falhou { color: var(--ambar); border-color: var(--ambar); cursor: pointer; }
+.abas [data-aba] { position: relative; }
+.abas [data-saude="falhou"]::after, .abas [data-saude="religando"]::after {
+  content: ""; position: absolute; top: 9px; right: 10px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ambar); }

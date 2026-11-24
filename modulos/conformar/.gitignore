@@ -1,0 +1,57 @@
+# Ambiente
+# ⚠️ Dois venvs, um por SO, e NÃO um só compartilhado: o disco atravessa as duas
+#    máquinas, e no Windows `.venv\Lib` e `.venv\lib` são a MESMA pasta (o Win32 é
+#    insensível à caixa mesmo em exFAT — medido). Um venv seria escrito dentro do outro.
+.venv/
+.venv-win/
+__pycache__/
+*.py[cod]
+build/
+dist/
+
+# Aplicativo Tauri (app/): 1,3 GB de artefato de compilação e esquemas gerados.
+app/src-tauri/target/
+app/src-tauri/gen/
+*.spec.bak
+
+# Empacotamento
+build.avpi
+plugins/*/painel/static/version.js
+
+# macOS + ExFAT (o volume não guarda metadado, então o Finder espalha AppleDouble)
+.DS_Store
+._*
+
+# Saídas de trabalho e material de teste
+saidas/
+*.aaf
+*.avb
+# os templates de bin do motor (sintéticos, /AVB_TEMPLATES/...): o app precisa deles para gerar .avb
+!motor/avb_export/templates/*.avb
+# os GABARITOS do MC (bins do próprio MC, 5 taxas) que tests/test_audio_taxas_do_mc.py compara
+!tests/dados/gabaritos_audio_mc/*.avb
+*.log
+bench_*.jsonl
+
+# Skill interna de Secure Development da Emissora (@emissora/secdev-skill).
+# Guia proprietário da empresa: fica só na máquina, nunca sobe para o GitLab
+# externo/público quando o projeto for publicado. Reinstalar com:
+# npx @emissora/secdev-skill --agent claude --yes
+.claude/skills/emissora-secdev-skill/
+# Aponta pro Artifactory privado da Emissora (registro @emissora, sem credencial) —
+# infra da skill acima, não é config do produto. Recriar com:
+# echo '@emissora:registry=https://artifactory.emissora.exemplo/artifactory/api/npm/npm-local/' > .npmrc
+.npmrc
+
+# Conhecimento de desenvolvimento — NUNCA vai para o repositório público.
+# Quarentena do que é privado (decisões com nome de cliente/produção real,
+# scripts de bancada que dependem de mídia real em disco). Fora do controle
+# de versão deste repo por escolha (mesmo padrão do Órbita) — segurança
+# contra um push acidental, não só exclusão do artefato publicado.
+.dev/
+
+# o motor montado (tools/montar_motor.py): vai no instalador, nunca no Git
+app/src-tauri/motor/
+
+# atalhos do autor para iniciar a sessão do Claude (locais)
+________claude-iniciar_*.bat

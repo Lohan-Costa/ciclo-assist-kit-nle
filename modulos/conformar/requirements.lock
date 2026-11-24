@@ -1,0 +1,30 @@
+# requirements.lock - versoes EXATAS do ambiente que roda hoje.
+#
+# ASCII PURO de proposito: o pip decodifica este arquivo com a codepage do sistema
+# quando nao ha BOM, e um caractere fora do ASCII pode torna-lo ILEGIVEL no Windows.
+# A explicacao completa esta em tools/lock.py, que gera este arquivo.
+#
+# Instalar:  pip install -r requirements.lock
+# Regerar :  python tools/lock.py     (NUNCA com `>` do PowerShell - ver tools/lock.py)
+#
+# Guia de Desenvolvimento Seguro, secao 4: lockfile e' obrigatorio, e nenhuma versao
+# publicada ha menos de 3 dias deve ser adotada (quarentena de cadeia de suprimentos).
+#
+# requirements.txt continua sendo a lista LEGIVEL (o que se pediu e por que);
+# este e' o que se INSTALA.
+ImageHash==4.3.2
+OpenTimelineIO==0.18.1
+PyWavelets==1.9.0
+ffmpeg-python==0.2.0
+future==1.0.0
+grpcio==1.83.0
+numpy==2.5.2
+opencv-python-headless==5.0.0.93
+pillow==12.3.0
+protobuf==7.35.1
+pyaaf2==1.7.1
+pyavb==1.4.0
+pymediainfo==7.0.1
+scipy==1.18.0
+typing_extensions==4.16.0
+zstandard==0.25.0

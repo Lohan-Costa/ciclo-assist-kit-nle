@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quem casa a mídia</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: memorando de engenharia, sóbrio. IDEA: a ficha de decisão. PICTURE: a tabela das pegadinhas.
+   COLOUR and TYPE: branco, tinta #10131a, prússia #0b4f8a; Literata. LAYOUT: uma coluna de leitura, tabela larga. */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0f1217);--ink:light-dark(#10131a,#e8eaee);--mute:light-dark(#5a6270,#9aa3b2);--rule:light-dark(#d9dde3,#2a303a);--ac:light-dark(#0b4f8a,#6fa8dc);--panel:light-dark(#f4f6f8,#171b22)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16.5px/1.6 Literata,Georgia,serif;overflow-x:clip}
+main{max-width:860px;margin:0 auto;padding:clamp(28px,4vw,56px) max(5vw,16px)}
+h1{font-weight:600;font-size:clamp(28px,3.8vw,40px);line-height:1.1;text-wrap:balance;margin:0 0 18px}
+h2{font-weight:600;font-size:22px;margin:34px 0 10px;color:var(--ac)}
+code{font-size:14px;background:var(--panel);padding:1px 5px;overflow-wrap:anywhere}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:8px 0 16px}th,td{text-align:left;padding:9px 10px 9px 0;border-top:1px solid var(--rule);vertical-align:top}th{color:var(--mute);font-size:14px}
+li{margin:5px 0}
+@media(max-width:600px){table{font-size:13px}}
+</style></head><body><main>
+<h1>Baselight: quem casa a mídia? — proposta de laboratório com pegadinhas (2026-11-22)</h1>
+<h2>A resposta curta</h2>
+<p><strong>Hoje quem casa é o Baselight</strong>, nos dois casos. O Ciclo Assist só entrega a montagem:</p>
+<ul>
+<li><strong>PRODUCAO-C:</strong> o nosso xmeml leva o caminho completo de cada arquivo, mas o <code>bl-conform</code> procura pelo NOME do arquivo (filtro &quot;Filename&quot;) dentro das pastas que passamos; o caminho que escrevemos não decide nada.
+<li><strong>PRODUCAO-A:</strong> o AAF do MC não tem caminho nenhum; o Baselight casou pelo nome do clipe / da fita (100 %).
+</ul>
+<p>A inteligência do Conformar — <strong>duração como veto</strong> (o seu critério: o proxy/offline acompanha a duração do original), identidade de essência (UMID), TC drop-frame lido certo, e o <strong>empate vai para o editor</strong> em vez de um palpite — **não participou**. Funcionou porque os nomes dos dois casos são únicos.</p>
+<h2>Onde o Baselight sozinho já tropeçou (medido)</h2>
+<ul>
+<li>PRODC (18ª rodada): com o in fora do arquivo, a variante do <code>--multiples</code> casou pelo tempo de GRAVAÇÃO (91 %) e trocou arquivos — calado.
+<li>O filtro &quot;None&quot; desiste com &quot;More than 20 events with massive ambiguity&quot;.
+<li>Ele escolhe a melhor variante pela % de eventos achados; não diz, evento a evento, por que escolheu aquele arquivo.
+<li>AAF com Locator: ele tira o prefixo do Locator e procura o resto do caminho nas pastas; pelo UID da Avid casou 0 %.
+</ul>
+<h2>Como garantir que os arquivos certos cheguem</h2>
+<p>&quot;Quem decide é o Ciclo; o Baselight obedece; depois a gente confere&quot;:</p>
+<ol>
+<li><strong>O Conformar casa</strong> (o matcher de sempre: nome, UMID, TC, duração como veto; ambíguo → o editor decide).
+<li><strong>Entrega sem margem de escolha</strong>: cada evento com o CAMINHO exato. Candidatos a medir no laboratório: o modelo de arquivo por fonte do <code>bl-conform</code> (<code>ft=</code> com <code>%D</code>/<code>%W</code>, a pasta e o nome do PRÓPRIO evento), um <code>--src</code> por pasta resolvida, ou nomes únicos por evento.
+<li><strong>Conferência depois do conform</strong>: pela FLAPI, o arquivo de cada plano × o que o Conformar decidiu. Diferente → trocar (o fundo já é trocado por BLG) ou marca &quot;[Ciclo]&quot; + o editor.
+</ol>
+<h2>A rodada de laboratório (mídia sintética, cada caso é uma ilha)</h2>
+<p>Receitas no <code>laboratorio-de-midia</code> — cada clipe mostra no quadro QUEM é (nome, câmera, duração, quadro) — e uma montagem no MC e outra no Premiere com as pegadinhas. Mede-se: <strong>Baselight sozinho × Ciclo decide + Baselight obedece + conferência</strong>.</p>
+<table><thead><tr><th>#</th><th>pegadinha</th><th>o que se espera do Ciclo</th></tr></thead><tbody><tr><td>P1</td><td>mesmo nome, TC zerado, durações diferentes (cartão A × B)</td><td>a duração separa</td></tr><tr><td>P2</td><td>mesmo nome, mesmo TC, mesma duração, conteúdo diferente</td><td>AMBÍGUO → o editor (nada de palpite)</td></tr><tr><td>P3</td><td>proxy com outra taxa (60p × 23,976) e duração arredondada</td><td>a duração em SEGUNDOS, com tolerância</td></tr><tr><td>P4</td><td>daily renomeado (nome ≠ do original)</td><td>UMID / TC + duração</td></tr><tr><td>P5</td><td>nome igual com caixa, acento NFD ou extensão diferentes</td><td>normalização do nome</td></tr><tr><td>P6</td><td>número no fim do nome (&quot;…_298.mov&quot;)</td><td>arquivo, não sequência</td></tr><tr><td>P7</td><td>rótulo DF × NDF</td><td>TC certo</td></tr><tr><td>P8</td><td>reel/tape vazio ou trocado</td><td>não depender da fita</td></tr><tr><td>P9</td><td>o mesmo clipe em duas pastas de dia (cópia idêntica)</td><td>qualquer uma serve — dizer qual</td></tr></tbody></table>
+<h2>Perguntas ao autor</h2>
+<ol>
+<li>A rodada entra AGORA (antes de fechar o PRODUCAO-A) ou depois do relatório final?
+<li>As pegadinhas da tabela cobrem o que você já viu em produção? Falta alguma (ex.: troca de câmera no meio do cartão)?
+<li>Se o Ciclo não conseguir forçar o caminho no <code>bl-conform</code>, aceitamos &quot;Baselight casa + Ciclo confere e corrige depois&quot;?
+</ol>
+<p style="color:var(--mute);font-size:14px">Fonte: <code>_CICLO ASSIST/docs/plano/2026-11-22-baselight-quem-casa-a-midia.md</code></p>
+</main></body></html>

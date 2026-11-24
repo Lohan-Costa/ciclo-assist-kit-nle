@@ -1,0 +1,127 @@
+<title>Atualizar corte no Baselight</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<style>
+.placar th, .placar td { vertical-align: middle; }
+.placar td.c { min-width: 110px; }
+.placar .nota { display: block; font-size: 13px; color: var(--ink-muted); margin-top: 4px; }
+.fluxo { display: grid; gap: 12px; }
+.decisao { display: grid; gap: 10px; }
+.decisao ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.rec { font-weight: 600; color: var(--teal-strong); }
+</style>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Ciclo Assist · Baselight · etapa 5 · medição e proposta</p>
+  <h1>A cor da v1 chega à montagem nova sem o colorista refazer</h1>
+  <div class="barra"></div>
+  <p class="lead">O laboratório <strong>BL09</strong> mediu, pela FLAPI do Baselight 7.0.3, quatro jeitos de levar a cor de uma scene já corrigida para a montagem v2. Dois deles acertam <strong>7 de 7 planos</strong> numa scene nova, sem tocar na scene do colorista. Um caso fica para decisão: o plano que o próprio colorista dividiu.</p>
+  <div class="numeros">
+    <div class="numero"><b>7 / 7</b><span>Multi-Paste por arquivo + TC</span></div>
+    <div class="numero"><b>7 / 7</b><span>cópia plano a plano pelo Ciclo</span></div>
+    <div class="numero"><b>5 / 7</b><span>só pelo nome: 2 erros calados</span></div>
+    <div class="numero"><b>0</b><span>aparar pela API: não existe</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">O laboratório</p><h2>Uma montagem v1 corrigida e uma v2 com uma mudança de cada tipo</h2></div>
+  <p style="max-width:72ch">Seis originais limpos do BL08, em 23,976. Na v1, cada plano recebeu uma cor que o identifica (um CDL com slope R = 1 + k/100, lido de volta do BLG); o S2 ganhou uma segunda camada e o S4, um marker do colorista. A v2 traz:</p>
+  <div class="grade">
+    <div class="card"><span class="selo">N1</span><h3>Plano novo</h3><p>Do mesmo arquivo de um plano retirado (S5), em outro trecho. Não deve receber cor.</p></div>
+    <div class="card"><span class="selo">S7 · S4 · S6</span><h3>Movido, aparado, estendido</h3><p>O S7 vai do fim para o começo; o S4 perde 12 quadros na cabeça e 6 na cauda; o S6 ganha 12 na cabeça. Os três mantêm a cor.</p></div>
+    <div class="card"><span class="selo">S3</span><h3>Take trocado</h3><p>C001C003 vira C001C004. Não deve herdar a cor do take antigo.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O placar</p><h2>O que chegou em cada plano, por via</h2></div>
+  <div class="legenda-marcas">
+    <span><i class="marca certo">ok</i> cor certa (ou nenhuma, quando era o certo)</span>
+    <span><i class="marca alerta">!</i> parcial, com aviso no log</span>
+    <span><i class="marca errado">×</i> cor errada, colada assim mesmo</span>
+  </div>
+  <div class="tabela">
+    <table class="placar">
+      <thead><tr><th>Plano da v2</th><th class="c">CopyGrades sobre uma cópia da v1</th><th class="c">Multi-Paste só pelo nome</th><th class="c">Multi-Paste arquivo + TC</th><th class="c">Cópia pelo Ciclo</th></tr></thead>
+      <tbody>
+        <tr><td>N1 · novo</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca errado">×</i><span class="nota">a cor do retirado</span></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S1 · só andou</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S7 · movido</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca errado">×</i><span class="nota">a cor do S2</span></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S2 · duas camadas</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S3 · take trocado</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S4 · aparado</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S6 · estendido</td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td><td class="c"><i class="marca certo">ok</i></td></tr>
+        <tr><td>S4 dividido pelo colorista, aparado na v2</td><td class="c"><i class="marca">a medir</i></td><td class="c">—</td><td class="c"><i class="marca alerta">!</i><span class="nota">uma cor só, a do 1º pedaço</span></td><td class="c"><i class="marca alerta">!</i><span class="nota">a do pedaço maior</span></td></tr>
+        <tr><td>O que sobra</td><td>a v1 inteira numa trilha cinza; o fim da v1 que passa da v2 entra no render; o marker fica no quadro de gravação, sobre outro plano</td><td>o log diz "Conflict!" e cola mesmo assim</td><td>scene limpa; o log diz quais planos ficaram sem cor e por quê; o marker do colorista não vai</td><td>scene limpa; o marker também não vai (ainda)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card aviso"><p class="eyebrow">Fora da conta</p><p>Editar a scene do colorista no lugar não é possível pela API: a FLAPI apaga e insere planos, mas <strong>não apara</strong>. E o <span class="cod">--CopyGrades</span> do <span class="cod">bl-conform</span> numa scene nova não tem de onde copiar: ele só copia dos planos que já estão na scene de destino.</p></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">No Baselight</p><h2>As duas scenes que acertaram, vistas na interface</h2></div>
+  <div class="telas duas">
+    <figure><a href="copygrades.jpg"><img src="copygrades.jpg" alt="Baselight: scene com a v1 em cinza na Track 1 e a v2 em verde na Track 2, com camadas de cor"></a><figcaption class="muted">CopyGrades por cima de uma cópia da v1: a v2 entra na Track 2 com a cor; a v1 continua na Track 1.</figcaption></figure>
+    <figure><a href="multipaste.jpg"><img src="multipaste.jpg" alt="Baselight: scene com uma faixa só, cinco planos com Layer e dois sem"></a><figcaption class="muted">Multi-Paste: uma faixa só; o plano novo (1) e o take trocado (5) sem cor, os outros com a cor da v1.</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Proposta</p><h2>Como o Ciclo atualiza o corte no Baselight</h2></div>
+  <ol class="passos">
+    <li><strong>A v2 chega</strong> pela Carta Aberta ou pelo De Lá Pra Cá, com o pedido "Atualizar" e a scene do colorista indicada (o job aberto da etapa 4 aponta qual).</li>
+    <li><strong>Conform da v2 numa scene nova</strong> do mesmo job, "· import 02", pelo caminho que já fecha o BL08: casamento com os originais, conferência e troca. A scene do colorista não é tocada.</li>
+    <li><strong>A cor vem pelo Multi-Paste</strong>, executado pelo Ciclo pela FLAPI, casando por <strong>arquivo + TC</strong>. É a ferramenta que o colorista já conhece, e o log dela vira o relatório.</li>
+    <li><strong>A conferência do Ciclo</strong> lê a cor de cada plano e compara com a comparação Carta v1 × Carta v2 do motor de atualizar. Plano com cor que não devia ter, ou sem a que devia, é corrigido pela cópia do BLG (a outra via que deu 7 de 7).</li>
+    <li><strong>O que o Multi-Paste não leva</strong>, o Ciclo leva: os markers do colorista, reposicionados pela fonte.</li>
+    <li><strong>O resumo</strong> no painel e markers "[Ciclo]" nos planos sem cor: "plano novo na v2", "take trocado: a cor do take antigo não foi aplicada".</li>
+  </ol>
+  <div class="card"><p class="eyebrow">Por que não só pelo nome</p><p>Pelo nome do arquivo, o Baselight escolhe sozinho entre planos do mesmo arquivo. No BL09 o plano novo herdou a cor de um plano que saiu da montagem. O casamento leva sempre o tempo (TC ou número de quadro).</p></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Decidido pelo autor (22/11) e implementado</p><h2>As três recomendações foram aprovadas</h2></div>
+  <div class="card acao"><p class="eyebrow">No app</p><p>Em <strong>Opções avançadas › no Baselight › Levar a cor de uma scene</strong>, o colorista escolhe a scene dele; a montagem nova entra numa scene nova com a cor conferida plano a plano. Pelo painel, no BL09: <strong>8 de 8 planos conferidos</strong>, o plano dividido cortado no mesmo quadro de fonte (cada metade com a sua cor), um marker do colorista levado e um que ficou para trás (o trecho saiu da montagem), dois planos sem cor com marker "[Ciclo]". Com um Multi-Paste errado de propósito, a conferência corrigiu os dois planos (7 de 7).</p></div>
+  <div class="card acao"><p class="eyebrow">Cor animada e look (22/11, depois)</p><p><strong>Cor animada:</strong> os keyframes ficam presos à fonte também quando a cor vem pela cópia do Ciclo (o Multi-Paste já fazia; a cópia escorregava 12 quadros e foi corrigida). <strong>Look sobre vários planos:</strong> como foi decidido pelo autor, a faixa vai também ao plano novo e ao take trocado que caem dentro dela — só essa camada, conferida; a cor própria do plano fica com o colorista, com marker. BL09: take trocado 7 de 7, plano novo dentro do look 5 de 5. No caminho, o conform passou a fixar o tempo de fonte (numa timeline curta o Baselight casava pela gravação).</p></div>
+  <div class="grade">
+    <div class="card decisao"><span class="selo">1 · aprovado</span><h3>Plano que o colorista dividiu</h3>
+      <ul>
+        <li><span class="rec">Cortar o plano da v2 no mesmo quadro da fonte</span>, e cada metade herda a sua cor. É um ponto de edição a mais, e nenhum quadro muda.</li>
+        <li>Ou a cor do pedaço maior, com marker.</li>
+        <li>Ou sem cor, com marker, e o colorista decide.</li>
+      </ul></div>
+    <div class="card decisao"><span class="selo">2 · aprovado</span><h3>Os markers do colorista</h3>
+      <ul>
+        <li><span class="rec">Levar para a scene nova, no mesmo quadro da fonte</span>; marker de plano retirado vira nota no resumo.</li>
+        <li>Ou não levar.</li>
+      </ul></div>
+    <div class="card decisao"><span class="selo">3 · aprovado</span><h3>Quem aplica a cor</h3>
+      <ul>
+        <li><span class="rec">Multi-Paste do Baselight, com a conferência do Ciclo</span> corrigindo o que discordar.</li>
+        <li>Ou só a cópia do Ciclo plano a plano, sem o Multi-Paste.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">A medir depois</p><h2>O que o BL09 ainda não cobre</h2></div>
+  <ul class="limpa">
+    <li>Cor com keyframes num plano aparado.</li>
+    <li>Uma faixa de cor que cobre vários planos (o "look" da cena).</li>
+    <li>Grupos, e a multitrilha da edição achatada pelo colorista.</li>
+    <li>O render da cor voltando dentro da v2.</li>
+    <li>O caso real: uma atualização da PRODUCAO-A ou do PRODUCAO-C.</li>
+  </ul>
+</section>
+
+<footer class="rodape">
+  <span>Laboratório BL09 · bancada <span class="cod">lab/bancadas/baselight/atualizar_corte.py</span></span>
+  <span>Baselight 7.0.3 · macOS · 22/11/2026</span>
+</footer>
+</main>

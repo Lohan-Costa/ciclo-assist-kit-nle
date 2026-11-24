@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "o_que_e": "Termos EQUIVALENTES entre portugues e ingles (e girias do set), nos dois sentidos. Cada grupo tem um PREFERIDO em portugues: e a palavra que a decupagem deve escrever, e a busca aceita qualquer uma do grupo.",
+    "por_que": "2026-09-22: o editor procurou 'claquete' e nao achou nada; a decupagem tinha escrito 'clapperboard' (39 notas no acervo contra 2 'claquete'). Pedido dele: um dicionario ABERTO, completado a medida que os casos aparecerem.",
+    "como_completar": "Acrescente um grupo com 'preferido' (portugues, como o editor fala), 'tambem' (TODAS as outras formas que a busca deve aceitar: ingles, giria, grafias) e, se houver, 'evitar' (as formas que a DECUPAGEM nao deve escrever -- entram na instrucao do modelo). Ex.: 'lapela' e portugues legitimo: esta em 'tambem', nao em 'evitar'. Acento tanto faz: a busca compara sem acento. Evite palavras curtas e genericas (ver 'mar' em intencao.py: sozinho casava 36% do acervo).",
+    "atualizado": "2026-09-22",
+    "genero": "'genero': 'f' ou 'm' quando o modelo erra o artigo (medido: o qwen3-vl escreveu 'um claquete'); a instrucao passa a dizer 'a claquete'."
+  },
+  "grupos": [
+    {
+      "preferido": "claquete",
+      "tambem": [
+        "clapperboard",
+        "clapboard",
+        "slate",
+        "claque"
+      ],
+      "evitar": [
+        "clapperboard",
+        "slate"
+      ],
+      "genero": "f"
+    },
+    {
+      "preferido": "notebook",
+      "tambem": [
+        "laptop"
+      ],
+      "evitar": [
+        "laptop"
+      ]
+    },
+    {
+      "preferido": "celular",
+      "tambem": [
+        "smartphone",
+        "telefone celular"
+      ],
+      "evitar": [
+        "smartphone"
+      ]
+    },
+    {
+      "preferido": "tripé",
+      "tambem": [
+        "tripod"
+      ],
+      "evitar": [
+        "tripod"
+      ]
+    },
+    {
+      "preferido": "estabilizador",
+      "tambem": [
+        "gimbal"
+      ],
+      "evitar": [
+        "gimbal"
+      ]
+    },
+    {
+      "preferido": "microfone de lapela",
+      "tambem": [
+        "lapela",
+        "lavalier"
+      ],
+      "evitar": [
+        "lavalier"
+      ]
+    },
+    {
+      "preferido": "fundo verde",
+      "tambem": [
+        "chroma",
+        "chroma key",
+        "green screen"
+      ],
+      "evitar": [
+        "green screen",
+        "chroma key"
+      ]
+    },
+    {
+      "preferido": "câmera lenta",
+      "tambem": [
+        "slow motion",
+        "slow-motion"
+      ],
+      "evitar": [
+        "slow motion"
+      ],
+      "genero": "f"
+    },
+    {
+      "preferido": "boom",
+      "tambem": [
+        "vara de boom",
+        "microfone boom",
+        "perche"
+      ],
+      "evitar": []
+    },
+    {
+      "preferido": "contraluz",
+      "tambem": [
+        "contra-luz",
+        "contra luz",
+        "backlight"
+      ],
+      "evitar": [
+        "backlight"
+      ]
+    },
+    {
+      "preferido": "desfocado",
+      "tambem": [
+        "desfoque",
+        "fora de foco",
+        "blur",
+        "borrado"
+      ],
+      "evitar": [
+        "blur"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,778 @@
+<title>Janela Fluxos e Agentes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Protótipo da janela no visual do produto: cinzas escuros, verde-água do programa, âmbar do que ainda decide. Tema único, escuro, como o app. */
+:root {
+  color-scheme: dark;
+  --fundo: #2b2b2b; --barra: #1f1f1f; --painel: #242424; --tela: #262626; --linha: #3f3f3f; --alca: #5a5a5a;
+  --tinta: #e2e2e2; --tinta-2: #b8b8b8; --verde: #2a7f77; --realce: #4cc4b8; --ambar: #d9a95a; --selecao: #3a3a3a;
+  --texto: "Segoe UI", -apple-system, system-ui, sans-serif;
+  --mono: "Cascadia Mono", Menlo, Consolas, monospace;
+  --lateral: 220px; --chat: 296px; --fluxos: 50%;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: #181818; color: var(--tinta); font: 13px/1.45 var(--texto); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 28px; }
+.dica { max-width: 1440px; margin: 0 auto 12px; color: var(--tinta-2); font-size: 14px; }
+.rolagem { max-width: 1440px; margin: 0 auto; overflow-x: auto; border: 1px solid var(--linha); border-radius: 8px; }
+.janela { min-width: 1080px; height: 760px; display: flex; flex-direction: column; background: var(--fundo); }
+.topo { height: 40px; flex: none; display: flex; align-items: center; padding: 0 16px; background: var(--barra); border-bottom: 1px solid var(--linha); font-weight: 600; }
+.corpo { flex: 1; min-height: 0; display: flex; }
+button { font: inherit; color: inherit; }
+
+.lateral { width: var(--lateral); flex: none; display: flex; flex-direction: column; background: var(--painel); min-height: 0; }
+.metade { min-height: 0; padding: 14px 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+#metadeFluxos { flex: 0 0 var(--fluxos); }
+#metadeAgentes { flex: 1 1 0; }
+.metade h2 { margin: 0; padding: 0 4px; font-size: 13px; font-weight: 600; }
+.lista { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.item { width: 100%; flex: none; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px; background: none; color: #d0d0d0; cursor: pointer; user-select: none; }
+.item:hover { background: #2e2e2e; }
+.item.selecionado { background: var(--selecao); }
+.item.aberto { background: var(--verde); color: #fff; font-weight: 600; }
+.acoes-lista { flex: none; display: flex; flex-direction: column; gap: 6px; }
+.tracejado { min-height: 36px; border: 1.5px dashed #5f5f5f; border-radius: 8px; background: none; color: var(--tinta-2); cursor: pointer; }
+.tracejado:hover { border-color: var(--realce); color: var(--tinta); }
+
+/* As alças: área de pegar maior que o traço. */
+.alca-v { position: relative; flex: none; width: 1px; background: var(--linha); cursor: col-resize; touch-action: none; }
+.alca-v::before { content: ""; position: absolute; inset: 0 -4px; }
+.alca-v::after { content: ""; position: absolute; left: -2px; top: 50%; width: 5px; height: 32px; margin-top: -16px; border-radius: 3px; background: var(--alca); }
+.alca-h { position: relative; flex: none; height: 1px; background: var(--linha); cursor: row-resize; touch-action: none; }
+.alca-h::before { content: ""; position: absolute; inset: -4px 0; }
+.alca-h::after { content: ""; position: absolute; left: 50%; top: -2px; width: 32px; height: 5px; margin-left: -16px; border-radius: 3px; background: var(--alca); }
+.alca-v:hover::after, .alca-h:hover::after { background: var(--realce); }
+
+.centro { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cabeca { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-bottom: 1px solid var(--linha); }
+.cabeca h1 { margin: 0; font-size: 17px; font-weight: 600; }
+.selo { padding: 1px 8px; border: 1px solid var(--alca); border-radius: 9px; color: var(--tinta-2); font-size: 11.5px; }
+.selo.editando { border-color: var(--ambar); color: var(--ambar); }
+.espaco { flex: 1; }
+.botao { padding: 7px 13px; border: 1px solid var(--alca); border-radius: 6px; background: #333; color: var(--tinta); cursor: pointer; }
+.botao.principal { border-color: var(--realce); background: var(--verde); color: #fff; font-weight: 600; }
+
+.botao:disabled { background: var(--fundo); border-color: #4a4a4a; color: var(--tinta-2); cursor: default; }
+
+/* A tela: arrastar no vazio move o quadro (a mão); o plano recebe translate e scale. */
+.tela-nodes { flex: 1; min-height: 0; position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; background-color: var(--tela); background-image: radial-gradient(#3a3a3a 1px, transparent 1px); background-size: 18px 18px; }
+.tela-nodes.movendo { cursor: grabbing; }
+.plano { position: absolute; left: 0; top: 0; width: 1px; height: 1px; transform-origin: 0 0; }
+.plano svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+/* O node cresce na horizontal, conforme o texto; a altura é fixa e o conteúdo fica centrado nela. */
+.node { position: absolute; min-width: 150px; height: 64px; padding: 0 14px; display: flex; flex-direction: column; justify-content: center; white-space: nowrap; border-radius: 8px; border: 1px solid #4a4a4a; background: #333; cursor: default; }
+.node.ia { border: 1.5px solid var(--realce); background: #2d3a38; }
+.node.duvida { border: 1.5px dashed var(--ambar); background: #3a3326; }
+.node.sel { box-shadow: 0 0 0 2px #e2e2e2; }
+.node.alvo { box-shadow: 0 0 0 2px var(--realce); }
+.node.correndo { box-shadow: 0 0 0 2px var(--ambar); }
+.node.pronto { box-shadow: 0 0 0 2px var(--realce); }
+.node b { display: block; font-weight: 600; font-size: 12.5px; }
+.node small { display: block; color: var(--tinta-2); font-size: 11px; margin-top: 2px; }
+.rotulo { position: absolute; color: var(--ambar); font-size: 11px; white-space: nowrap; pointer-events: none; transform: translate(-50%, -50%); background: var(--tela); padding: 0 3px; }
+
+/* O nó de ligação só aparece com o node selecionado E o mouse em cima. */
+.porta { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--realce); border: 2px solid #1f1f1f; cursor: crosshair; opacity: 0; pointer-events: none; }
+.node.sel:hover .porta { opacity: 1; pointer-events: auto; }
+.porta.n { left: 50%; top: -6px; margin-left: -5.5px; }
+.porta.s { left: 50%; bottom: -6px; margin-left: -5.5px; }
+.porta.e { right: -6px; top: 50%; margin-top: -5.5px; }
+.porta.w { left: -6px; top: 50%; margin-top: -5.5px; }
+
+.canto { position: absolute; bottom: 14px; display: flex; align-items: center; gap: 4px; cursor: default; }
+.canto.esq { left: 14px; }
+.canto.dir { right: 14px; padding: 3px; border: 1px solid var(--linha); border-radius: 8px; background: var(--painel); }
+.quadrado { width: 30px; height: 30px; border: 1px solid var(--alca); border-radius: 6px; background: #333; color: var(--tinta); font-size: 16px; line-height: 1; cursor: pointer; }
+.canto.dir .quadrado { border: 0; background: none; }
+.canto.dir .quadrado:hover { background: var(--selecao); }
+.nivel { min-width: 44px; text-align: center; color: var(--tinta-2); font-variant-numeric: tabular-nums; font-size: 12px; }
+.menu-mais { position: absolute; left: 0; bottom: 38px; min-width: 160px; padding: 4px; border: 1px solid var(--linha); border-radius: 8px; background: var(--painel); }
+.menu-mais button { width: 100%; padding: 7px 10px; border: 0; border-radius: 5px; background: none; text-align: left; cursor: pointer; white-space: nowrap; }
+.menu-mais button:hover { background: var(--selecao); }
+.andamento { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); padding: 5px 12px; border-radius: 12px; background: var(--painel); border: 1px solid var(--linha); color: var(--tinta-2); font-size: 12px; white-space: nowrap; cursor: default; }
+
+.editor { flex: 1; min-height: 0; overflow-y: auto; background: var(--tela); font: 12.5px/20px var(--mono); }
+.editor.editando { box-shadow: inset 0 0 0 1px var(--realce); }
+.linha { display: flex; padding: 1px 0; }
+.linha:nth-child(even) { background: #2c2c2c; }
+.num { flex: none; width: 46px; padding-right: 12px; text-align: right; color: #9a9a9a; user-select: none; font-variant-numeric: tabular-nums; }
+.txt { flex: 1; min-width: 0; padding-right: 20px; white-space: pre-wrap; word-break: break-word; color: #dcdcdc; min-height: 20px; outline: none; }
+.editor.editando .linha:focus-within { background: #31403e; }
+
+.chat { width: var(--chat); flex: none; display: flex; flex-direction: column; background: var(--painel); min-width: 0; }
+.chat header { padding: 14px 16px; border-bottom: 1px solid var(--linha); font-weight: 600; }
+.abas { flex: none; display: flex; border-bottom: 1px solid var(--linha); }
+.abas button { flex: 1; padding: 13px 8px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--tinta-2); cursor: pointer; }
+.abas button.ativa { color: var(--tinta); font-weight: 600; border-bottom-color: var(--realce); }
+.props { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.props h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.props .vazio { margin: auto; text-align: center; color: var(--tinta-2); }
+.campo { display: flex; flex-direction: column; gap: 5px; }
+.campo-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.campo-topo label { color: var(--tinta); }
+.origem { max-width: 150px; padding: 1px 2px; border: 1px solid #4a4a4a; border-radius: 4px; background: var(--painel); color: var(--tinta-2); font: 11.5px var(--texto); }
+.valor { width: 100%; height: 32px; padding: 0 9px; border: 1px solid var(--alca); border-radius: 6px; background: #333; color: var(--tinta); font: inherit; }
+.valor:disabled { background: var(--fundo); border-color: #4a4a4a; color: var(--tinta-2); }
+.travado { color: var(--tinta-2); font-size: 11.5px; }
+.nota { color: var(--tinta-2); font-size: 12px; }
+.chip-no { flex: none; display: flex; align-items: center; gap: 6px; margin: 0 14px 12px; padding: 4px 6px 4px 10px; align-self: flex-start; max-width: calc(100% - 28px); border: 1px solid #2f5f5a; border-radius: 12px; color: var(--realce); font-size: 12px; }
+.chip-no span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip-no button { border: 0; background: none; color: var(--tinta-2); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px; }
+.proposta { padding: 10px 12px; border: 1px solid #6b5426; border-radius: 8px; background: #3a3326; display: flex; flex-direction: column; gap: 8px; }
+.proposta .botoes { display: flex; gap: 6px; }
+.proposta.decidida { border-color: var(--linha); background: none; color: var(--tinta-2); }
+.cartao-lig { flex: none; border: 1px solid var(--linha); border-radius: 8px; }
+.cartao-lig > button { width: 100%; display: flex; align-items: center; gap: 7px; padding: 8px 10px; border: 0; background: none; color: var(--tinta); text-align: left; cursor: pointer; font-weight: 600; font-size: 12.5px; }
+.cartao-lig > button svg { flex: none; transition: transform .12s; }
+.cartao-lig > button[aria-expanded="true"] svg { transform: rotate(90deg); }
+.cartao-lig > button .conta { margin-left: auto; color: var(--tinta-2); font-weight: 400; font-size: 11.5px; }
+.lig-corpo { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 5px; }
+.lig-nota { padding: 0 2px 2px; color: var(--tinta-2); font-size: 12px; }
+.ligacao { width: 100%; padding: 6px 9px; border: 1px solid #4a4a4a; border-radius: 6px; background: #333; text-align: left; cursor: pointer; user-select: none; }
+.ligacao:hover { border-color: var(--realce); }
+.ligacao b { display: block; font-weight: 600; font-size: 12.5px; }
+.ligacao small { display: block; color: var(--tinta-2); font-size: 11.5px; }
+.conversa { flex: 1; min-height: 0; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.minha { align-self: flex-end; max-width: 240px; padding: 9px 12px; border-radius: 8px; background: var(--selecao); }
+.dele { color: #d0d0d0; }
+.espera { margin: auto; text-align: center; color: var(--tinta-2); }
+.compositor { padding: 12px 14px; border-top: 1px solid var(--linha); display: flex; gap: 8px; align-items: flex-end; }
+.compositor textarea { display: block; flex: 1; min-width: 0; height: 38px; max-height: 132px; padding: 8px 11px; border: 1px solid var(--alca); border-radius: 6px; background: #333; color: var(--tinta); font: inherit; line-height: 20px; resize: none; overflow-y: hidden; }
+.compositor button { width: 40px; height: 38px; border: 0; border-radius: 6px; background: var(--verde); color: #fff; font-size: 15px; }
+.compositor :disabled { background: var(--fundo); color: var(--tinta-2); border-color: #4a4a4a; }
+.compositor button:disabled { background: var(--selecao); }
+.so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+</style>
+
+<p class="dica">Protótipo. Na lista, um clique seleciona e dois abrem. Na tela de nodes, arraste o vazio para mover o quadro. Clique duas vezes num node para ver os parâmetros. Selecione e passe o mouse para puxar uma ligação. Clique numa linha ou node e use Delete para apagar. As execuções são simuladas.</p>
+
+<div class="rolagem">
+<div class="janela">
+  <div class="topo">Fluxos e Agentes</div>
+  <div class="corpo" id="corpo">
+    <aside class="lateral" aria-label="Fluxos e agentes">
+      <section class="metade" id="metadeFluxos">
+        <h2>Fluxos de trabalho</h2>
+        <div class="lista" id="listaFluxos"></div>
+        <div class="acoes-lista">
+          <button type="button" class="tracejado">Criar Fluxo de Trabalho</button>
+          <button type="button" class="tracejado">Importar Fluxo de Trabalho</button>
+        </div>
+      </section>
+      <div class="alca-h" id="alcaMetades" role="separator" aria-orientation="horizontal" aria-label="Dividir Fluxos e Agentes"></div>
+      <section class="metade" id="metadeAgentes">
+        <h2>Agentes de IA</h2>
+        <div class="lista" id="listaAgentes"></div>
+        <div class="acoes-lista">
+          <button type="button" class="tracejado">Criar Agente de IA</button>
+          <button type="button" class="tracejado">Importar Agente de IA</button>
+        </div>
+      </section>
+    </aside>
+    <div class="alca-v" id="alcaLateral" role="separator" aria-orientation="vertical" aria-label="Largura da lateral"></div>
+    <main class="centro" id="centro"></main>
+    <div class="alca-v" id="alcaChat" role="separator" aria-orientation="vertical" aria-label="Largura do chat"></div>
+    <aside class="chat" id="chat" aria-label="Chat"></aside>
+  </div>
+</div>
+</div>
+
+<script>
+"use strict";
+var NO_L = 150, NO_A = 64, proximoId = 100;
+function grafo(nos, fios) {
+  return { nos: nos.map(function (n) { return { id: n[0], nome: n[1], det: n[2], x: n[3], y: n[4], tipo: n[5] || "" }; }),
+           fios: fios.map(function (f) { var d = f[2] || {}; return { de: f[0], para: f[1], tracejado: !!d.t, rotulo: d.r || "", pula: !!d.pula, saida: d.saida || "", entrada: d.entrada || "" }; }),
+           vista: { x: 0, y: 0, z: 1 }, sel: null };
+}
+var PREMIERE = grafo(
+  [["a","Pasta da diária","entrada",24,250],["b","Converter para proxy","ProRes Proxy · 1080",224,130],["c","Separar o som direto","WAV da pasta",224,370],["d","Importar no Premiere","câmera e som",424,250],["e","Agente de metadado","IA · propõe o padrão",624,250,"ia"],["f","Sincronizar","CAM A e SOM DIRETO",844,130],["g","Perguntar ao editor","para e espera",844,370,"duvida"],["h","Criar merged clips","soltos como subclipe",844,30]],
+  [["a","b"],["a","c"],["b","d"],["c","d"],["d","e"],["e","f",{t:1,r:"entendeu"}],["e","g",{t:1,r:"tem dúvida",pula:1}],["g","e",{t:1,r:"volta com a resposta",pula:1,saida:"s",entrada:"s"}],["f","h"]]);
+/* O que cada node pede e entrega. `o`: fixo · perguntar (ao executar) · node (vem de outro node) · travado (a operação não deixa mudar). */
+var DETALHES = {
+  a: { entrega: "pasta", campos: [{ r: "Pasta da diária", o: "perguntar", v: "" }] },
+  b: { entrega: "a pasta dos proxies", campos: [
+    { r: "Projeto do Resolve", o: "perguntar", v: "" },
+    { r: "Pasta dos vídeos", o: "node", v: "" },
+    { r: "Onde salvar os proxies", o: "perguntar", v: "" },
+    { r: "Codec", o: "travado", v: "ProRes Proxy" },
+    { r: "Altura", o: "travado", v: "1080" }] },
+  c: { entrega: "os WAV da diária", campos: [{ r: "Pasta do som", o: "node", v: "" }] },
+  d: { entrega: "as bins importadas", campos: [
+    { r: "Modo", o: "perguntar", v: "" },
+    { r: "Proxies", o: "node", v: "" },
+    { r: "Bin de destino", o: "fixo", v: "D01" }] },
+  e: { agente: true, entrega: "regras e perguntas", campos: [{ r: "Material", o: "node", v: "" }] },
+  f: { entrega: "a sequência sincronizada", campos: [
+    { r: "Câmera", o: "fixo", v: "CAM A" },
+    { r: "Som", o: "fixo", v: "SOM DIRETO" }] },
+  g: { entrega: "as respostas do editor", campos: [] },
+  h: { entrega: "os merged clips", campos: [{ r: "Bin de destino", o: "fixo", v: "CENAS" }] }
+};
+PREMIERE.nos.forEach(function (n) { n.detalhe = DETALHES[n.id]; });
+function emLinha(passos) {
+  var nos = passos.map(function (p, i) { return ["n" + i, p[0], p[1], 24 + (i % 4) * 230, 50 + Math.floor(i / 4) * 130, p[2]]; });
+  var fios = passos.slice(1).map(function (_, i) { return ["n" + i, "n" + (i + 1)]; });
+  return grafo(nos, fios);
+}
+var FLUXOS = [
+  { nome: "Conformar no DaVinci Resolve", g: emLinha([["Abrir programa","DaVinci Resolve"],["Conformar no Resolve","De Lá Pra Cá"]]) },
+  { nome: "Preparar a diária no Media Composer", g: emLinha([["Abrir programa","DaVinci Resolve"],["Converter para OP-Atom","no Resolve"],["Fechar programa","DaVinci Resolve"],["Abrir programa","Media Composer"],["Importar masters","câmera"],["Som direto gerenciado","WAV da pasta"],["Agente de revisão","IA · confere as fontes","ia"],["Sincronizar","no Media Composer"],["Salvar tudo","projeto"]]) },
+  { nome: "Preparar a diária no Premiere", g: PREMIERE }
+];
+var AGENTES = [
+  { nome: "Agente de metadado", chat: ["Peça para ele nunca perguntar sobre os canais.", "Acrescentei a regra na linha 17. O texto do agente já está atualizado."], texto: ["---","name: agente-de-metadado","titulo: Agente de metadado","description: Entende como uma produção nomeia o som direto e propõe regras por forma de nome, perguntando só o que não dá para saber.","tipo: conselheiro","entradas: {\"diaria\": \"texto\", \"formas\": \"lista\", \"ja_resolvido\": \"objeto\", \"pastas\": \"lista\", \"notas\": \"lista\", \"canais\": \"lista\", \"memoria\": \"objeto\"}","saida: {\"regras\": \"lista\", \"perguntas\": \"lista\", \"fora\": \"lista\"}","---","","## Instrução","","Você é o agente de metadado de um assistente de montagem. Recebe só o som direto que o programa NÃO conseguiu ler sozinho, resumido.","","O que chega:","- `formas`: cada forma é um nome de arquivo com os números trocados por `#`, com a contagem e amostras dos campos SCENE e TAKE.","- `ja_resolvido`: as formas e os rótulos que o programa já sabe ler. Não pergunte sobre eles.","- `pastas`, `notas` e `canais`: contexto. Não pergunte sobre canais.","- `memoria`: o que o editor já explicou e o que ele disse não saber. Nunca pergunte de novo.","","Tarefa: dizer como ler episódio, cena, plano e take de cada forma, e perguntar o que não dá para saber.","","Como escrever uma regra:","- Proponha por FORMA, nunca valores por arquivo.","- O `molde` é a forma copiada caractere a caractere, com cada `#` que você sabe ler trocado por `{campo}`.","- Número que você não sabe ler continua `#`.","- Toda regra precisa dizer qual é a cena."] },
+  { nome: "Agente de revisão de fontes", chat: ["O que este agente confere?", "Antes do sync, ele vê se cada fonte declarada faz sentido como um único equipamento."], texto: ["---","name: agente-de-revisao-de-fontes","titulo: Agente de revisão de fontes","description: Confere, antes do sync de um fluxo, se cada fonte declarada faz sentido como um único equipamento.","tipo: conselheiro","entradas: {\"diaria\": \"texto\", \"fontes\": \"lista\"}","saida: {\"coerente\": \"sim_nao\", \"motivo\": \"texto\", \"pergunta\": \"texto\"}","---","","## Instrução","","Você é o revisor de um fluxo automático de assistência de montagem. Uma diária vai ser sincronizada: cada fonte declarada","é UM equipamento, uma câmera ou um gravador de som. Decida se a organização faz sentido, olhando os nomes das fontes, as","bins e os nomes dos arquivos.","","É incoerente quando: uma fonte de câmera mistura arquivos de dois equipamentos; há arquivo claramente de som numa fonte de","câmera ou o contrário; duas fontes são claramente o mesmo equipamento; ou as fontes não têm relação com a diária pedida.","Não é incoerente: números de cartão, contador, datas ou sufixos diferentes dentro do mesmo padrão de nome."] }
+];
+
+var selecionado = null, aberto = FLUXOS[2], editando = false;
+var centro = document.getElementById("centro"), chat = document.getElementById("chat");
+function el(tag, classe, texto) { var e = document.createElement(tag); if (classe) { e.className = classe; } if (texto !== undefined) { e.textContent = texto; } return e; }
+function botao(rotulo, classe, acao) { var b = el("button", classe, rotulo); b.type = "button"; if (acao) { b.addEventListener("click", acao); } return b; }
+function eAgente(i) { return AGENTES.indexOf(i) >= 0; }
+
+function lista(idDaLista, itens) {
+  var caixa = document.getElementById(idDaLista);
+  caixa.textContent = "";
+  itens.forEach(function (i) {
+    var b = botao(i.nome, "item");
+    b.dataItem = i;
+    // ⛔ O clique só troca a classe: redesenhar a lista aqui destruía o botão antes do segundo clique, e o duplo clique nunca chegava.
+    b.addEventListener("click", function () { selecionado = i; marcarListas(); });
+    b.addEventListener("dblclick", function () { aberto = i; selecionado = i; editando = false; desenhar(); });
+    caixa.appendChild(b);
+  });
+}
+function marcarListas() {
+  Array.prototype.forEach.call(document.querySelectorAll(".item"), function (b) {
+    b.className = "item" + (b.dataItem === aberto ? " aberto" : b.dataItem === selecionado ? " selecionado" : "");
+  });
+}
+function desenharListas() { lista("listaFluxos", FLUXOS); lista("listaAgentes", AGENTES); marcarListas(); }
+
+var SVG = "http://www.w3.org/2000/svg", DIR = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+var quadro = null, btnTestarNode = null, timers = [];
+
+function pontoDe(n, lado) {
+  var l = n.l || NO_L;
+  return { n: [n.x + l / 2, n.y], s: [n.x + l / 2, n.y + NO_A], e: [n.x + l, n.y + NO_A / 2], w: [n.x, n.y + NO_A / 2] }[lado];
+}
+function ladosDe(a, b, f) {
+  if (f.saida) { return [f.saida, f.entrada || "w"]; }
+  if (b.x >= a.x + (a.l || NO_L)) { return ["e", "w"]; }
+  if (b.y >= a.y + NO_A) { return ["s", "n"]; }
+  if (a.y >= b.y + NO_A) { return ["n", "s"]; }
+  return ["w", "e"];
+}
+function curva(p1, l1, p2, l2) {
+  var dist = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+  var d = l1 === l2 ? Math.max(90, dist / 3) : Math.max(24, Math.min(80, dist / 2));
+  return "M" + p1[0] + " " + p1[1] + " C" + (p1[0] + DIR[l1][0] * d) + " " + (p1[1] + DIR[l1][1] * d) + " " + (p2[0] + DIR[l2][0] * d) + " " + (p2[1] + DIR[l2][1] * d) + " " + p2[0] + " " + p2[1];
+}
+function noPorId(g, id) { return g.nos.filter(function (n) { return n.id === id; })[0]; }
+
+function desenharFios() {
+  var q = quadro;
+  q.svg.textContent = "";
+  q.rotulos.textContent = "";
+  q.g.nos.forEach(function (n) { var d = q.els[n.id]; if (d && d.offsetWidth) { n.l = d.offsetWidth; } });
+  q.g.fios.forEach(function (f) {
+    var a = noPorId(q.g, f.de), b = noPorId(q.g, f.para);
+    if (!a || !b) { return; }
+    var l = ladosDe(a, b, f), p1 = pontoDe(a, l[0]), p2 = pontoDe(b, l[1]);
+    var p = document.createElementNS(SVG, "path");
+    p.setAttribute("d", curva(p1, l[0], p2, l[1])); p.setAttribute("fill", "none"); p.setAttribute("stroke-width", "1.6");
+    var marcada = q.g.selFio === f;
+    p.setAttribute("stroke", marcada ? "#ffffff" : f.tracejado ? "#d9a95a" : "#7a7a7a");
+    if (marcada) { p.setAttribute("stroke-width", "2.4"); }
+    if (f.tracejado) { p.setAttribute("stroke-dasharray", "5 4"); }
+    q.svg.appendChild(p);
+    // A linha visível é fina demais para o mouse: uma cópia larga e invisível recebe o clique.
+    var pega = document.createElementNS(SVG, "path");
+    pega.setAttribute("d", p.getAttribute("d")); pega.setAttribute("fill", "none"); pega.setAttribute("stroke", "transparent"); pega.setAttribute("stroke-width", "14");
+    pega.style.pointerEvents = "stroke"; pega.style.cursor = "pointer";
+    pega.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      q.g.sel = null; q.g.selFio = f; q.menu.hidden = true; marcarSel(); desenharFios();
+    });
+    q.svg.appendChild(pega);
+    if (f.rotulo) {
+      var d = el("div", "rotulo", f.rotulo), desce = l[0] === l[1] ? 92 : 0;
+      d.style.left = (p1[0] + p2[0]) / 2 + "px"; d.style.top = (p1[1] + p2[1]) / 2 + desce + "px";
+      q.rotulos.appendChild(d);
+    }
+  });
+}
+function aplicarVista() {
+  var q = quadro, v = q.g.vista;
+  q.plano.style.transform = "translate(" + v.x + "px," + v.y + "px) scale(" + v.z + ")";
+  q.tela.style.backgroundSize = 18 * v.z + "px " + 18 * v.z + "px";
+  q.tela.style.backgroundPosition = v.x + "px " + v.y + "px";
+  q.nivel.textContent = Math.round(v.z * 100) + "%";
+}
+function mudarZoom(passo) {
+  var q = quadro, v = q.g.vista, z = Math.max(0.3, Math.min(2, Math.round((v.z + passo) * 10) / 10));
+  var cx = q.tela.clientWidth / 2, cy = q.tela.clientHeight / 2;
+  v.x = cx - (cx - v.x) * z / v.z; v.y = cy - (cy - v.y) * z / v.z; v.z = z;
+  aplicarVista();
+}
+function marcarSel() {
+  var q = quadro;
+  Object.keys(q.els).forEach(function (id) { q.els[id].classList.toggle("sel", id === q.g.sel); });
+  if (btnTestarNode) { btnTestarNode.disabled = !q.g.sel; }
+}
+function noPlano(e) {
+  var r = quadro.tela.getBoundingClientRect(), v = quadro.g.vista;
+  return [(e.clientX - r.left - v.x) / v.z, (e.clientY - r.top - v.y) / v.z];
+}
+function seguir(elemento, e, mover, soltar) {
+  elemento.setPointerCapture(e.pointerId);
+  function aoMover(ev) { mover(ev); }
+  function fim(ev) { elemento.removeEventListener("pointermove", aoMover); elemento.removeEventListener("pointerup", fim); elemento.removeEventListener("pointercancel", fim); if (soltar) { soltar(ev); } }
+  elemento.addEventListener("pointermove", aoMover); elemento.addEventListener("pointerup", fim); elemento.addEventListener("pointercancel", fim);
+}
+function puxarLigacao(n, lado, porta, e) {
+  var q = quadro, inicio = pontoDe(n, lado);
+  var linha = document.createElementNS(SVG, "path");
+  linha.setAttribute("fill", "none"); linha.setAttribute("stroke", "#4cc4b8"); linha.setAttribute("stroke-width", "1.6");
+  q.svg.appendChild(linha);
+  function alvoEm(ev) { var a = document.elementFromPoint(ev.clientX, ev.clientY); a = a && a.closest ? a.closest(".node") : null; return a && a !== q.els[n.id] ? a : null; }
+  function limparAlvo() { Object.keys(q.els).forEach(function (id) { q.els[id].classList.remove("alvo"); }); }
+  seguir(porta, e, function (ev) {
+    var p = noPlano(ev), outro = lado === "e" ? "w" : lado === "w" ? "e" : lado === "n" ? "s" : "n";
+    linha.setAttribute("d", curva(inicio, lado, p, outro));
+    limparAlvo();
+    var a = alvoEm(ev);
+    if (a) { a.classList.add("alvo"); }
+  }, function (ev) {
+    limparAlvo();
+    var a = alvoEm(ev), id = a ? a.dataset.id : null;
+    if (id && !q.g.fios.some(function (f) { return f.de === n.id && f.para === id; })) {
+      q.g.fios.push({ de: n.id, para: id, tracejado: false, rotulo: "", pula: false, saida: "", entrada: "" });
+      if (abaDireita === "props") { desenharChat(); }
+    }
+    desenharFios();
+  });
+}
+function criarNo(n) {
+  var q = quadro, d = el("div", "node" + (n.tipo ? " " + n.tipo : ""));
+  d.dataset.id = n.id; d.style.left = n.x + "px"; d.style.top = n.y + "px";
+  d.appendChild(el("b", "", n.nome)); d.appendChild(el("small", "", n.det));
+  ["n", "e", "s", "w"].forEach(function (lado) {
+    var p = el("span", "porta " + lado);
+    p.addEventListener("pointerdown", function (e) { e.stopPropagation(); e.preventDefault(); puxarLigacao(n, lado, p, e); });
+    d.appendChild(p);
+  });
+  d.addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    q.g.sel = n.id; marcarSel(); q.menu.hidden = true; limparFio();
+    var ini = noPlano(e), x0 = n.x, y0 = n.y;
+    seguir(d, e, function (ev) {
+      var p = noPlano(ev);
+      n.x = x0 + p[0] - ini[0]; n.y = y0 + p[1] - ini[1];
+      d.style.left = n.x + "px"; d.style.top = n.y + "px";
+      desenharFios();
+    });
+  });
+  // ⭐ Como na lista: um clique seleciona, dois abrem. Aqui o que abre são os parâmetros, no painel direito.
+  d.addEventListener("dblclick", function () { noAberto = n; abaDireita = "props"; desenharChat(); });
+  q.els[n.id] = d;
+  q.nos.appendChild(d);
+}
+function limparFio() { if (quadro.g.selFio) { quadro.g.selFio = null; desenharFios(); } }
+function adicionarNo() {
+  var q = quadro, v = q.g.vista;
+  var n = { id: "novo" + (proximoId++), nome: "Novo node", det: "escolha a operação", tipo: "",
+            x: (q.tela.clientWidth / 2 - v.x) / v.z - NO_L / 2, y: (q.tela.clientHeight / 2 - v.y) / v.z - NO_A / 2 };
+  q.g.nos.push(n); criarNo(n); q.g.sel = n.id; q.menu.hidden = true; marcarSel(); limparFio();
+}
+function apagarSelecionado() {
+  var q = quadro, id = q.g.sel;
+  if (q.g.selFio) {
+    q.g.fios = q.g.fios.filter(function (f) { return f !== q.g.selFio; });
+    q.g.selFio = null; desenharFios();
+    if (noAberto) { desenharChat(); }
+    return;
+  }
+  if (!id) { return; }
+  q.g.nos = q.g.nos.filter(function (n) { return n.id !== id; });
+  q.g.fios = q.g.fios.filter(function (f) { return f.de !== id && f.para !== id; });
+  q.els[id].remove(); delete q.els[id];
+  q.g.sel = null; marcarSel(); desenharFios();
+  if (noAberto && noAberto.id === id) { noAberto = null; }
+  var estavaNoChat = noNoChat && noNoChat.id === id;
+  if (estavaNoChat) { noNoChat = null; }
+  if (abaDireita === "props" || estavaNoChat) { desenharChat(); }
+}
+function pararTeste() {
+  timers.forEach(clearTimeout); timers = [];
+  if (quadro) {
+    Object.keys(quadro.els).forEach(function (id) { quadro.els[id].classList.remove("correndo", "pronto"); });
+    quadro.andamento.hidden = true;
+  }
+}
+function simular(ids) {
+  var q = quadro;
+  pararTeste();
+  q.andamento.hidden = false;
+  ids.forEach(function (id, i) {
+    var n = noPorId(q.g, id);
+    timers.push(setTimeout(function () {
+      if (i) { q.els[ids[i - 1]].classList.remove("correndo"); q.els[ids[i - 1]].classList.add("pronto"); }
+      q.els[id].classList.add("correndo");
+      q.andamento.textContent = "Executando: " + n.nome;
+    }, i * 500));
+  });
+  timers.push(setTimeout(function () {
+    q.els[ids[ids.length - 1]].classList.remove("correndo"); q.els[ids[ids.length - 1]].classList.add("pronto");
+    q.andamento.textContent = "Execução concluída (simulação)";
+  }, ids.length * 500));
+}
+function ordemDoFluxo(g) {
+  var validos = g.fios.filter(function (f) { return !f.pula; });
+  var fila = g.nos.filter(function (n) { return !validos.some(function (f) { return f.para === n.id; }); }).map(function (n) { return n.id; });
+  var vistos = {}, ordem = [];
+  while (fila.length) {
+    var id = fila.shift();
+    if (vistos[id]) { continue; }
+    if (validos.some(function (f) { return f.para === id && !vistos[f.de] && g.nos.some(function (n) { return n.id === f.de; }); }) && fila.length) { fila.push(id); continue; }
+    vistos[id] = true; ordem.push(id);
+    validos.forEach(function (f) { if (f.de === id) { fila.push(f.para); } });
+  }
+  return ordem;
+}
+function testarFluxo() { var o = ordemDoFluxo(quadro.g); if (o.length) { simular(o); } }
+function testarNode() { if (quadro.g.sel) { simular([quadro.g.sel]); } }
+
+function telaDeNodes(g) {
+  var tela = el("div", "tela-nodes"), plano = el("div", "plano");
+  var svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("width", "1"); svg.setAttribute("height", "1"); svg.setAttribute("aria-hidden", "true");
+  var rotulos = el("div"), nos = el("div");
+  plano.appendChild(svg); plano.appendChild(rotulos); plano.appendChild(nos);
+  tela.appendChild(plano);
+
+  var esq = el("div", "canto esq"), menu = el("div", "menu-mais");
+  menu.hidden = true;
+  menu.appendChild(botao("Adicionar Node", "", adicionarNo));
+  var mais = botao("+", "quadrado", function () { menu.hidden = !menu.hidden; });
+  mais.setAttribute("aria-label", "Mais opções");
+  esq.appendChild(menu); esq.appendChild(mais); tela.appendChild(esq);
+
+  var dir = el("div", "canto dir"), nivel = el("span", "nivel");
+  var menos = botao("−", "quadrado", function () { mudarZoom(-0.1); }); menos.setAttribute("aria-label", "Diminuir zoom");
+  var maisZ = botao("+", "quadrado", function () { mudarZoom(0.1); }); maisZ.setAttribute("aria-label", "Aumentar zoom");
+  dir.appendChild(menos); dir.appendChild(nivel); dir.appendChild(maisZ); tela.appendChild(dir);
+
+  var andamento = el("div", "andamento"); andamento.hidden = true; tela.appendChild(andamento);
+  quadro = { g: g, tela: tela, plano: plano, svg: svg, rotulos: rotulos, nos: nos, nivel: nivel, menu: menu, andamento: andamento, els: {} };
+  g.nos.forEach(criarNo);
+
+  tela.addEventListener("pointerdown", function (e) {
+    if (e.target !== tela && e.target !== plano) { return; }
+    e.preventDefault();
+    var ini = [e.clientX, e.clientY], x0 = g.vista.x, y0 = g.vista.y, moveu = false;
+    tela.classList.add("movendo"); menu.hidden = true;
+    seguir(tela, e, function (ev) {
+      if (Math.abs(ev.clientX - ini[0]) + Math.abs(ev.clientY - ini[1]) > 3) { moveu = true; }
+      g.vista.x = x0 + ev.clientX - ini[0]; g.vista.y = y0 + ev.clientY - ini[1];
+      aplicarVista();
+    }, function () {
+      tela.classList.remove("movendo");
+      if (!moveu) { g.sel = null; marcarSel(); limparFio(); }
+    });
+  });
+  desenharFios(); aplicarVista(); marcarSel();
+  return tela;
+}
+
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Delete" && e.key !== "Backspace") { return; }
+  var a = e.target;
+  if (!quadro || !quadro.tela.isConnected || !(quadro.g.sel || quadro.g.selFio) || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable) { return; }
+  e.preventDefault();
+  apagarSelecionado();
+});
+
+function editorDeTexto(ag) {
+  var ed = el("div", "editor" + (editando ? " editando" : ""));
+  ag.texto.forEach(function (t, i) {
+    var l = el("div", "linha");
+    l.appendChild(el("span", "num", String(i + 1)));
+    var txt = el("span", "txt", t);
+    if (editando) {
+      txt.setAttribute("contenteditable", "plaintext-only");
+      txt.setAttribute("spellcheck", "false");
+      txt.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); } });
+    }
+    l.appendChild(txt);
+    ed.appendChild(l);
+  });
+  return ed;
+}
+
+function salvarEdicao(ag) {
+  ag.texto = Array.prototype.map.call(centro.querySelectorAll(".txt"), function (t) { return t.textContent; });
+  editando = false; desenhar();
+}
+
+function desenharCentro() {
+  pararTeste();
+  quadro = null; noAberto = null; abaDireita = "chat"; noNoChat = null; conversaNo = [];
+  centro.textContent = "";
+  var cab = el("div", "cabeca");
+  cab.appendChild(el("h1", "", aberto.nome));
+  var ag = eAgente(aberto);
+  if (ag) { cab.appendChild(el("span", "selo" + (editando ? " editando" : ""), editando ? "editando" : "somente leitura")); }
+  cab.appendChild(el("span", "espaco"));
+  if (ag && editando) {
+    cab.appendChild(botao("Cancelar", "botao", function () { editando = false; desenhar(); }));
+    cab.appendChild(botao("Salvar", "botao principal", function () { salvarEdicao(aberto); }));
+  } else {
+    if (!ag) {
+      btnTestarNode = botao("Executar node", "botao", testarNode);
+      cab.appendChild(btnTestarNode);
+      cab.appendChild(botao("Executar fluxo", "botao", testarFluxo));
+    }
+    cab.appendChild(botao("Compartilhar", "botao"));
+    cab.appendChild(ag ? botao("Editar", "botao principal", function () { editando = true; desenhar(); }) : botao("Salvar fluxo", "botao principal"));
+  }
+  centro.appendChild(cab);
+  centro.appendChild(ag ? editorDeTexto(aberto) : telaDeNodes(aberto.g));
+  if (quadro) { desenharFios(); enquadrarNaPrimeiraVez(); }
+}
+
+/* Na primeira abertura, o fluxo inteiro cabe na tela; depois vale o zoom e a posição que o editor deixou. */
+function enquadrarNaPrimeiraVez() {
+  var q = quadro, g = q.g, folga = 32;
+  if (g.enquadrado || !g.nos.length) { return; }
+  g.enquadrado = true;
+  var x0 = Math.min.apply(null, g.nos.map(function (n) { return n.x; })), y0 = Math.min.apply(null, g.nos.map(function (n) { return n.y; }));
+  var x1 = Math.max.apply(null, g.nos.map(function (n) { return n.x + (n.l || NO_L); })), y1 = Math.max.apply(null, g.nos.map(function (n) { return n.y + NO_A; }));
+  var w = q.tela.clientWidth - folga * 2, h = q.tela.clientHeight - folga * 2 - 40;
+  var z = Math.max(0.3, Math.min(1, Math.floor(Math.min(w / (x1 - x0), h / (y1 - y0)) * 10) / 10));
+  g.vista.z = z;
+  g.vista.x = (q.tela.clientWidth - (x1 - x0) * z) / 2 - x0 * z;
+  g.vista.y = (q.tela.clientHeight - 40 - (y1 - y0) * z) / 2 - y0 * z;
+  aplicarVista();
+}
+
+var abaDireita = "chat", noAberto = null;
+
+function entradasPossiveis(n) {
+  return quadro.g.fios.filter(function (f) { return f.para === n.id; }).map(function (f) {
+    var a = noPorId(quadro.g, f.de), d = a && a.detalhe;
+    return a ? a.nome + " · " + (d ? d.entrega : "saída") : "";
+  }).filter(Boolean);
+}
+function campoDoNo(n, c, i) {
+  var caixa = el("div", "campo"), topo = el("div", "campo-topo");
+  var id = "campo-" + n.id + "-" + i, rot = el("label", "", c.r);
+  rot.htmlFor = id;
+  topo.appendChild(rot);
+  if (c.o === "travado") {
+    topo.appendChild(el("span", "travado", "fixo nesta operação"));
+  } else {
+    var sel = document.createElement("select");
+    sel.className = "origem"; sel.setAttribute("aria-label", "De onde vem: " + c.r);
+    [["fixo", "Valor fixo"], ["perguntar", "Perguntar ao executar"], ["node", "De outro node"]].forEach(function (o) {
+      var op = el("option", "", o[1]); op.value = o[0]; sel.appendChild(op);
+    });
+    sel.value = c.o;
+    sel.addEventListener("change", function () { c.o = sel.value; desenharChat(); });
+    topo.appendChild(sel);
+  }
+  caixa.appendChild(topo);
+  if (c.o === "node") {
+    var fontes = entradasPossiveis(n), s2 = document.createElement("select");
+    s2.className = "valor"; s2.id = id;
+    (fontes.length ? fontes : ["Ligue um node a este"]).forEach(function (t) { s2.appendChild(el("option", "", t)); });
+    s2.disabled = !fontes.length;
+    caixa.appendChild(s2);
+  } else {
+    var ent = document.createElement("input");
+    ent.className = "valor"; ent.id = id; ent.value = c.v;
+    ent.disabled = c.o !== "fixo";
+    if (c.o === "perguntar") { ent.value = ""; ent.placeholder = "Será pedido ao executar"; }
+    ent.addEventListener("input", function () { c.v = ent.value; });
+    caixa.appendChild(ent);
+  }
+  return caixa;
+}
+/* Recolher vale para os próximos nodes: quem fechou o card não quer reabrir a cada um. */
+var cartoesAbertos = { entrada: true, saida: true };
+
+function irParaNo(alvo) {
+  var q = quadro, v = q.g.vista, l = alvo.l || NO_L;
+  noAberto = alvo; q.g.sel = alvo.id; marcarSel(); limparFio();
+  var x = alvo.x * v.z + v.x, y = alvo.y * v.z + v.y, W = q.tela.clientWidth, H = q.tela.clientHeight;
+  if (x < 20 || y < 20 || x + l * v.z > W - 20 || y + NO_A * v.z > H - 70) {
+    v.x = W / 2 - (alvo.x + l / 2) * v.z; v.y = H / 2 - (alvo.y + NO_A / 2) * v.z; aplicarVista();
+  }
+  desenharChat();
+}
+function linhaDeLigacao(alvo, sub) {
+  var b = botao("", "ligacao");
+  b.title = "Clique duas vezes para ir até este node";
+  b.appendChild(el("b", "", alvo.nome));
+  if (sub) { b.appendChild(el("small", "", sub)); }
+  b.addEventListener("dblclick", function () { irParaNo(alvo); });
+  return b;
+}
+function cartaoDeLigacoes(tipo, n) {
+  var entra = tipo === "entrada", g = quadro.g;
+  var fios = g.fios.filter(function (f) { return (entra ? f.para : f.de) === n.id && noPorId(g, entra ? f.de : f.para); });
+  var caixa = el("div", "cartao-lig"), cab = botao("", "");
+  var seta = document.createElementNS(SVG, "svg");
+  seta.setAttribute("width", "9"); seta.setAttribute("height", "9"); seta.setAttribute("viewBox", "0 0 9 9"); seta.setAttribute("aria-hidden", "true");
+  var ponta = document.createElementNS(SVG, "path");
+  ponta.setAttribute("d", "M2.5 1 7 4.5 2.5 8"); ponta.setAttribute("fill", "none"); ponta.setAttribute("stroke", "#b8b8b8"); ponta.setAttribute("stroke-width", "1.5");
+  seta.appendChild(ponta); cab.appendChild(seta);
+  cab.appendChild(el("span", "", entra ? "Recebe" : "Entrega"));
+  cab.appendChild(el("span", "conta", fios.length ? fios.length + (fios.length > 1 ? " ligações" : " ligação") : "nenhuma"));
+  cab.setAttribute("aria-expanded", cartoesAbertos[tipo] ? "true" : "false");
+  cab.addEventListener("click", function () { cartoesAbertos[tipo] = !cartoesAbertos[tipo]; desenharChat(); });
+  caixa.appendChild(cab);
+  if (cartoesAbertos[tipo]) {
+    var corpo = el("div", "lig-corpo"), o_que = n.detalhe ? n.detalhe.entrega : "";
+    if (!entra && o_que && fios.length) { corpo.appendChild(el("div", "lig-nota", o_que + ", para:")); }
+    if (!fios.length) { corpo.appendChild(el("div", "lig-nota", entra ? "Nada chega aqui: este node inicia o caminho." : "Nada sai daqui: este node encerra o caminho.")); }
+    fios.forEach(function (f) {
+      var outro = noPorId(g, entra ? f.de : f.para), sub;
+      if (entra) { sub = outro.detalhe ? "entrega " + outro.detalhe.entrega : ""; if (f.rotulo) { sub += (sub ? " · " : "") + f.rotulo; } }
+      else { sub = f.rotulo ? "quando: " + f.rotulo : ""; }
+      corpo.appendChild(linhaDeLigacao(outro, sub));
+    });
+    caixa.appendChild(corpo);
+  }
+  return caixa;
+}
+function painelDoNo() {
+  var p = el("div", "props"), n = noAberto;
+  if (!n) { p.appendChild(el("p", "vazio", "Clique duas vezes em um node para ver os parâmetros dele.")); return p; }
+  p.appendChild(cartaoDeLigacoes("entrada", n));
+  p.appendChild(el("h3", "", n.nome));
+  var d = n.detalhe;
+  if (!d) {
+    p.appendChild(el("p", "nota", "Os campos deste node vêm da operação dele. Neste protótipo, veja o fluxo do Premiere."));
+  } else {
+    d.campos.forEach(function (c, i) { p.appendChild(campoDoNo(n, c, i)); });
+    if (!d.campos.length) { p.appendChild(el("p", "nota", "Este node não tem parâmetros.")); }
+    if (d.agente) { p.appendChild(botao("Abrir agente", "botao", function () { aberto = AGENTES[0]; selecionado = aberto; desenhar(); })); }
+  }
+  p.appendChild(botao("Ajustar no chat", "botao", function () { noNoChat = n; abaDireita = "chat"; desenharChat(); var e = document.getElementById("mensagem"); if (e) { e.focus(); } }));
+  p.appendChild(cartaoDeLigacoes("saida", n));
+  return p;
+}
+
+/* O node carregado no chat. Simulado: o programa de verdade manda o node ao modelo, e a mudança volta como proposta para aceitar. */
+var noNoChat = null, conversaNo = [];
+function enviarSobreNo(texto) {
+  if (!noNoChat || !texto.trim()) { return; }
+  var t = texto.toLowerCase(), alvo = /\d{3,4}|resolu|tamanho|altura/.test(t) ? "Altura" : "Codec";
+  var campo = noNoChat.detalhe && noNoChat.detalhe.campos.filter(function (c) { return c.r === alvo; })[0];
+  if (!campo) {
+    conversaNo.push({ minha: texto, dele: "Neste protótipo, experimente no Converter para proxy: peça outro codec ou outra resolução." });
+  } else {
+    conversaNo.push({ minha: texto, proposta: { n: noNoChat, campo: campo, novo: alvo === "Altura" ? (t.match(/\d{3,4}/) || ["720"])[0] : "ProRes 422 LT", estado: "" } });
+  }
+  desenharChat();
+}
+function decidirProposta(p, aceitou) {
+  p.estado = aceitou ? "aceita" : "recusada";
+  if (aceitou) {
+    p.campo.v = p.novo;
+    var cs = p.n.detalhe.campos, v = function (r) { return cs.filter(function (c) { return c.r === r; })[0].v; };
+    p.n.det = v("Codec") + " · " + v("Altura");
+    if (quadro && quadro.els[p.n.id]) { quadro.els[p.n.id].querySelector("small").textContent = p.n.det; desenharFios(); }
+  }
+  desenharChat();
+}
+function blocoDaProposta(p) {
+  var b = el("div", "proposta" + (p.estado ? " decidida" : ""));
+  var quem = (p.n.tipo === "ia" ? "agente " : "node ") + p.n.nome;
+  b.appendChild(el("div", "", p.estado === "aceita" ? "No " + quem + ", " + p.campo.r + " mudou para " + p.novo + "." : p.estado === "recusada" ? "Mudança recusada. O " + quem + " não foi alterado." :
+    "No " + quem + ", proponho mudar " + p.campo.r + " de " + p.campo.v + " para " + p.novo + ". A conferência passa a esperar o novo valor."));
+  if (!p.estado) {
+    var f = el("div", "botoes");
+    f.appendChild(botao("Aceitar", "botao principal", function () { decidirProposta(p, true); }));
+    f.appendChild(botao("Recusar", "botao", function () { decidirProposta(p, false); }));
+    b.appendChild(f);
+  }
+  return b;
+}
+
+function desenharChat() {
+  var ag = eAgente(aberto);
+  chat.textContent = "";
+  if (ag) {
+    chat.appendChild(el("header", "", "Alterar com o chat"));
+  } else {
+    var abas = el("div", "abas");
+    [["chat", "Chat"], ["props", "Propriedades"]].forEach(function (a) {
+      abas.appendChild(botao(a[1], abaDireita === a[0] ? "ativa" : "", function () { abaDireita = a[0]; desenharChat(); }));
+    });
+    chat.appendChild(abas);
+    if (abaDireita === "props") { chat.appendChild(painelDoNo()); return; }
+  }
+  var c = el("div", "conversa");
+  if (editando) {
+    c.appendChild(el("p", "espera", "Você está editando o texto. Salve ou cancele para voltar a alterar pelo chat."));
+  } else {
+    var msgs = ag ? aberto.chat : ["Quero preparar a diária com proxy e conferir os metadados antes do sync.", "Montei o fluxo. Se o agente de metadado tiver dúvida, o caminho desce para a sua resposta e volta a ele."];
+    c.appendChild(el("div", "minha", msgs[0])); c.appendChild(el("div", "dele", msgs[1]));
+    if (!ag) {
+      conversaNo.forEach(function (m) {
+        c.appendChild(el("div", "minha", m.minha));
+        c.appendChild(m.proposta ? blocoDaProposta(m.proposta) : el("div", "dele", m.dele));
+      });
+    }
+  }
+  chat.appendChild(c);
+  c.scrollTop = c.scrollHeight;   // a última mensagem, ou a proposta a aceitar, sempre à vista
+  var carregado = !ag && !editando && noNoChat;
+  if (carregado) {
+    var chip = el("div", "chip-no");
+    chip.appendChild(el("span", "", (noNoChat.tipo === "ia" ? "agente: " : "node: ") + noNoChat.nome));
+    var tirar = botao("×", "", function () { noNoChat = null; desenharChat(); });
+    tirar.setAttribute("aria-label", "Tirar o node do chat");
+    chip.appendChild(tirar);
+    chat.appendChild(chip);
+  }
+  var f = el("div", "compositor");
+  var rot = document.createElement("label"); rot.style.cssText = "flex:1;min-width:0;display:flex";
+  rot.appendChild(el("span", "so-leitor", "Mensagem"));
+  var ent = document.createElement("textarea"); ent.id = "mensagem"; ent.rows = 1; ent.disabled = editando;
+  // Cresce com o texto até o teto; só então aparece a rolagem, sempre vertical.
+  ent.addEventListener("input", function () {
+    ent.style.height = "auto";
+    var h = Math.min(ent.scrollHeight + 2, 132);
+    ent.style.height = h + "px";
+    ent.style.overflowY = ent.scrollHeight + 2 > 132 ? "auto" : "hidden";
+  });
+  ent.placeholder = editando ? "Chat em espera" : ag ? "Descreva a mudança..." : carregado ? "O que mudar neste node?" : "Descreva o fluxo...";
+  rot.appendChild(ent); f.appendChild(rot);
+  var env = botao("→", "", function () { enviarSobreNo(ent.value); }); env.setAttribute("aria-label", "Enviar"); env.disabled = editando; f.appendChild(env);
+  // ⚠️ A rolagem é acertada de novo com o compositor na tela: ele toma altura da conversa.
+  setTimeout(function () { c.scrollTop = c.scrollHeight; }, 0);
+  ent.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviarSobreNo(ent.value); } });
+  chat.appendChild(f);
+}
+function desenhar() { desenharListas(); desenharCentro(); desenharChat(); }
+
+function arrastar(alca, mover) {
+  alca.addEventListener("pointerdown", function (e) {
+    e.preventDefault(); alca.setPointerCapture(e.pointerId);
+    function aoMover(ev) { mover(ev); }
+    function soltar() { alca.removeEventListener("pointermove", aoMover); alca.removeEventListener("pointerup", soltar); alca.removeEventListener("pointercancel", soltar); }
+    alca.addEventListener("pointermove", aoMover); alca.addEventListener("pointerup", soltar); alca.addEventListener("pointercancel", soltar);
+  });
+}
+function limitar(v, a, b) { return Math.max(a, Math.min(b, v)); }
+var raiz = document.documentElement, corpo = document.getElementById("corpo");
+arrastar(document.getElementById("alcaLateral"), function (e) { raiz.style.setProperty("--lateral", limitar(e.clientX - corpo.getBoundingClientRect().left, 190, 420) + "px"); });
+arrastar(document.getElementById("alcaChat"), function (e) { raiz.style.setProperty("--chat", limitar(corpo.getBoundingClientRect().right - e.clientX, 240, 520) + "px"); });
+arrastar(document.getElementById("alcaMetades"), function (e) { var r = corpo.getBoundingClientRect(); raiz.style.setProperty("--fluxos", limitar((e.clientY - r.top) / r.height * 100, 28, 72) + "%"); });
+desenhar();
+</script>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baselight: relatório da etapa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: relatório de laboratório — sóbrio, medido, conclusão primeiro.
+   IDEA: a prancha de conferência — referência à esquerda, Baselight à direita, o número embaixo.
+   PICTURE: o par do arco (03 s), a máscara sobre máscara, grande no primeiro ecrã.
+   COLOUR and TYPE: branco, tinta #10131a, carmim #c1121f (o que falta), prússia #0b4f8a (o que confere); Literata.
+   LAYOUT: título e números à esquerda, prancha à direita; depois cadeia, pranchas, marcas, achados, próximos passos. */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0f1217);--ink:light-dark(#10131a,#e8eaee);--mute:light-dark(#5a6270,#9aa3b2);
+--rule:light-dark(#d9dde3,#2a303a);--ok:light-dark(#0b4f8a,#6fa8dc);--no:light-dark(#c1121f,#ff6b6b);--panel:light-dark(#f4f6f8,#171b22)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16.5px/1.6 Literata,Georgia,serif;overflow-x:clip}
+.band{padding:clamp(28px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-weight:600;font-size:clamp(30px,4.2vw,46px);line-height:1.08;text-wrap:balance;margin:0 0 14px}
+h2{font-weight:600;font-size:clamp(22px,2.6vw,30px);line-height:1.15;margin:0 0 14px;text-wrap:balance}
+p{margin:0 0 12px;max-width:70ch}
+.mute{color:var(--mute)}
+.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(20px,3vw,44px);align-items:center}
+.nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 24px;margin-top:22px}
+.num b{display:block;font-size:clamp(30px,3.6vw,42px);line-height:1;font-weight:600;color:var(--ok);white-space:nowrap}
+.num span{font-size:14px;color:var(--mute)}
+figure{margin:0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--rule)}
+figcaption{font-size:14px;color:var(--mute);margin-top:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lr{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:28px}
+ol.cad{list-style:none;padding:0;margin:0;display:grid;gap:0;counter-reset:c}
+ol.cad li{counter-increment:c;display:grid;grid-template-columns:2.4em minmax(0,1fr);gap:10px;padding:12px 0;border-top:1px solid var(--rule)}
+ol.cad li::before{content:counter(c);font-weight:600;color:var(--ok);font-size:20px}
+code{font-size:13.5px;overflow-wrap:anywhere;background:var(--panel);padding:1px 5px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:10px 10px 10px 0;border-top:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;font-size:14px;color:var(--mute)}
+td.q{white-space:nowrap;font-variant-numeric:tabular-nums}
+td img{width:180px;max-width:100%;display:block;border:1px solid var(--rule)}
+.no{color:var(--no);font-weight:600}.ok{color:var(--ok);font-weight:600}
+ul{padding-left:1.1em;margin:0 0 12px}li{margin:4px 0;max-width:80ch}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:26px 40px}
+.cols h3{font-size:17px;margin:0 0 6px}
+.links{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 0}
+.links a{color:var(--ok);text-decoration:none}
+.panel{background:var(--panel)}
+pre,.scroll{overflow-x:auto}html{scroll-padding-top:20px}
+@media(max-width:820px){.hero{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--mute)}.stack td:empty{display:none}td img{width:100%}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+
+<section class="band"><div class="wrap hero">
+  <div>
+    <p class="mute">Ciclo Assist · Conformar → Baselight · relatório da etapa, 21–22/11/2026 · Mac mini, Baselight 7.0.3 (trial)</p>
+    <h1>O PRODUCAO-C chega ao Baselight conformado nos originais, com retime, máscaras e títulos, sem clicar</h1>
+    <p>Do <code>.prproj</code> do Premiere à scene do Baselight por programa: <strong>132 de 133 pontos</strong> conferem contra o
+      vid ref do projeto. O que falta é o espaçamento entre letras de um título, que o Baselight não tem. Cor fica com o
+      colorista, como decidido.</p>
+    <div class="nums">
+      <div class="num"><b>132/133</b><span>pontos × o vid ref (RESGATE), um a cada 12 quadros</span></div>
+      <div class="num"><b>≥ 0,87</b><span>pior quadro nos trechos com máscara, quadro a quadro (6 trechos, 11 máscaras)</span></div>
+      <div class="num"><b>74 · 10 · 7</b><span>planos com retime/Motion por BLG · composições de máscara · títulos</span></div>
+      <div class="num"><b>5</b><span>marcas “[Ciclo]” só onde algo não foi</span></div>
+    </div>
+  </div>
+  <figure>
+    <div class="lr"><span>Premiere (vid ref)</span><span>Baselight (render v20)</span></div>
+    <img src="img/q78.jpg" alt="Quadro 78: à esquerda a referência do Premiere, à direita o render do Baselight; a dança à esquerda da pilastra e o arco à direita aparecem nos dois">
+    <figcaption><span>03 s · máscara sobre máscara: a dança (V2) e o arco (V1) atrás da pilastra (V3)</span><span>0,89</span></figcaption>
+  </figure>
+</div></section>
+
+<nav class="band" style="padding-block:0"><div class="wrap links scroll">
+  <a href="#cadeia">A cadeia</a><a href="#pranchas">As pranchas</a><a href="#marcas">O que não foi</a>
+  <a href="#achados">Achados</a><a href="#antes">Antes do PRODC</a><a href="#proximo">Próximos passos</a><a href="#onde">Onde está</a>
+</div></nav>
+
+<section class="band" id="cadeia"><div class="wrap">
+  <h2>A cadeia: oito passos, todos por programa</h2>
+  <p class="mute">O caminho do produto, ainda em ferramentas de estudo (<code>MIDIAS DE TESTES/9 SAIDAS DOS APPS/_BASELIGHT/estudo/ferramentas</code>).</p>
+  <ol class="cad">
+    <li><div><strong>Ler a sequência</strong> com o leitor do Conformar (<code>PRODC_FINAL_isolado_1.prproj</code>): 111 segmentos, nests achatados, máscara na fonte quadro a quadro, Motion, velocidade, títulos.</div></li>
+    <li><div><strong>Gerar um xmeml</strong> só com a montagem (<code>xmeml_do_leitor.py</code>): cada clipe com a fonte declarada na taxa da timeline, imagem parada com in 0, clipe desligado fora.</div></li>
+    <li><div><strong>Conformar</strong> com o <code>bl-conform</code> na scene em vídeo (<code>--space Video_Full --multiples</code>): 100 % por nome de arquivo e quadro de fonte, nos originais.</div></li>
+    <li><div><strong>Retime e Motion</strong> por BLG em cada plano (<code>traduzir_PRODC.py</code>): curva Time×Time um quadro por chave, Transform animado, flip por escala negativa.</div></li>
+    <li><div><strong>Máscaras</strong> (<code>mascaras_PRODC.py gerar/gravar</code>): composição BG Replacement + Shape por plano, aninhada quando o fundo também é mascarado; um processo curto por plano.</div></li>
+    <li><div><strong>Títulos</strong> (<code>titulos_PRODC.py</code>): faixas criadas pela FLAPI e transformadas, no arquivo da scene, em camadas de Text em modo Composite; Blank preto onde o título fica sobre o vazio.</div></li>
+    <li><div><strong>Marcas e stills</strong> (<code>marcar_e_stills.py</code>): “[Ciclo]” em vermelho, só nos planos com aviso; rodar de novo troca só as nossas.</div></li>
+    <li><div><strong>Render e conferência</strong> (<code>render_scene.py</code>, <code>conferir_PRODC.py</code>, <code>conferir_trechos.py</code>): ProRes com Video LUT “scale” e comparação com o vid ref.</div></li>
+  </ol>
+</div></section>
+
+<section class="band panel" id="pranchas"><div class="wrap">
+  <h2>As pranchas: o que conferia mal e agora confere</h2>
+  <p class="mute">Em cada par, à esquerda o vid ref do Premiere, à direita o render do Baselight. A diferença de cor é esperada: a v1 não leva cor. Os números são a correlação daquele quadro com o vid ref, no começo do dia 22 (render v6) e agora (v20).</p>
+  <div class="grid">
+    <figure><img src="img/q118.jpg" alt="Quadro 118, referência e Baselight"><figcaption><span>05 s · o fundo troca no meio do plano (PRJ-168 → JUL_7644)</span><span>0,31 → 0,99</span></figcaption></figure>
+    <figure><img src="img/q528.jpg" alt="Quadro 528, referência e Baselight"><figcaption><span>22 s · a escadaria entra atrás da perna (2º trecho do fundo)</span><span>0,67 → 1,00</span></figcaption></figure>
+    <figure><img src="img/q205.jpg" alt="Quadro 205, referência e Baselight"><figcaption><span>08 s · título em Acumin sobre preto (o clipe de baixo está desligado no Premiere)</span><span>−0,03 → 0,79</span></figcaption></figure>
+    <figure><img src="img/q570.jpg" alt="Quadro 570, referência e Baselight"><figcaption><span>23 s · legenda “Come with me.” em Arial, na base</span><span>0,98 (já conferia)</span></figcaption></figure>
+    <figure><img src="img/q1530.jpg" alt="Quadro 1530, referência e Baselight"><figcaption><span>64 s · a imagem parada do logo (era lida como sequência)</span><span>0,00 → 1,00</span></figcaption></figure>
+    <figure><img src="img/q78.jpg" alt="Quadro 78, referência e Baselight"><figcaption><span>03 s · o arco aparece pela composição aninhada</span><span>0,44 → 0,89</span></figcaption></figure>
+  </div>
+</div></section>
+
+<section class="band" id="marcas"><div class="wrap">
+  <h2>O que não foi ao Baselight: cinco marcas, mais a cor</h2>
+  <p>Pela sua decisão, a cor do offline (Lumetri, LUTs, a camada de ajuste sobre a sequência toda) fica com o colorista e não ganha marca. As marcas vão só onde a imagem muda e ninguém saberia.</p>
+  <table class="stack">
+    <thead><tr><th>Quadro</th><th>O quê</th><th>Por quê</th><th>No Baselight</th></tr></thead>
+    <tbody>
+      <tr><td class="q">74 · 03 s</td><td>P&amp;B do LOU_7310 (V3)</td><td>Black &amp; White é cor: fica para o colorista, mas é intenção da montagem</td><td><img src="img/marca_76.jpg" alt="Quadro 76 no Baselight"></td></tr>
+      <tr><td class="q">117 · 04 s</td><td>Gaussian Blur do PRJ-0006-252 (V3)</td><td>O desfoque não é traduzido nesta versão</td><td><img src="img/marca_119.jpg" alt="Quadro 119 no Baselight"></td></tr>
+      <tr><td class="q">162 · 06 s</td><td>Camada de ajuste na V4 (11 quadros)</td><td>O leitor não lê o conteúdo dela: conferir no offline</td><td><img src="img/marca_165.jpg" alt="Quadro 165 no Baselight"></td></tr>
+      <tr><td class="q">193 · 08 s</td><td>Títulos em Acumin (Creative Cloud)</td><td>O Premiere tem tracking; o Text do Baselight não tem espaçamento entre letras. É o único ponto que não confere (“THE”, 0,66)</td><td><img src="img/marca_210.jpg" alt="Quadro 210 no Baselight"></td></tr>
+      <tr><td class="q">535 · 22 s</td><td>P&amp;B do LOU_7310 (V4)</td><td>Idem ao 74</td><td><img src="img/marca_537.jpg" alt="Quadro 537 no Baselight"></td></tr>
+    </tbody>
+  </table>
+</div></section>
+
+<section class="band panel" id="achados"><div class="wrap">
+  <h2>Os achados que mandam no desenho</h2>
+  <div class="cols">
+    <div><h3>Conform</h3><ul>
+      <li>Nome de arquivo basta: AAF do MC, XML do Premiere e o nosso xmeml casam 100 % nos originais.</li>
+      <li>O xmeml declara a fonte na taxa da timeline; o retime vai todo pela curva, um quadro por chave.</li>
+      <li>Imagem com número no fim do nome: <code>in 0</code>, senão vira sequência.</li>
+      <li>Clipe desligado no NLE fica fora (o PRJ-203 de 08 s estava desligado).</li>
+      <li>O <code>bl-conform</code> ainda recusa o nosso FLE; a interface aceita.</li></ul></div>
+    <div><h3>BLG e composição</h3><ul>
+      <li>O prefixo de comprimento conta BYTES: um “×” em “1024×540” travava a FLAPI para sempre.</li>
+      <li>Faixas entre o fundo e a camada agem só no fundo: é assim que a máscara sobre máscara se aninha.</li>
+      <li>O BLG não guarda tempo por faixa: trecho do plano se faz pela shape animada.</li>
+      <li><code>get_blg_payload</code> devolve a pilha de quem está por cima: o plano se acha pelo metadado <code>clip</code>.</li></ul></div>
+    <div><h3>Texto e scene</h3><ul>
+      <li>Text como fonte sai sobre preto; dentro de uma camada de grade, em modo Composite, desenha sobre a imagem.</li>
+      <li>Na scene, linha menor fica por cima (V1 3072, V2 2048, V3 1024, V4 0) e a faixa tem tempo absoluto.</li>
+      <li>Scene editada por fora entra pelo <code>bl-import</code>, com um delta novo e a revisão do formato intacta.</li>
+      <li>Fonte do Creative Cloud: pelo caminho do arquivo oculto, achado pelo nome PostScript.</li></ul></div>
+    <div><h3>Operação</h3><ul>
+      <li>O render pela FLAPI só anda com a interface do Baselight aberta.</li>
+      <li>Cliente morto deixa a scene “Write Locked” até reiniciar o serviço (precisa da senha do Mac).</li>
+      <li>Render com Video LUT “scale” = o still (sem ele, faixa cheia marcada como legal).</li>
+      <li>Dissolve: mistura no espaço de trabalho; a scene em vídeo dá o mesmo α do MC.</li></ul></div>
+  </div>
+</div></section>
+
+<section class="band" id="antes"><div class="wrap">
+  <h2>Antes do PRODUCAO-C: o laboratório</h2>
+  <p>Rodadas 1–17 (21/11), com material do laboratório e o MC e o Premiere fechados durante o Baselight:</p>
+  <ul>
+    <li>AAF online do produto, AAF dos dailies, XML do Premiere, 29,97 DF: planos certos (6/6, 2/2, 5/5), quadro de entrada exato.</li>
+    <li>Reverso, câmera lenta, acelerado, congelado e rampas (Premiere): 48/48 pelo Retime Time×Time gerado; o XML perde a curva e o conform sozinho erra.</li>
+    <li>Geometria do MC (Resize, 3D Warp): ignorada pelo conform, entra por BLG de Transform gerado byte a byte igual ao da interface.</li>
+    <li>Máscara (lab B14/B16): in do fundo, suavidade, shape animada, frente dentro, Motion, nest e proxy — borda ≤ 1,4 px contra o Premiere.</li>
+    <li>Markers e stills pela FLAPI; o render passou a sair igual ao still.</li>
+  </ul>
+</div></section>
+
+<section class="band panel" id="proximo"><div class="wrap">
+  <h2>Próximos passos e riscos</h2>
+  <div class="cols">
+    <div><h3>Para virar produto</h3><ul>
+      <li>Levar a cadeia de <code>estudo/ferramentas</code> para o Conformar como a saída “Baselight”.</li>
+      <li>O lado do MC no mesmo nível do PRODC (AAF real com máscaras e títulos).</li>
+      <li>Traduzir o Gaussian Blur e ler a camada de ajuste; decidir o P&amp;B.</li>
+      <li>A atualização de corte numa timeline já conformada (etapa futura do plano).</li></ul></div>
+    <div><h3>Riscos</h3><ul>
+      <li>O trial acaba por volta de 05/12; sem reset (sua decisão).</li>
+      <li>Editar o arquivo da scene usa um formato sem documentação: medido no 7.0.3, pode mudar.</li>
+      <li>Fonte do Creative Cloud: precisa estar ativa na máquina do Baselight.</li>
+      <li>A referência de 10/10 não tem o ajuste de 6 px na máscara de 01:02 feito em 18/11.</li></ul></div>
+  </div>
+</div></section>
+
+<section class="band" id="onde"><div class="wrap">
+  <h2>Onde está tudo</h2>
+  <ul>
+    <li>Diário com as 27 rodadas, fotos, renders e ferramentas: <code>MIDIAS DE TESTES/9 SAIDAS DOS APPS/_BASELIGHT/estudo/</code></li>
+    <li>Scene final: <code>localhost:LAB_BASELIGHT:BL10_WSD24T</code> · render <code>estudo/renders/BL10_PRODC/PRODC_v20.mov</code></li>
+    <li>Banco: <code>bancodedadosnles/plugins/baselight/README.md</code> · planos: <code>docs/plano/2026-11-21-baselight*.md</code></li>
+  </ul>
+  <p class="mute">Medidas: correlação de cinza 480×270 com desfoque de 2 px, limiar 0,75 (o critério do caso R04).</p>
+</div></section>
+</body>
+</html>

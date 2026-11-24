@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Só as páginas LOCAIS (a barra de abas e a espera de cada módulo) falam com o Rust. ⛔ Os painéis dos módulos, servidos por HTTP pelos motores (7817, 7823, 7824), NÃO ganham IPC: mostram texto que um modelo escreveu, e o caminho deles até a janela é o motor reinvocando o executável.",
+  "windows": ["main", "ajustes"],
+  "webviews": ["topo", "rodape", "preparar", "assistir", "conformar", "entregar", "ajustes-menu"],
+  "permissions": ["core:default"]
+}

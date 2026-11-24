@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Ciclo Assist Sonda</title></head>
+<body>
+<script>
+// A página da sonda: pede o roteiro ao receptor (spikes/o_premiere_por_dentro.py), roda
+// cada etapa e manda o relato. Chromium do CEP 11 (Premiere 23): fetch e async existem.
+(async function () {
+  var BASE = "http://127.0.0.1:7899";
+  var cep = window.__adobe_cep__;
+
+  function relatar(etapa, dados) {
+    return fetch(BASE + "/relato", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({etapa: etapa, dados: dados, t: Date.now()})
+    }).catch(function () {});
+  }
+
+  function eval_(expr) {
+    return new Promise(function (ok) {
+      if (!cep) return ok("!sem __adobe_cep__");
+      cep.evalScript(expr, function (r) { ok(r); });
+    });
+  }
+
+  function lit(s) { return JSON.stringify(String(s)); }
+
+  try {
+    await relatar("arranque", {
+      cep: typeof cep, origem: location.href, ua: navigator.userAgent,
+      host: cep ? JSON.parse(cep.getHostEnvironment()).appVersion : null,
+      node: typeof require
+    });
+
+    var cfg = await (await fetch(BASE + "/config")).json();
+
+    // (b) o que o Premiere diz de cada item.
+    await relatar("abrir", await eval_("sondaAbrir(" + lit(cfg.projeto) + ")"));
+    await relatar("importar", await eval_("sondaImportar(" + lit(cfg.arquivos.join("|")) + ")"));
+    await relatar("proxy", await eval_("sondaProxy(" + lit(cfg.item_com_proxy) + "," + lit(cfg.proxy) + ")"));
+    await relatar("subclipe", await eval_("sondaSubclipe(" + lit(cfg.item_com_proxy) + ")"));
+
+    // (c) a ida e volta serviço → painel → ExtendScript → serviço, por long-poll.
+    for (;;) {
+      var p = await (await fetch(BASE + "/pedido")).json();
+      if (!p.expr) break;
+      var r = await eval_(p.expr);
+      await fetch(BASE + "/resposta", {method: "POST", body: JSON.stringify({id: p.id, r: r})});
+    }
+
+    // (a) iframe servido: ele enxerga o CEP? e a ponte por postMessage funciona?
+    await new Promise(function (ok) {
+      window.addEventListener("message", async function (ev) {
+        if (ev.data && ev.data.expr) {
+          var r = await eval_(ev.data.expr);
+          ev.source.postMessage({id: ev.data.id, r: r}, "*");
+        }
+        if (ev.data && ev.data.fim) ok();
+      });
+      var f = document.createElement("iframe");
+      f.src = BASE + "/iframe";
+      document.body.appendChild(f);
+      setTimeout(ok, 20000);
+    });
+
+    // (a) navegar a janela inteira para a página servida — o desenho do .avpi.
+    await relatar("navegando", {para: BASE + "/pagina"});
+    location.href = BASE + "/pagina";
+  } catch (e) {
+    relatar("erro", String(e && e.stack || e));
+  }
+})();
+</script>
+</body>
+</html>

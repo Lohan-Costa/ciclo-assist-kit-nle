@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRODUCAO-C no Baselight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: escritório de planejamento — direto, uma decisão por linha, sem enfeite
+   IDEA: a folha de conferência de um conform: régua de tempo com as máscaras, tabela regrada
+   PICTURE: as 11 máscaras do PRODC na régua dos 66 s, por trilha, com o fundo de várias trilhas em tijolo
+   COLOUR and TYPE: pedra #e7e4df, preto, tijolo #c8371e, painéis brancos; noite #171513 — Schibsted Grotesk
+   LAYOUT: título e veredito, a régua, depois tabelas regradas e as perguntas numeradas no fim */
+:root{color-scheme:light dark;--bg:light-dark(#e7e4df,#171513);--ink:light-dark(#141210,#ece8e2);--panel:light-dark(#fff,#211e1b);--rule:light-dark(#141210,#ece8e2);--muted:light-dark(#5b5650,#a9a39b);--brick:#c8371e;--soft:light-dark(#d6d1ca,#3a3531)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Schibsted Grotesk",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:clamp(32px,4.6vw,50px);line-height:1.05;margin:0 0 14px;text-wrap:balance;font-weight:700}
+h2{font-size:24px;line-height:1.15;margin:0 0 12px;font-weight:700;text-wrap:balance}
+p{max-width:70ch;margin:0 0 12px}
+.lede{font-size:17px;color:var(--muted)}
+.head{border-top:6px solid var(--rule);padding-top:18px}
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-top:22px}
+.verdict div{padding:14px 16px 14px 0}
+.verdict b{display:block;font-size:clamp(26px,3.4vw,38px);line-height:1.05}
+.verdict span{color:var(--muted);font-size:14px}
+.panel{background:var(--panel);padding:clamp(16px,2.4vw,28px);margin-top:26px}
+.ruler{position:relative;margin:8px 0 6px}
+.lane{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;height:34px;border-bottom:1px solid var(--soft)}
+.lane>i{font-style:normal;font-weight:600;font-size:14px}
+.track{position:relative;height:100%}
+.m{position:absolute;top:8px;height:18px;min-width:7px;background:var(--ink)}
+.m.stack{background:var(--brick)}
+.ticks{display:grid;grid-template-columns:44px minmax(0,1fr);font-size:13px;color:var(--muted)}
+.ticks div{display:flex;justify-content:space-between}
+.key{display:flex;flex-wrap:wrap;gap:18px;font-size:14px;color:var(--muted);margin-top:10px}
+.key i{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{text-align:left;font-weight:600;border-bottom:2px solid var(--rule);padding:8px 10px 8px 0;font-size:14px}
+td{border-bottom:1px solid var(--soft);padding:8px 10px 8px 0;vertical-align:top}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.hot td:last-child{color:var(--brick);font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:26px}
+ol.q{padding-left:1.3em;margin:0}ol.q li{margin-bottom:12px;max-width:70ch}
+.small{font-size:14px;color:var(--muted)}
+code{font-size:14px;overflow-wrap:anywhere}
+pre,.scroll{overflow-x:auto}
+@media(max-width:600px){table{font-size:13px}.stack2 thead{display:none}.stack2 tr{display:grid;padding-block:10px}.stack2 td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack2 td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--muted)}.stack2 td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack2 td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<section class="band"><div class="wrap head">
+  <h1>A máscara está provada no laboratório; o PRODUCAO-C pede três decisões antes</h1>
+  <p class="lede">Proposta escrita com o autor ausente, em 21/11 à noite, depois dos cinco passos da máscara (B14, rodadas 9 a 13 do diário). Nada do PRODC foi para o Baselight ainda: só a leitura do projeto ISOLADO pelo leitor do Conformar.</p>
+  <div class="verdict">
+    <div><b>≤ 0,033</b><span>erro máximo de alfa da suavidade, F10 a F500, nos quatro modos</span></div>
+    <div><b>≤ 1,0 px</b><span>a borda animada, quadro a quadro, frente fora ou dentro</span></div>
+    <div><b>11</b><span>máscaras no PRODC, todas animadas e com a frente dentro</span></div>
+    <div><b>6 de 11</b><span>têm 2 ou 3 trilhas empilhadas atrás — o caso que o lab não tinha</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>As 11 máscaras na régua do trailer</h2>
+    <div class="ruler" id="ruler"></div>
+    <div class="ticks"><span></span><div><span>0 s</span><span>15 s</span><span>30 s</span><span>45 s</span><span>66 s</span></div></div>
+    <div class="key"><span><i style="background:var(--ink)"></i>um clipe atrás (fundo simples)</span><span><i style="background:var(--brick)"></i>2–3 trilhas empilhadas atrás</span></div>
+  </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <div class="cols">
+    <div>
+      <h2>O que o laboratório já resolveu</h2>
+      <table class="stack2"><thead><tr><th>Passo</th><th>Como ficou</th></tr></thead><tbody id="feito"></tbody></table>
+    </div>
+    <div>
+      <h2>O PRODC em números</h2>
+      <table class="stack2"><thead><tr><th>O quê</th><th>Quantos</th></tr></thead><tbody id="PRODC"></tbody></table>
+      <p class="small" style="margin-top:10px">Lido de <code>ISOLADO/PROJETO/PRODC_FINAL_isolado.prproj</code>, sequência <code>PRODC_Trailer_v02_RESGATE</code>. A cor fica fora da v1 (decisão de 21/11).</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>As máscaras, uma por linha</h2>
+  <div class="scroll"><table><thead><tr><th>Trilha</th><th>Clipe</th><th class="n">Quadros</th><th class="n">Vértices</th><th class="n">Com alça</th><th class="n">F / E (px)</th><th>Atrás</th></tr></thead><tbody id="masc"></tbody></table></div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>Os três problemas que o laboratório não tinha</h2>
+  <div class="cols" id="probs"></div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <div class="cols">
+    <div>
+      <h2>Ordem proposta</h2>
+      <ol class="q">
+        <li><b>Pilotar uns 15 minutos</b> numa scene do lab: a shape tem suavidade interna? Uma Bézier com alças feita à mão, para ler o formato das tangentes. A shape segue o Motion do plano ou o quadro?</li>
+        <li><b>Laboratório B14b:</b> uma máscara com alças, uma sobre clipe com Motion e um fundo de duas trilhas.</li>
+        <li><b>PRODC sem máscaras:</b> montagem + BLGs de retime e Motion, conferida pelos 133 pontos × vid ref e por stills.</li>
+        <li><b>As 11 máscaras do PRODC</b>, markers só nos planos com aviso, e o relatório da etapa.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>Perguntas para você</h2>
+      <ol class="q">
+        <li>Aceita um xmeml <b>gerado por nós</b> (não o export do Premiere) como transporte só da montagem, enquanto o FLE não passa no <code>bl-conform</code>?</li>
+        <li>Fundo de várias trilhas: estudo primeiro a opção (a), uma camada por trilha, antes de cogitar achatar o trecho?</li>
+        <li>Espaço de trabalho: traduzir sempre para o da scene que o colorista abrir (T-Log é o padrão), ou o conform já cria a scene em vídeo?</li>
+        <li>O render ProRes sai com os patamares esticados (o still não): investigo o deliverable ou a conferência fica só nos stills?</li>
+      </ol>
+    </div>
+  </div>
+  <p class="small" style="margin-top:22px">Arquivos: <code>docs/plano/2026-11-21-baselight-we-speak-dance.md</code> · diário <code>MIDIAS DE TESTES/9 SAIDAS DOS APPS/_BASELIGHT/estudo/DIARIO.md</code> · banco <code>plugins/baselight/README.md</code>.</p>
+</div></section>
+
+<script>
+{
+const TOTAL=1591;
+const M=[
+ ["V2","LOU_7310",26,4,6,3,"201 / 0",1],["V2","JUL_7671",74,5,4,0,"10 / 0",1],["V2","JUL_7644",119,25,4,0,"10 / 0",1],
+ ["V2","C0296",763,8,10,1,"50 / 0",1],["V3","LOU_7310",74,6,4,0,"50 / 0",3],["V3","PRJ-0006-252",117,5,11,6,"50 / 16",2],
+ ["V3","PRJ-0006-252",122,1,11,8,"50 / 16",1],["V3","PRJ-0006-252",123,1,11,8,"50 / 16",1],["V3","LOU_7237",535,50,4,0,"10 / 0",2],
+ ["V4","PRJ-0006-308",522,7,6,5,"50 / 0",2],["V4","LOU_7310",535,6,4,0,"50 / 0",3]];
+const atras={1:"1 clipe",2:"V1 + V2",3:"V1 + V2 + V3"};
+const stackOf=(m)=>m[7]>1;
+document.getElementById("ruler").innerHTML=["V4","V3","V2"].map(t=>`<div class="lane"><i>${t}</i><div class="track">${
+  M.filter(m=>m[0]===t).map(m=>`<span class="m${stackOf(m)?" stack":""}" style="left:${(m[2]/TOTAL*100).toFixed(2)}%;width:${(m[3]/TOTAL*100).toFixed(2)}%" title="${m[1]} · ${m[3]} quadros"></span>`).join("")}</div></div>`).join("");
+document.getElementById("masc").innerHTML=M.map(m=>`<tr class="${stackOf(m)?"hot":""}"><td>${m[0]}</td><td>${m[1]}</td><td class="n">${m[3]}</td><td class="n">${m[4]}</td><td class="n">${m[5]}</td><td class="n">${m[6]}</td><td>${m[7]===1&&m[1]==="PRJ-0006-252"?"1 clipe (V2)":atras[m[7]]}</td></tr>`).join("");
+const F=[["O in do fundo","o deslocamento do arquivo do fundo, em segundos + meio quadro — exato em 16 planos"],
+ ["A suavidade","raio = a·F/W e a borda recuada b·F; constantes por modo (T-Log ou vídeo × frente fora ou dentro)"],
+ ["A animada","um keyframe por quadro em todos os cantos — só animar alguns deixa a curva parada"],
+ ["Frente dentro","uma bandeira da shape inverte; outra, parecida, derruba o serviço da FLAPI (anotada)"],
+ ["Espaço de trabalho","a mistura é no espaço da scene: T-Log entorta a curva, vídeo é simétrico"],
+ ["Markers e stills","markers vermelhos com nota “[Ciclo]” e stills dos quadros marcados, com a cor certa"]];
+document.getElementById("feito").innerHTML=F.map(f=>`<tr><td><b>${f[0]}</b></td><td>${f[1]}</td></tr>`).join("");
+const W=[["Planos de vídeo","89 (V1 63 · V2 10 · V3 11 · V4 3 · V6 1 · V7 1)"],["Taxas (tempo real em 23,976)","60 qps 34 · 25 qps 32 · 100 qps 14 · 23,976 9"],
+ ["Motion","89"],["Rampas de velocidade","10"],["Máscaras de opacidade","11"],["Títulos / Gaussian Blur","7 / 3"],["Lumetri (fora da v1)","68"]];
+document.getElementById("PRODC").innerHTML=W.map(w=>`<tr><td>${w[0]}</td><td>${w[1]}</td></tr>`).join("");
+const P=[["1 · A montagem","O bl-conform recusa o nosso FLE, e o XML do Premiere perde as rampas. Proposta: um xmeml gerado pelo nosso leitor só como transporte da montagem (corte, trilha, in/out, taxa), como a bancada da B14 já faz; retime, Motion e máscara pelos BLGs já provados. Alternativas: FLE pela interface (pilotado) ou o REA no bl-conform."],
+ ["2 · O fundo de várias trilhas","O Background Replacement pega uma sequência só. (a) Uma camada por trilha de baixo, cada uma com a máscara do seu plano; (b) dividir o plano mascarado nos cortes de baixo — serve para corte em sequência, não para empilhamento; (c) achatar o trecho de baixo num plate (perde o online daquele trecho). Recomendo estudar (a) no laboratório."],
+ ["3 · Forma qualquer, com alças","Converter vértice e alças do Premiere (fração da fonte, antes do Motion) para os pontos do Baselight, e recuar a curva b·F para dentro (17 a 175 px nos F do PRODC). Antes: ver na interface se a shape tem suavidade interna — há uma preferência escondida de “inner/outer”; se tiver, o recuo não é preciso."]];
+document.getElementById("probs").innerHTML=P.map(p=>`<div class="panel" style="margin-top:0"><h2 style="font-size:20px">${p[0]}</h2><p style="margin:0">${p[1]}</p></div>`).join("");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Fluxos e Agentes — Ciclo Assist</title>
+<!-- A janela Fluxos e Agentes (fase N0 do plano 2026-11-08-janela-de-nodes): a tela de nodes, só leitura.
+     O que ainda não existe aparece travado até a fase dele. Referência de visual e de comportamento: docs/plano/prototipos/janela-de-nodes.html -->
+<link rel="stylesheet" href="/static/oficina.css">
+</head>
+<body>
+<div class="corpo" id="corpo">
+  <aside class="lateral" aria-label="Fluxos e agentes">
+    <section class="metade" id="metadeFluxos">
+      <h2>Fluxos de trabalho</h2>
+      <div class="lista" id="listaFluxos"></div>
+      <div class="acoes-lista">
+        <button type="button" class="tracejado" id="criarFluxo">Criar Fluxo de Trabalho</button>
+        <button type="button" class="tracejado" id="importarFluxo">Importar Fluxo de Trabalho</button>
+        <button type="button" class="tracejado" id="restaurarFluxos" hidden></button>
+      </div>
+    </section>
+    <div class="alca-h" id="alcaMetades" role="separator" aria-orientation="horizontal" aria-label="Dividir Fluxos e Agentes"></div>
+    <section class="metade" id="metadeAgentes">
+      <h2>Agentes de IA</h2>
+      <div class="lista" id="listaAgentes"></div>
+      <div class="acoes-lista">
+        <button type="button" class="tracejado" disabled title="Ainda não disponível">Criar Agente de IA</button>
+        <button type="button" class="tracejado" disabled title="Ainda não disponível">Importar Agente de IA</button>
+      </div>
+    </section>
+  </aside>
+  <div class="alca-v" id="alcaLateral" role="separator" aria-orientation="vertical" aria-label="Largura da lateral"></div>
+  <main class="centro" id="centro"></main>
+  <div class="alca-v" id="alcaDireita" role="separator" aria-orientation="vertical" aria-label="Largura do painel direito"></div>
+  <aside class="direita" id="direita" aria-label="Chat e propriedades"></aside>
+</div>
+<script src="/static/oficina.js"></script>
+</body>
+</html>

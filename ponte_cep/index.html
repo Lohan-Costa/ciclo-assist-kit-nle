@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo Assist</title>
+<!--
+  O LOADER da ponte do Premiere (invisível): acha o serviço e navega para /premiere/ponte, a página servida
+  que atende os pedidos da janela do app. Molde: o De Lá Pra Cá.
+  `mode: "no-cors"` na sondagem: a página vem de file:// e o serviço não libera CORS para essa origem (que
+  qualquer arquivo local apresenta). A resposta opaca só diz que o serviço está vivo, e basta.
+  Serviço fora: tenta de novo, para sempre (o app pode abrir depois do Premiere).
+-->
+</head>
+<body>
+<script>
+"use strict";
+var SERVICO = "http://127.0.0.1:7824";
+function procurar() {
+  fetch(SERVICO + "/saude", { cache: "no-store", mode: "no-cors" })
+    .then(function () { window.location.replace(SERVICO + "/premiere/ponte"); })
+    .catch(function () { setTimeout(procurar, 3000); });
+}
+procurar();
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+body { margin: 0; background: #ececea; }
+a { color: #185fa5; } a:hover { color: #378add; }
+.win { width: 1440px; height: 900px; display: flex; flex-direction: column; overflow: hidden;
+  background: #ffffff; color: #1f2023; -webkit-font-smoothing: antialiased;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.trunc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.titlebar { flex: none; height: 40px; background: #f5f5f3; border-bottom: 0.5px solid #e6e6e3;
+  display: flex; align-items: center; gap: 10px; padding: 0 12px; }
+.lights { display: flex; gap: 8px; margin-right: 8px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.brand { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #56585c; }
+.tbtn { display: inline-flex; align-items: center; gap: 4px; border: 0.5px solid #d2d2cd; border-radius: 6px;
+  padding: 4px 8px; font-size: 11px; color: #56585c; white-space: nowrap; background: transparent; }
+.tbtn.confirm { border-color: #bfe3d4; color: #0f6e56; }
+.tbtn.danger { border-color: #f0c6c6; color: #a32d2d; }
+.tbtn.accent { border-color: #378add; color: #185fa5; background: #e8f0fb; }
+.tbtn.off { color: #9a9c9f; border-style: dashed; }
+.pill { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; padding: 1px 6px;
+  border-radius: 10px; white-space: nowrap; }
+.p-ok { background: #e1f5ee; color: #0f6e56; }
+.p-warn { background: #faeeda; color: #854f0b; }
+.p-info { background: #e6f1fb; color: #185fa5; }
+.p-bad { background: #fcebeb; color: #a32d2d; }
+.p-local { background: #ececea; color: #56585c; }
+.label { font-size: 10px; font-weight: 600; color: #9a9c9f; letter-spacing: 0.05em; text-transform: uppercase; }
+.sub { font-size: 10px; color: #9a9c9f; }
+.body { flex: 1; display: flex; min-height: 0; }
+.rail { width: 64px; flex: none; background: #f5f5f3; border-right: 0.5px solid #e6e6e3;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; }
+.nav { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px 6px;
+  border-radius: 6px; color: #56585c; font-size: 10px; }
+.nav.active { background: #ffffff; color: #1f2023; font-weight: 500; }
+.chat { width: 360px; flex: none; border-right: 0.5px solid #e6e6e3; display: flex; flex-direction: column; }
+.phead { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-bottom: 0.5px solid #e6e6e3; min-height: 25px; }
+.ptitle { font-size: 13px; font-weight: 500; color: #1f2023; }
+.msgs { flex: 1; overflow: hidden; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.me { align-self: flex-end; max-width: 86%; background: #f5f5f3; border: 0.5px solid #e6e6e3;
+  border-radius: 10px; padding: 7px 10px; line-height: 1.45; }
+.ai { line-height: 1.5; display: flex; flex-direction: column; gap: 8px; }
+.ai p { margin: 0; }
+.mcard { display: flex; gap: 8px; align-items: center; padding: 6px; border: 0.5px solid #e6e6e3; border-radius: 6px; }
+.mthumb { width: 64px; height: 36px; border-radius: 3px; flex: none; position: relative; }
+.compose { flex: none; padding: 10px 12px 12px; border-top: 0.5px solid #e6e6e3; }
+.cbox { border: 0.5px solid #d2d2cd; border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+.send { width: 26px; height: 26px; border-radius: 6px; background: #378add; color: #ffffff;
+  display: flex; align-items: center; justify-content: center; }
+.center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.toolbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 0.5px solid #e6e6e3; }
+.crumb { font-size: 13px; font-weight: 500; flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.crumb span.c { color: #9a9c9f; font-weight: 400; }
+.search { display: flex; align-items: center; gap: 6px; border: 0.5px solid #d2d2cd; border-radius: 6px;
+  padding: 4px 8px; width: 320px; color: #9a9c9f; font-size: 12px; }
+.search.foco { border-color: #378add; color: #1f2023; }
+.seg { display: flex; border: 0.5px solid #d2d2cd; border-radius: 6px; overflow: hidden; }
+.seg span { padding: 4px 7px; color: #9a9c9f; display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.seg span.on { background: #f5f5f3; color: #1f2023; }
+.seg span + span { border-left: 0.5px solid #d2d2cd; }
+.filters { flex: none; display: flex; flex-wrap: wrap; row-gap: 6px; gap: 6px; align-items: center; padding: 7px 12px; border-bottom: 0.5px solid #e6e6e3; }
+.fchip { display: inline-flex; gap: 4px; align-items: center; border: 0.5px solid #d2d2cd; border-radius: 10px;
+  padding: 2px 8px; font-size: 11px; color: #56585c; white-space: nowrap; }
+.fchip.on { background: #e8f0fb; border-color: #378add; color: #185fa5; }
+.cover { flex: none; display: flex; gap: 14px; white-space: nowrap; align-items: center; padding: 6px 12px; background: #f5f5f3;
+  border-bottom: 0.5px solid #e6e6e3; font-size: 11px; color: #56585c; }
+.cover .it { display: flex; align-items: center; gap: 6px; }
+.bar { width: 40px; height: 3px; background: #e6e6e3; border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: #2d9d57; }
+.grid { flex: 1; overflow: hidden; padding: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px; align-content: start; grid-auto-rows: max-content; }
+.card { border: 0.5px solid #e6e6e3; border-radius: 6px; overflow: hidden; background: #ffffff; }
+.card.sel { border-color: #378add; box-shadow: 0 0 0 1px #378add; }
+.thumb { position: relative; aspect-ratio: 16 / 9; }
+.tc { position: absolute; right: 4px; bottom: 4px; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #ffffff; background: rgba(0, 0, 0, 0.55); padding: 0 4px; border-radius: 3px; }
+.tl { position: absolute; left: 4px; top: 4px; display: flex; gap: 3px; }
+.cbody { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 4px; }
+.cname { font-size: 12px; font-weight: 500; }
+.row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.stages { display: flex; gap: 6px; color: #d2d2cd; margin-left: auto; }
+.stages .ok { color: #2d9d57; }
+.insp { width: 320px; flex: none; border-left: 0.5px solid #e6e6e3; display: flex; flex-direction: column; overflow: hidden; }
+.sec { padding: 10px 12px; border-bottom: 0.5px solid #e6e6e3; display: flex; flex-direction: column; gap: 7px; }
+.kv { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 4px 8px; font-size: 11px; margin: 0; }
+.kv dt { color: #9a9c9f; } .kv dd { margin: 0; color: #1f2023; }
+.tag { display: inline-flex; align-items: center; gap: 4px; border: 0.5px solid #d2d2cd; border-radius: 10px;
+  padding: 1px 7px; font-size: 11px; color: #1f2023; background: #ffffff; }
+.tag.inf { border-style: dashed; color: #56585c; }
+.foot { flex: none; height: 24px; border-top: 0.5px solid #e6e6e3; background: #f5f5f3; font-size: 10px;
+  color: #56585c; display: flex; align-items: center; gap: 16px; padding: 0 12px; }
+.foot .it { display: flex; align-items: center; gap: 5px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.tblwrap { flex: 1; overflow: hidden; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tbl th { text-align: left; font-weight: 500; color: #56585c; background: #f5f5f3; padding: 6px 8px;
+  border-bottom: 0.5px solid #e6e6e3; white-space: nowrap; }
+.tbl td { padding: 6px 8px; border-bottom: 0.5px solid #e6e6e3; white-space: nowrap; color: #1f2023; }
+.tbl tr.sel td { background: #e8f0fb; }
+.tbl td.m { color: #56585c; }
+.page { flex: 1; overflow: hidden; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.box { border: 0.5px solid #e6e6e3; border-radius: 10px; background: #ffffff; }
+.boxh { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 0.5px solid #e6e6e3; }
+.h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.p { font-size: 12px; color: #56585c; margin: 0; line-height: 1.5; }
+.check { color: #2d9d57; } .miss { color: #a32d2d; } .na { color: #9a9c9f; }
+.prog { height: 3px; background: #e6e6e3; border-radius: 2px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: #2d9d57; }
+.hl { background: #faeeda; color: #854f0b; border-radius: 2px; padding: 0 2px; }
+
+.tree { width: 248px; flex: none; background: #f5f5f3; border-right: 0.5px solid #e6e6e3; display: flex; flex-direction: column; overflow: hidden; }
+.trow { display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 6px; font-size: 12px; color: #1f2023; white-space: nowrap; }
+.trow.sel { background: #e8f0fb; }
+.trow .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.trow .q { font-size: 10px; color: #9a9c9f; }
+.kbd { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; border: 0.5px solid #d2d2cd; border-radius: 3px; padding: 0 4px; color: #56585c; background: #ffffff; }
+.tcbox { display: flex; flex-direction: column; gap: 1px; padding: 3px 8px; border: 0.5px solid #e6e6e3; border-radius: 6px; background: #ffffff; }
+.tcbox b { font: 500 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: #1f2023; }
+.tl-track { position: relative; height: 46px; border-bottom: 0.5px solid #e6e6e3; }
+.tl-clip { position: absolute; top: 4px; bottom: 4px; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.tl-head { width: 56px; flex: none; display: flex; align-items: center; justify-content: center; font: 500 10px ui-monospace, SFMono-Regular, Menlo, monospace; color: #56585c; border-right: 0.5px solid #e6e6e3; background: #f5f5f3; }
+.switch { width: 26px; height: 15px; border-radius: 8px; background: #d2d2cd; position: relative; flex: none; }
+.switch i { position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #ffffff; }
+.switch.on { background: #378add; } .switch.on i { left: 13px; }
+</style>
+</helmet>
+<div class="win">
+<div class="titlebar">
+  <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+  <span class="tbtn" style="color:#1f2023"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /></svg> Acervo Ciclo <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#9a9c9f;flex:none"><path d="M6 9l6 6l6 -6" /></svg></span>
+  <span class="pill p-info"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M6 9a6 6 0 1 0 12 0a6 6 0 0 0 -12 0" /> <path d="M12 3c1.333 .333 2 2.333 2 6s-.667 5.667 -2 6" /> <path d="M12 3c-1.333 .333 -2 2.333 -2 6s.667 5.667 2 6" /> <path d="M6 9h12" /> <path d="M3 20h7" /> <path d="M14 20h7" /> <path d="M10 20a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M12 15v3" /></svg> remoto · NAS</span>
+  <div style="flex:1"></div>
+  <span class="brand"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /> <path d="M8 4l0 16" /> <path d="M16 4l0 16" /> <path d="M4 8l4 0" /> <path d="M4 16l4 0" /> <path d="M4 12l16 0" /> <path d="M16 8l4 0" /> <path d="M16 16l4 0" /></svg> Ciclo Assist</span>
+  <div style="flex:1"></div>
+  <span class="sub" style="display:flex;align-items:center;gap:5px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M5 6a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1l0 -12" /> <path d="M9 9h6v6h-6l0 -6" /> <path d="M3 10h2" /> <path d="M3 14h2" /> <path d="M10 3v2" /> <path d="M14 3v2" /> <path d="M21 10h-2" /> <path d="M21 14h-2" /> <path d="M14 21v-2" /> <path d="M10 21v-2" /></svg> processando 3 · Mac mini</span>
+  <span style="width:22px;height:22px;border-radius:50%;background:#e1f5ee;color:#0f6e56;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center">LC</span>
+</div><div class="body">
+<div class="rail"><div class="nav"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /> <path d="M8 4l0 16" /> <path d="M16 4l0 16" /> <path d="M4 8l4 0" /> <path d="M4 16l4 0" /> <path d="M4 12l16 0" /> <path d="M16 8l4 0" /> <path d="M16 16l4 0" /></svg><span>Mídias</span></div><div class="nav active"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg><span>Entidades</span></div><div class="nav"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 19h-7a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v3.5" /> <path d="M19 16v6" /> <path d="M22 19l-3 3l-3 -3" /></svg><span>Ingestão</span></div><div class="nav"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M7 12l5 5l-1.5 1.5a3.536 3.536 0 1 1 -5 -5l1.5 -1.5" /> <path d="M17 12l-5 -5l1.5 -1.5a3.536 3.536 0 1 1 5 5l-1.5 1.5" /> <path d="M3 21l2.5 -2.5" /> <path d="M18.5 5.5l2.5 -2.5" /> <path d="M10 11l-2 2" /> <path d="M13 14l-2 2" /></svg><span>Reconectar</span></div><div class="nav"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /></svg><span>Bancos</span></div><div style="flex:1"></div><div class="nav"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065" /> <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg><span>Ajustes</span></div></div>
+<div class="chat">
+  <div class="phead"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M8 9h8" /> <path d="M8 13h6" /> <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12" /></svg><span class="ptitle">Conversa</span>
+    <span class="pill p-local">Claude · Sonnet 5</span><div style="flex:1"></div>
+    <span class="tbtn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg> Nova</span></div>
+  <div class="msgs"><div class="me">quantas vezes a helena fala o bordão nos capítulos?</div><div class="ai"><p><b>37 vezes</b> confirmadas, em 29 capítulos. Mais 9 prováveis: a frase está na transcrição, mas o roteiro do capítulo não diz quem fala.</p><div class="row"><span class="tbtn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /> <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg> Revisar as 9</span><span class="tbtn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 4l-8 4l8 4l8 -4l-8 -4" /> <path d="M4 12l8 4l8 -4" /> <path d="M4 16l8 4l8 -4" /></svg> Coleção com as 37</span></div><p class="sub">Procurei nos 42 capítulos com fala transcrita, de 42.</p></div></div>
+  <div class="compose"><div class="cbox">
+    <div style="color:#9a9c9f;font-size:12px;min-height:34px">Pergunte sobre o banco, ou peça uma seleção…</div>
+    <div class="row" style="color:#9a9c9f"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5" /></svg><span class="sub">arraste mídias, roteiros ou fotos</span>
+      <div style="flex:1"></div><span class="send"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5l0 14" /> <path d="M18 11l-6 -6" /> <path d="M6 11l6 -6" /></svg></span></div>
+  </div></div>
+</div><div class="center">
+<div class="toolbar">
+  <div class="crumb"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg><span>Entidades</span></div>
+  <div class="search" style="width:220px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M21 21l-6 -6" /></svg><span class="trunc">Procurar pessoa, local, bordão…</span></div>
+  <span class="tbtn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5l0 14" /> <path d="M5 12l14 0" /></svg> Nova entidade</span>
+  <span class="tbtn"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" /> <path d="M9 5a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2" /> <path d="M9 12h6" /> <path d="M9 16h6" /></svg> Ler elenco do roteiro…</span>
+</div>
+<div class="filters">
+  <span class="fchip on">Todas</span><span class="fchip"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg> Personagens</span><span class="fchip"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg> Pessoas</span>
+  <span class="fchip"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" /></svg> Locais</span><span class="fchip"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /></svg> Objetos</span><span class="fchip"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" /> <path d="M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" /></svg> Bordões</span>
+  <span style="width:10px"></span><span class="label">Produção</span><span class="fchip">Produção Exemplo</span><span class="fchip">Rio de Dentro</span>
+</div>
+<div class="tblwrap"><table class="tbl"><thead><tr><th>Nome</th><th>Tipo</th><th>Produção</th><th>Intérprete / de quem</th><th>Aparições confirmadas</th><th>Inferidas</th></tr></thead><tbody><tr class="sel"><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg><b style="font-weight:500">Pessoa S</b></div></td>
+<td class="m">personagem</td><td class="m">Produção Exemplo</td><td class="m">Personagem B</td><td>312</td><td><span class="pill p-info">41 a revisar</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg><b style="font-weight:500">Pessoa T</b></div></td>
+<td class="m">personagem</td><td class="m">Produção Exemplo</td><td class="m">Personagem C</td><td>268</td><td><span class="pill p-info">12 a revisar</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg><b style="font-weight:500">Personagem D</b></div></td>
+<td class="m">personagem</td><td class="m">Produção Exemplo</td><td class="m">Personagem A</td><td>140</td><td><span class="na">—</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg><b style="font-weight:500">Personagem E</b></div></td>
+<td class="m">pessoa</td><td class="m">Rio de Dentro</td><td class="m">—</td><td>3 entrevistas</td><td><span class="na">—</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg><b style="font-weight:500">João barqueiro</b></div></td>
+<td class="m">pessoa</td><td class="m">Rio de Dentro</td><td class="m">—</td><td>1 entrevista</td><td><span class="na">—</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" /></svg><b style="font-weight:500">Cais do porto</b></div></td>
+<td class="m">local</td><td class="m">todas</td><td class="m">—</td><td>86</td><td><span class="pill p-info">23 a revisar</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /> <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" /></svg><b style="font-weight:500">Casa da praia</b></div></td>
+<td class="m">local</td><td class="m">Produção Exemplo</td><td class="m">—</td><td>121</td><td><span class="pill p-info">4 a revisar</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" /> <path d="M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" /></svg><b style="font-weight:500">“Deixa comigo, meu bem”</b></div></td>
+<td class="m">bordão</td><td class="m">Produção Exemplo</td><td class="m">Pessoa S</td><td>37</td><td><span class="pill p-info">9 a revisar</span></td></tr><tr class=""><td><div class="row"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /></svg><b style="font-weight:500">Barco Estrela do Mar</b></div></td>
+<td class="m">objeto</td><td class="m">Produção Exemplo</td><td class="m">—</td><td>19</td><td><span class="pill p-info">6 a revisar</span></td></tr></tbody></table></div></div>
+<div class="insp">
+  <div class="phead"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#56585c;flex:none"><path d="M13.192 9h6.616a2 2 0 0 1 1.992 2.183l-.567 6.182a4 4 0 0 1 -3.983 3.635h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183" /> <path d="M15 13h.01" /> <path d="M18 13h.01" /> <path d="M15 16.5c1 .667 2 .667 3 0" /> <path d="M8.632 15.982a4.037 4.037 0 0 1 -.382 .018h-1.5a4 4 0 0 1 -3.983 -3.635l-.567 -6.182a2 2 0 0 1 1.992 -2.183h6.616a2 2 0 0 1 2 2" /> <path d="M6 8h.01" /> <path d="M9 8h.01" /> <path d="M6 12c.764 -.51 1.528 -.63 2.291 -.36" /></svg><span class="ptitle">Pessoa S</span><span class="pill p-local">personagem</span></div>
+  <div class="sec"><dl class="kv"><dt>Produção</dt><dd>Produção Exemplo</dd><dt>Intérprete</dt><dd><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg> Personagem B</dd>
+    <dt>Também chamada</dt><dd>Lena, dona Pessoa S</dd><dt>Bordão</dt><dd>“Deixa comigo, meu bem”</dd></dl></div>
+  <div class="sec"><span class="label">De onde vêm as aparições</span>
+    <dl class="kv"><dt>Roteiro</dt><dd>198 · capítulos 1–42</dd><dt>Anotação</dt><dd>114</dd><dt>Claquete</dt><dd>—</dd></dl>
+    <span class="sub">Nunca pelo rosto nem pela voz: roteiro, claquete e o que você anotou.</span></div>
+  <div class="sec" style="flex:1;border-bottom:none;overflow:hidden"><div class="row"><span class="label">A revisar</span><span class="pill p-info">41</span><div style="flex:1"></div><span class="tbtn">Ver todas</span></div><div class="row" style="padding:5px 0;border-bottom:0.5px solid #e6e6e3"><div class="mthumb" style="background: linear-gradient(180deg, #3b3f45 0%, #1f2023 140%);;width:56px;height:32px"></div>
+  <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:11px;font-weight:500">CAP042 <span class="mono sub">01:12:40:03</span></span><span class="sub trunc">roteiro ancorado · 94%</span></div>
+  <span class="check"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></svg></span></div><div class="row" style="padding:5px 0;border-bottom:0.5px solid #e6e6e3"><div class="mthumb" style="background: linear-gradient(180deg, #4e4a5a 0%, #1f2023 140%);;width:56px;height:32px"></div>
+  <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:11px;font-weight:500">CAP041 <span class="mono sub">01:31:02:11</span></span><span class="sub trunc">roteiro ancorado · 88%</span></div>
+  <span class="check"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /> <path d="M9 12l2 2l4 -4" /></svg></span></div><div class="row" style="padding:5px 0;border-bottom:0.5px solid #e6e6e3"><div class="mthumb" style="background: linear-gradient(180deg, #6b6258 0%, #1f2023 140%);;width:56px;height:32px"></div>
+  <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:11px;font-weight:500">CAP040 <span class="mono sub">01:04:18:20</span></span><span class="sub trunc">roteiro ancorado · 41%</span></div>
+  <div class="row" style="gap:4px"><span class="tbtn danger" style="padding:3px 6px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></span><span class="tbtn confirm" style="padding:3px 6px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M5 12l5 5l10 -10" /></svg></span></div></div><div class="row" style="padding:5px 0;border-bottom:0.5px solid #e6e6e3"><div class="mthumb" style="background: linear-gradient(180deg, #4e4a5a 0%, #1f2023 140%);;width:56px;height:32px"></div>
+  <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:11px;font-weight:500">CAP041 <span class="mono sub">01:40:55:02</span></span><span class="sub trunc">sem roteiro · anotação sugerida</span></div>
+  <div class="row" style="gap:4px"><span class="tbtn danger" style="padding:3px 6px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M18 6l-12 12" /> <path d="M6 6l12 12" /></svg></span><span class="tbtn confirm" style="padding:3px 6px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M5 12l5 5l10 -10" /></svg></span></div></div></div>
+</div></div>
+<div class="foot">
+  <span class="it"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" /> <path d="M8 4l0 16" /> <path d="M16 4l0 16" /> <path d="M4 8l4 0" /> <path d="M4 16l4 0" /> <path d="M4 12l16 0" /> <path d="M16 8l4 0" /> <path d="M16 16l4 0" /></svg> 2.310 mídias · 2.140 h</span>
+  <span class="it"><span class="dot" style="background:#a32d2d"></span> 214 offline</span>
+  <span class="it"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /> <path d="M12 7v5l3 3" /></svg> fila: 3 tarefas</span>
+  <span class="it"><span class="dot" style="background:#1d9e75"></span> Mac mini conectado</span>
+  <span class="it"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /> <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" /> <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg> 4 pessoas neste banco</span>
+  <div style="flex:1"></div>
+  <span class="it">esta máquina: MacBook Pro · perfil leve</span>
+</div></div>
+</x-dc>
+</body>
+</html>

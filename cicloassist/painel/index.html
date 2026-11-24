@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ciclo Assist</title>
+<link rel="stylesheet" href="/static/painel.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="marca">
+    <span class="ponto" id="ponto" data-estado="ligando" title="estado do serviço"></span>
+    <h1>Ciclo Assist</h1>
+  </div>
+  <span class="versao" id="versao"></span>
+  <!-- ⭐ O pino: só na JANELA do app (`?casca=app`). Para arrastar da bin, o editor clica no NLE, que vem para a
+       frente e esconderia a janela; fixada, ela fica por cima (pedido do autor no De Lá Pra Cá, 2026-10-18). -->
+  <!-- ⭐ De qual NLE a janela fala: só na janela do app, e só com os dois ligados (`escolherONle`). -->
+  <select class="qual-nle" id="qualNle" hidden aria-label="Editor">
+    <option value="avid">Media Composer</option>
+    <option value="premiere">Premiere</option>
+  </select>
+  <button type="button" class="pino" id="pino" hidden aria-pressed="false"
+          title="Manter a janela na frente do Media Composer e do Premiere">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4"/>
+      <path d="M9 15l-4.5 4.5"/><path d="M14.5 4l5.5 5.5"/>
+    </svg>
+  </button>
+</header>
+
+<!-- ⭐ A barra de abas existe com UMA aba de propósito.
+     O Ciclo Assist é o primeiro de vários painéis da casa, e a aba é onde os próximos
+     entram. Acrescentar uma é somar um <button data-tela> aqui e um <section data-tela>
+     abaixo — nada em JavaScript. -->
+<nav class="abas" id="abas">
+  <button type="button" class="aba ativa" data-tela="conversa">Claude</button>
+  <button type="button" class="aba" data-tela="busca">Busca</button>
+  <button type="button" class="aba" data-tela="vetores">Vetores</button>
+  <span class="espaco"></span>
+  <button type="button" class="engrenagem" data-tela="config"
+          aria-label="Configurações" title="Configurações">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65
+               1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65
+               0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65
+               1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0
+               0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65
+               1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0
+               0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65
+               1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65
+               0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+</nav>
+
+<!-- ⚠️ O aviso de limite mora FORA da conversa, e some sozinho quando o uso cai.
+     Dentro da conversa ele viraria histórico e o editor o leria como resposta. -->
+<div class="aviso" id="aviso" hidden></div>
+
+<!-- ⭐ O andamento do fluxo, preso acima da conversa (N5): pausar, responder e confirmar sem abrir a janela de nodes. -->
+<div id="fluxosQuadro" class="fluxos-quadro-lugar" data-tela="conversa"></div>
+
+<main class="conversa" id="conversa" data-tela="conversa" aria-live="polite">
+  <!-- ⭐⭐ A conversa continua mesmo com a tela em branco. Ele fechou o Media Composer
+       sem /clear, reabriu, viu isto vazio e não tinha como saber que o fio seguia inteiro
+       — e o teste seguinte rodou sobre meio milhão de tokens de anteontem. -->
+  <div class="fio-aviso" id="fioAviso" hidden></div>
+  <!-- O chat abre limpo (autor, 2026-11-08): sem saudação nem perguntas de exemplo. -->
+</main>
+
+<!-- ⭐⭐ A aba BUSCA: achar um plano sem gastar um turno do modelo.
+     O motor é o mesmo do chat (`procurar_no_material` e `planos_parecidos`); o que muda é
+     quem pergunta. Aqui o editor pergunta direto, e a resposta custa uma leitura de disco.
+
+     ⚠️⚠️ O tamanho do que a busca alcança fica SEMPRE na tela ("3 de 23 decupadas"). No
+     chat quem diz isso é o modelo; aqui não há ninguém para dizer, e sem a frase
+     "não achei" se lê como "meu material não tem isso". -->
+<section class="tela" data-tela="busca" id="telaBusca" hidden>
+  <h2>Achar um plano</h2>
+  <p class="explica">
+    Procura no que já foi <b>decupado</b> — o que o Claude escreveu olhando os quadros. Não
+    gasta a sua assinatura.
+  </p>
+
+  <div class="bus-linha">
+    <input type="search" id="busFrase" class="bus-frase"
+           placeholder="consultório, blusa vermelha, dorme…"
+           spellcheck="false" autocomplete="off"
+           aria-label="Procurar na descrição do material">
+    <button type="button" id="busProcurar" class="botao compacto">Procurar</button>
+  </div>
+
+  <!-- ⛔ Prosa não filtra: os cinco campos FECHADOS da decupagem viram cinco selects, com
+       o vocabulário vindo do serviço. Digitar aqui seria oferecer um valor que a nota
+       nunca usou, e devolver zero sem explicar por quê. -->
+  <div class="bus-campos" id="busCampos"></div>
+
+  <!-- ⭐⭐ Preferência, NÃO exclusão (pedido do editor, 2026-09-21): o bruto continua na
+       lista, só depois. Ligado por padrão porque é assim que se monta — o master é a
+       saída quando não há recorte. -->
+  <label class="bus-preferir" title="Subclipes e group clips primeiro; o master continua na lista, mais abaixo">
+    <input type="checkbox" id="busPreferir" checked> preferir subclipes</label>
+
+  <div class="bus-barra">
+    <p class="bus-resumo" id="busResumo">diga o que procurar</p>
+    <button type="button" id="busLimpar" class="botao compacto" hidden>Limpar</button>
+  </div>
+
+  <!-- ⛔⛔ O que o dicionário de intenção acrescentou ("drone" → aérea, DJI, sobrevoo).
+       Busca que se alarga calada é a irmã do filtro calado. -->
+  <p class="bus-expansao" id="busExpansao" hidden></p>
+
+  <!-- ⚠️ "Pedi a preferência e ela ainda não valeu" é um resultado diferente de não pedir:
+       a lista sai só com masters, e sem dizer parece que o projeto não tem subclipe. -->
+  <p class="bus-indice" id="busIndice" hidden></p>
+
+  <!-- ⚠️ O recorte do projeto aberto é dito em voz alta. Filtro calado é pior que filtro
+       nenhum: sem a frase, "não achei" vira "não existe". -->
+  <p class="bus-escopo" id="busEscopo" hidden></p>
+
+  <div class="bus-resultados" id="busResultados"></div>
+
+  <p class="bus-vazio" id="busVazio" hidden></p>
+  <p class="config-recado" id="busRecado" hidden></p>
+</section>
+
+<!-- ⭐ A aba Vetores: o que já foi analisado, uma linha por MÍDIA.
+     ⚠️ Uma linha é um MASTER, e um take sincronizado mistura dois — imagem da câmera,
+     som do gravador. Por isso a linha de som não tem quadro nem vetor, e a célula fica
+     VAZIA (não se aplica), diferente do "—" (falta fazer). -->
+<section class="tela" data-tela="vetores" id="telaVetores" hidden>
+  <h2>Material analisado</h2>
+  <p class="explica">
+    O que já foi processado fica guardado por mídia e serve a qualquer take que a use —
+    masterclipe, subclipe ou multicam, inclusive criados depois.
+  </p>
+
+  <div class="vet-barra">
+    <p class="vet-resumo" id="vetResumo">lendo o cache…</p>
+    <button type="button" id="recarregarVetores" class="botao compacto"
+            title="Ler o cache de novo">Atualizar</button>
+  </div>
+
+  <!-- ⭐ Procurar a mídia é o que faz a lista mostrar o que FALTA, e não só o que já foi
+       feito. A pasta vem de uma lista: as `Avid MediaFiles` que existem nos volumes, mais
+       as que o editor apontou no seletor do sistema. -->
+  <div class="vet-acervo" id="vetPastas">
+    <select id="pastaDeMidia" class="modelo" aria-label="Pasta de mídia"></select>
+    <button type="button" id="varrerAcervo" class="botao compacto"
+            title="Ler os arquivos da pasta e agrupá-los em clipes">Procurar mídia</button>
+    <button type="button" id="apontarPasta" class="botao compacto"
+            title="Apontar uma pasta de mídia que não está na lista">Outra…</button>
+  </div>
+
+  <!-- ⭐ A bin responde outra pergunta que o disco: "o que está no PROJETO". É a fonte
+       mais barata daqui — 907 masterclipes em 42 bins, 0,4 s — e o nome que sai dela é o
+       que o editor vê e pode editar. -->
+  <div class="vet-acervo">
+    <button type="button" id="lerBins" class="botao compacto"
+            title="Ler as bins do projeto aberto e listar os masterclipes">
+      Ler as bins do projeto</button>
+    <span class="vet-nota" id="vetProjeto">o projeto aberto no Media Composer</span>
+  </div>
+
+  <!-- ⭐ Transcrever no fundo é trabalho ADIANTADO: a transcrição é do master inteiro, em
+       tempo do master, então o que ficar pronto aqui faz a pergunta no chat responder na
+       hora — para qualquer take daquela mídia, inclusive criados depois. -->
+  <div class="vet-acoes">
+    <button type="button" id="vetorizarFalta" class="botao compacto"
+            title="Olhar os planos e guardar o vetor de cada quadro amostrado">
+      Vetorizar a imagem</button>
+    <button type="button" id="transcreverFalta" class="botao compacto">
+      Transcrever a fala</button>
+    <!-- ⚠️ O único botão do produto que gasta a ASSINATURA do editor. O preço vem medido
+         do serviço e aparece antes do clique. -->
+    <button type="button" id="decuparFalta" class="botao compacto perigo"
+            title="O Claude olha os quadros e escreve a decupagem — isto consome a sua assinatura">
+      Decupar a imagem</button>
+    <!-- ⭐ A decupagem MICRO: uma nota por trecho (plano do montado, momento do bruto), no
+         Mac. Complementa a macro — não a substitui. -->
+    <button type="button" id="microFalta" class="botao compacto"
+            title="Uma nota por trecho, com entrada e saída — roda no Mac, não gasta assinatura. Complementa a decupagem acima.">
+      Decupar em trechos</button>
+    <!-- ⭐ A DENSIDADE da decupagem (F3): seis quadros descrevem bem um plano e descrevem
+         MAL um master de quatro minutos que vai do geral ao close — e é o editor quem sabe
+         qual dos dois ele está mandando analisar. ⚠️ Ela muda o PREÇO, e a linha abaixo
+         diz quanto antes do clique.
+         ⛔⛔ O rótulo diz A QUAL BOTÃO ela pertence, e isso custou uma fila de 4 horas:
+         escrito só "olhar [6 quadros]", no meio dos quatro botões, o editor leu como a
+         capilaridade da decupagem em TRECHOS e disparou a micro — *"ambíguo mesmo"*
+         (2026-09-23). A micro não usa este seletor: ela escolhe de 3 a 8 quadros por
+         trecho conforme o movimento medido. -->
+    <label class="vet-refazer"
+           title="Só para o botão «Decupar a imagem». A decupagem em trechos escolhe sozinha, de 3 a 8 quadros por trecho, conforme o movimento.">
+      <b>Decupar a imagem</b> olhando
+      <select id="densidade">
+        <option value="macro" selected>6 quadros</option>
+        <option value="fino">12 quadros</option>
+        <option value="exaustivo">24 quadros</option>
+      </select>
+    </label>
+    <label class="vet-refazer" title="Refazer o que já está pronto, e não só o que falta">
+      <input type="checkbox" id="refazerTudo"> refazer o pronto</label>
+    <span class="vet-nota">
+      ⭐ separados de propósito: vetorizar é ~2 s por clipe, transcrever é ~1 minuto por
+      take de 4. Dá para parar a qualquer momento, e recomeçar não repete o que ficou
+      pronto. ⚠️ Os botões trabalham no que a lista está MOSTRANDO — filtre para escolher.
+    </span>
+  </div>
+  <p class="vet-preco" id="precoDecupagem" hidden></p>
+  <!-- ⭐⭐ O preço da micro é TEMPO, não dólar — e horas de Mac precisam ser ditas antes do
+       clique pela mesma razão que o dólar da macro é. ⚠️ Enquanto ninguém procurou os
+       cortes, bruto e montado mudam a conta em 6×: a tela mostra a FAIXA e diz que é faixa,
+       em vez de escolher um e acertar por sorte. -->
+  <p class="vet-preco" id="precoMicro" hidden></p>
+
+  <!-- ⭐ A vigia (só no Premiere): o que o editor importar é vetorizado e transcrito
+       sozinho. ⛔ Nunca decupa — isso gasta a assinatura, e o preço vem antes do clique. -->
+  <div class="vet-vigia" id="vetVigia" hidden>
+    <label class="vet-refazer vigia"
+           title="Vetorizar e transcrever sozinho o que for importado no projeto daqui em diante. Não decupa (isso gasta a assinatura).">
+      <input type="checkbox" id="vigiaLigada"> processar sozinho o que eu importar</label>
+    <span class="vet-nota" id="vigiaEstado"></span>
+  </div>
+
+  <!-- ⚠️ Silêncio parece travamento: a varredura leva um minuto num acervo de verdade,
+       e ela conta o arquivo que está lendo enquanto anda. -->
+  <div class="vet-andamento" id="vetAndamento" hidden>
+    <div class="vet-progresso"><i><b></b></i></div>
+    <div class="vet-andamento-linha">
+      <span class="vet-andamento-texto" id="vetAndamentoTexto"></span>
+      <button type="button" id="pararTarefa" class="botao compacto">Parar</button>
+    </div>
+  </div>
+
+  <!-- ⚠️ 358 mídias numa varredura real desta máquina: sem filtro, a aba é uma lista
+       para rolar, não uma ferramenta. O campo procura pelo nome como aparece na bin. -->
+  <div class="vet-filtro">
+    <input type="search" id="vetProcura" placeholder="Procurar pelo nome ou pela bin…"
+           spellcheck="false" autocomplete="off" aria-label="Procurar mídia pelo nome ou bin">
+  </div>
+
+  <!-- ⭐ Etiquetas em vez do select de situação. Na mesma família elas SOMAM ("imagem" ou
+       "som"); entre famílias elas FILTRAM ("som" e "sem transcrição"). -->
+  <div class="vet-tags" id="vetTags" role="group" aria-label="Filtrar por etiqueta"></div>
+
+  <!-- ⭐⭐ Decisão do editor (2026-09-13): TABELA, não cartão. Cartão de três linhas por
+       mídia fazia 358 mídias virarem uma rolagem sem fim. A tabela rola nos DOIS sentidos
+       dentro da própria caixa: o nome fica preso à esquerda e o cabeçalho no topo, e a
+       barra horizontal fica sempre à vista — em 340 px as colunas não cabem, e esconder a
+       barra faria as da direita parecerem não existir. -->
+  <div class="vet-rolagem">
+    <table class="vet-tabela">
+      <thead><tr id="vetCabeca"></tr></thead>
+      <tbody id="vetores"></tbody>
+    </table>
+  </div>
+  <p class="vet-corte" id="vetCorte" hidden></p>
+  <p class="vet-vazio" id="vetVazio" hidden>
+    Nada analisado ainda. O cache enche sozinho conforme você pergunta sobre o material —
+    ver quadros de um take ou transcrever uma cena já deixa tudo pronto para a próxima vez.
+  </p>
+  <p class="config-recado" id="vetRecado" hidden></p>
+</section>
+
+<section class="tela" data-tela="config" id="telaConfig" hidden>
+  <h2>Material processado</h2>
+  <p class="explica">
+    Quadros, áudio e transcrição ficam guardados para não serem refeitos a cada pergunta.
+    Apagar só custa tempo: tudo se refaz a partir da mídia do projeto.
+  </p>
+
+  <div class="config-linha">
+    <span class="config-rot">Pasta</span>
+    <input type="text" id="cacheCaminho" spellcheck="false" autocomplete="off"
+           aria-label="Pasta onde o material processado é guardado">
+    <!-- ⭐ Navegar é o caminho normal; o campo de texto fica para quem prefere colar um
+         caminho de rede, que é mais rápido que procurá-lo clicando. -->
+    <button type="button" id="escolherPasta" class="botao compacto"
+            title="Escolher a pasta">Escolher…</button>
+  </div>
+  <p class="config-nota" id="cacheNota"></p>
+
+  <div class="config-acoes">
+    <button type="button" id="salvarCache" class="botao">Salvar pasta</button>
+    <button type="button" id="abrirCache" class="botao">Abrir pasta</button>
+    <button type="button" id="apagarCache" class="botao perigo">Apagar tudo</button>
+  </div>
+  <p class="config-recado" id="configRecado" hidden></p>
+
+  <h2>Suporte</h2>
+  <div class="config-linha">
+    <span class="config-rot">Registro</span>
+    <code class="config-valor" id="caminhoDosLogs"></code>
+  </div>
+  <div class="config-acoes">
+    <button type="button" id="abrirLogs" class="botao">Abrir pasta do registro</button>
+  </div>
+  <p class="explica">
+    É o arquivo que conta o que aconteceu quando algo dá errado. Ele não guarda o que
+    você escreve nas perguntas.
+  </p>
+</section>
+
+<!-- ⭐ A barra de status: que modelo responde, quanto da conversa já foi, quanto da
+     assinatura já foi, e quando vira. Fica ACIMA do compositor porque é contexto para a
+     próxima pergunta — não é resultado da anterior. -->
+<!-- ⭐ DUAS linhas (autor, 2026-11-04): em cima o que o editor CONTROLA (modelo, automático),
+     embaixo, alinhado à esquerda, o que ele OLHA (conversa · 5h · reseta). Antes os medidores
+     iam à direita da mesma linha e caíam soltos quando não cabiam. -->
+<footer class="status" id="status" data-tela="conversa">
+  <select id="escolhaDoModelo" class="modelo" aria-label="Modelo do Claude"></select>
+  <button type="button" id="botaoAuto" class="toggle" aria-pressed="false"
+          title="Com o automático ligado, o Ciclo Assist executa as ações sem pedir confirmação">
+    <span class="luz"></span>automático
+  </button>
+  <button type="button" id="botaoOficina" class="botao-oficina" title="Ver os fluxos de trabalho e os agentes de IA">Fluxos e Agentes</button>
+  <span class="medidores" id="medidores">
+    <span class="medidor" id="medidorCtx">
+      <span class="rot">conversa</span><i><b></b></i><em>—</em>
+    </span>
+    <span class="medidor" id="medidorUso">
+      <span class="rot">5h</span><i><b></b></i><em>—</em>
+    </span>
+    <span class="reset" id="reset"></span>
+    <!-- ⭐ A Carta Aberta (C2): abaixo de "Fluxos e Agentes", na linha de baixo, à direita -->
+    <button type="button" id="botaoCarta" class="botao-oficina" title="A pasta de trabalho compartilhada entre editores">Carta Aberta</button>
+  </span>
+</footer>
+
+<form class="compositor" id="compositor">
+  <!-- ⭐ O que o editor arrastou, como etiquetas acima da caixa de texto. Some quando a
+       pergunta é enviada: a referência vale para a pergunta, não para a conversa toda. -->
+  <!-- ⚠️⚠️ A barra fica FORA da lista e some junto com ela. Dez subclipes arrastados
+       enchiam a linha do compositor e espremiam a caixa de texto até um quadrado de uma
+       letra (visto em campo, 2026-09-11) — o anexo não pode competir com a pergunta. -->
+  <div class="anexos-barra" id="anexosBarra" hidden>
+    <button type="button" id="dobrarAnexos" class="anexos-dobra" aria-expanded="true">
+      <span class="seta" id="setaDosAnexos">▾</span><span id="anexosConta"></span></button>
+    <button type="button" id="limparAnexos" class="anexos-tirar">tirar todos</button>
+  </div>
+  <div class="anexos" id="anexos" hidden></div>
+  <!-- ⭐ O menu ☰: atalhos de prompt em cima, comandos fixos embaixo (plano
+       docs/plano/2026-09-14-menu-do-compositor.md). Clicar num atalho PREENCHE a caixa,
+       nunca envia: dá para arrastar a bin antes. -->
+  <button type="button" id="abrirMenu" aria-haspopup="menu" aria-expanded="false"
+          aria-controls="menuPop" aria-label="Atalhos e ações" title="Atalhos e ações">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M5 7h14M5 12h14M5 17h14"/>
+    </svg>
+  </button>
+  <textarea id="entrada" rows="1" placeholder="Pergunte alguma coisa…  (/clear limpa a conversa)"
+            aria-label="Sua pergunta" autocomplete="off"></textarea>
+  <!-- ⛔⛔ Parar MATA o subprocesso do modelo. Não é um pedido educado como o da fila de
+       fundo: o trabalho do turno roda dentro do `claude -p`, e uma flag cooperativa só
+       pararia de PINTAR enquanto o modelo continuasse gastando. O title diz o que ele
+       NÃO faz — ferramenta já disparada termina. -->
+  <button type="button" id="pararConversa" hidden aria-label="Parar"
+          title="Parar a resposta. O que já foi pedido ao Avid termina de rodar.">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+      <rect x="6" y="6" width="12" height="12" rx="2"/>
+    </svg>
+  </button>
+  <button type="submit" id="enviar" aria-label="Enviar">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6"/>
+    </svg>
+  </button>
+</form>
+
+<!-- ⛔⛔ O menu fica FORA do <form>: a tela de salvar tem um campo de apelido, e um form
+     com um campo de texto SUBMETE no Enter — o editor digitaria o apelido, apertaria
+     Enter e o painel mandaria a pergunta que estava na caixa. -->
+<div class="menu-pop" id="menuPop" role="menu" hidden>
+  <div class="menu-lista" id="menuAtalhos"></div>
+  <div class="menu-sep" id="menuFluxosSep" hidden></div>
+  <div class="menu-lista" id="menuFluxos" hidden></div>
+  <div class="menu-sep"></div>
+  <button type="button" role="menuitem" class="menu-item" id="menuSalvar">Salvar como atalho…</button>
+  <div class="menu-sep"></div>
+  <button type="button" role="menuitem" class="menu-item perigo" id="menuLimpar">Limpar conversa</button>
+  <div class="menu-forma" id="menuForma" hidden>
+    <label>Apelido <input type="text" id="formaApelido" maxlength="40" autocomplete="off"></label>
+    <label>Texto <textarea id="formaTexto" rows="5"></textarea></label>
+    <p class="menu-erro" id="formaErro" hidden></p>
+    <div class="menu-forma-botoes">
+      <button type="button" class="botao compacto" id="formaCancelar">Cancelar</button>
+      <button type="button" class="botao compacto" id="formaSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/painel.js"></script>
+<script src="/static/fluxo.js"></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+{
+"origem": "estudo BL15_TXT2_camada.blscene (a camada com o operador Text em modo Composite, feita na interface; Baselight 7.0.3, 2026-11-22): a arvore da camada 523, na ordem",
+"raiz": 523,
+"ordem": [
+523,
+524,
+530,
+538,
+531,
+532,
+533,
+534,
+535,
+536,
+537,
+555,
+556,
+554,
+546,
+539,
+540,
+541,
+542,
+543,
+544,
+545,
+547,
+548,
+549,
+550,
+551,
+552,
+553
+],
+"objetos": {
+"523": {
+"rev": 7,
+"tipo": "GR_InsideOutsideRop gr_insideoutside",
+"filhos": [
+0,
+524,
+530
+],
+"est": "2 d Z f 0000000000000000 7:Layer:1 42c80000 3f800000 00000000 2 0 0 0 0 Z 5 5 1 304087104 f 1 0: -1 -1 0 16:GR_ColourWarpRop f f f 16:GR_ColourWarpRop f f f 16:GR_CurveGradeRop f f f 16:GR_CurveGradeRop f f f 16:GR_VideoGradeRop f f f 16:GR_VideoGradeRop f f f 15:GR_FilmGradeRop f f f 15:GR_FilmGradeRop f f f 16:GR_MatteText3Rop t 2 f f 15:GR_BaseGradeRop f f f "
+},
+"524": {
+"rev": 1,
+"tipo": "GM_Integer gr_insideoutside",
+"filhos": [],
+"est": "4 "
+},
+"530": {
+"rev": 4,
+"tipo": "GR_MatteText3Rop gr_mattetext3",
+"filhos": [
+538,
+555,
+556,
+554,
+0
+],
+"est": "4 o 0 o 1 o 2 o 3 4:Text 42ca0000 3f800000 3f800000 2 0 0 0 4 Z 1 4 "
+},
+"538": {
+"rev": 2,
+"tipo": "BEZ_Transform2dInterp bez",
+"filhos": [
+531,
+532,
+533,
+534,
+535,
+536,
+537
+],
+"est": "8 z o 0 o 1 o 2 o 3 o 4 o 5 o 6 "
+},
+"531": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+},
+"532": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+},
+"533": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+},
+"534": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+},
+"535": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+},
+"536": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3fe0000000000000 23:6 0 0 0 0 -1 0.001 0.5  "
+},
+"537": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3fd2000000000000 27:6 0 0 0 0 -1 0.001 0.28125  "
+},
+"555": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 i1 "
+},
+"556": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 i0 "
+},
+"554": {
+"rev": 2,
+"tipo": "GRMT_BlockInterp gr_mattetext3",
+"filhos": [
+546,
+547,
+548,
+549,
+550,
+551,
+552,
+553
+],
+"est": "8 o 0 o 1 o 2 o 3 o 4 o 5 o 6 o 7 4059000000000000 3f847ae147ae147b 3f98cccccccccccd "
+},
+"546": {
+"rev": 2,
+"tipo": "BEZ_Transform2dInterp bez",
+"filhos": [
+538,
+539,
+540,
+541,
+542,
+543,
+544,
+545
+],
+"est": "8 o 0 o 1 o 2 o 3 o 4 o 5 o 6 o 7 "
+},
+"539": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+},
+"540": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+},
+"541": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+},
+"542": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+},
+"543": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+},
+"544": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3fe0000000000000 23:6 0 0 0 0 -1 0.001 0.5  "
+},
+"545": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3fd2000000000000 27:6 0 0 0 0 -1 0.001 0.28125  "
+},
+"547": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 s6:CAMADA "
+},
+"548": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 a3 f0x1p+0 f0x1p+0 f0x1p+0 "
+},
+"549": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 i0 "
+},
+"550": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 s4:none "
+},
+"551": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 s22:LiberationSans-Regular "
+},
+"552": {
+"rev": 1,
+"tipo": "GM_InterpDiscrete gm",
+"filhos": [],
+"est": "0 f 0 a3 f0x1p-1 f0x1p-1 f0x1p-1 "
+},
+"553": {
+"rev": 1,
+"tipo": "GM_Bezier1dInterp gm",
+"filhos": [],
+"est": "0 f 3fe0000000000000 23:6 0 0 0 0 -1 0.001 0.5  "
+}
+}
+}

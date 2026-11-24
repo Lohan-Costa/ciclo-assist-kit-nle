@@ -1,0 +1,6 @@
+# Os ffmpeg/ffprobe FIXADOS do motor (8.1.2, os do ex-Órbita: `motor/fetch_ffmpeg.py`, com o SHA-256 lá).
+# Binário de terceiro, ~400 MB: fora do Git, como o `src-tauri/binaries/` do ex-Órbita era.
+binarios/
+# As venvs, uma por SO (a do Windows: `.venv-win`); como as do Conformar. Gravam caminho absoluto: recriar em cada máquina.
+.venv/
+.venv-win/

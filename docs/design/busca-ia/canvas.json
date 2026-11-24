@@ -1,0 +1,93 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "title": "1 · Frase, em lista",
+   "x": 0,
+   "y": 0,
+   "w": 440,
+   "h": 620
+  },
+  {
+   "file": "Fala.dc.html",
+   "title": "2 · Fala: palavra ou frase",
+   "x": 520,
+   "y": 0,
+   "w": 440,
+   "h": 620
+  },
+  {
+   "file": "Parecidos.dc.html",
+   "title": "3 · Quadro arrastado do Avid",
+   "x": 1040,
+   "y": 0,
+   "w": 440,
+   "h": 620
+  },
+  {
+   "file": "Grade.dc.html",
+   "title": "5 · Grade, zoom pequeno",
+   "x": 0,
+   "y": 760,
+   "w": 440,
+   "h": 620
+  },
+  {
+   "file": "GradeZoom.dc.html",
+   "title": "6 · Grade, zoom grande",
+   "x": 520,
+   "y": 760,
+   "w": 440,
+   "h": 620
+  },
+  {
+   "file": "Cobertura.dc.html",
+   "title": "4 · Nada achado, índice incompleto",
+   "x": 1040,
+   "y": 760,
+   "w": 440,
+   "h": 620
+  },
+  {
+   "file": "Estreito.dc.html",
+   "title": "7 · Lista em 340 px",
+   "x": 0,
+   "y": 1520,
+   "w": 340,
+   "h": 620
+  }
+ ],
+ "annotations": [
+  {
+   "id": "regras",
+   "x": 1560,
+   "y": 0,
+   "w": 300,
+   "text": "Regras que a tela tem de mostrar, não só obedecer:\n\n• Só mídia de alguma bin do projeto ABERTO (Trash fora). Disco puro não entra.\n• Todo resultado diz POR QUE apareceu: imagem, fala ou decupagem.\n• O número em cada fonte é quanto já foi indexado — 'não achei' nunca vira 'não existe'.\n• Nome de personagem vem de roteiro/claquete/decupagem, nunca do rosto."
+  },
+  {
+   "id": "perguntas",
+   "x": 1560,
+   "y": 380,
+   "w": 300,
+   "text": "Para decidir com o editor:\n\n1. Lista (1) ou grade (alternativa)? - AMBOS, devemos ter botões para escolher a forma preferida e na grade ter um slide de zoom da miniatura, podendo aumentar ou diminuir sempre de forma responsiva.\n2. Clique no resultado: carrega na Source já no TC? Ou só seleciona? - clique simples, seleciona, clique duplo carrega no source\n3. Uma linha por MÍDIA com '+2 momentos', ou uma linha por momento? - '+2 momentos´ mas faltam botões \"próximo\" / \"anterior\" para mostrar quais outros momentos dentro do mesmo local só atualizando a miniatura ao lado. \n4. Filtros de campo (close, noite…) como botões, ou só a frase? - só a frase\n\n5. Miniaturas aqui são desenhos: no produto, o quadro real sai do cache local.\n\n\nobs geral: nenhum texto da interface deve ser mais escuro que #a3a3a3. "
+  },
+  {
+   "id": "note-1",
+   "x": 404,
+   "y": 131,
+   "w": 120,
+   "text": "adicionar visualização de lista ou miniatura aqui"
+  },
+  {
+   "id": "v2",
+   "x": 440,
+   "y": 1520,
+   "w": 340,
+   "text": "v2 — o que mudou com as respostas:\n\n• Seletor lista / grade no canto dos chips, onde o retângulo foi desenhado.\n• Grade responsiva: o zoom define o tamanho MÍNIMO da miniatura e cabem quantas colunas der (telas 5 e 6).\n• Clique seleciona (borda verde-água); duplo clique abre na Source no TC do momento.\n• Momentos: ‹ 1 de 3 › embaixo da miniatura troca só a imagem e o TC. Na grade, as setas aparecem na selecionada.\n• Sem filtros de campo: só a frase.\n• Texto: principal #ececec · secundário #c4c4c4 · piso #a3a3a3."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

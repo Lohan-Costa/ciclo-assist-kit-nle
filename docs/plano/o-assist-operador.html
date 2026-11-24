@@ -1,0 +1,384 @@
+<title>O Assist Operador</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: uma coluna de leitura (~980px), diagramas em caixas HTML que empilham no celular; cor = a via de cada passo */
+:root {
+  --bg: #f3f5f6; --papel: #ffffff; --tinta: #16201f; --tinta-2: #4a5654; --linha: #d5dcdb;
+  --api: #0f8a7e; --api-fundo: #e2f3f0;
+  --arq: #5b54b8; --arq-fundo: #ebe9f8;
+  --pil: #2563c9; --pil-fundo: #e3ecfa;
+  --pausa: #b7791f; --pausa-fundo: #fbf0dc;
+  --pare: #c0392b; --pare-fundo: #f9e3e0;
+  --ok: #2f7d32;
+  --f-tit: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-txt: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1514; --papel: #172120; --tinta: #e4ecea; --tinta-2: #a3b1ae; --linha: #2b3836;
+  --api: #3cc4b4; --api-fundo: #133a36; --arq: #9d97ee; --arq-fundo: #262347;
+  --pil: #6b9ef0; --pil-fundo: #182a48; --pausa: #e3a94c; --pausa-fundo: #3a2c14;
+  --pare: #ef7a6c; --pare-fundo: #3d1c18; --ok: #6cc570; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1514; --papel: #172120; --tinta: #e4ecea; --tinta-2: #a3b1ae; --linha: #2b3836;
+  --api: #3cc4b4; --api-fundo: #133a36; --arq: #9d97ee; --arq-fundo: #262347;
+  --pil: #6b9ef0; --pil-fundo: #182a48; --pausa: #e3a94c; --pausa-fundo: #3a2c14;
+  --pare: #ef7a6c; --pare-fundo: #3d1c18; --ok: #6cc570; color-scheme: dark }
+
+body { background: var(--bg); color: var(--tinta); font-family: var(--f-txt); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.pagina { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; }
+h1, h2, h3 { font-family: var(--f-tit); letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(38px, 7vw, 60px); font-weight: 700; }
+h2 { font-size: 30px; font-weight: 600; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.rotulo { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-2); }
+.secao { display: flex; flex-direction: column; gap: 16px; }
+.mono { font-family: var(--f-mono); font-size: .9em; }
+code { font-family: var(--f-mono); font-size: .88em; background: var(--papel); border: 1px solid var(--linha); border-radius: 3px; padding: 0 4px; }
+
+.abertura { display: flex; flex-direction: column; gap: 14px; border-bottom: 2px solid var(--tinta); padding-bottom: 24px; }
+.abertura .tese { font-size: 19px; max-width: 60ch; }
+.citacao { border-left: 3px solid var(--linha); padding-left: 14px; color: var(--tinta-2); font-style: italic; max-width: 70ch; }
+
+/* legenda das vias */
+.legenda { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--tinta-2); }
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.ponto { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+/* diagrama da arquitetura */
+.arq { background: var(--papel); border: 1px solid var(--linha); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.fila { display: flex; gap: 10px; flex-wrap: wrap; }
+.no { flex: 1 1 200px; min-width: 0; border: 1.5px solid var(--tinta); border-radius: 4px; padding: 12px 14px; background: var(--bg); display: flex; flex-direction: column; gap: 4px; }
+.no b { font-family: var(--f-tit); font-size: 19px; font-weight: 600; }
+.no small { color: var(--tinta-2); font-size: 13px; }
+.no.editor { border-style: dashed; }
+.no.via-api { border-color: var(--api); background: var(--api-fundo); }
+.no.via-arq { border-color: var(--arq); background: var(--arq-fundo); }
+.no.via-pil { border-color: var(--pil); background: var(--pil-fundo); }
+.seta { text-align: center; font-family: var(--f-mono); font-size: 12px; color: var(--tinta-2); padding: 2px 0; }
+.seta::before { content: "↓ "; font-size: 15px; color: var(--tinta); }
+.nles { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.nles span { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--linha); padding: 3px 8px; border-radius: 3px; background: var(--bg); }
+
+.porques { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.porque { border-top: 2px solid var(--tinta); padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.porque b { font-weight: 600; }
+.porque p { color: var(--tinta-2); font-size: 14px; }
+
+/* o fluxo de ficção */
+.fluxo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; counter-reset: passo; }
+.passo { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--linha); counter-increment: passo; }
+.passo::before { content: counter(passo); font-family: var(--f-tit); font-size: 28px; font-weight: 700; line-height: 1; color: var(--tinta-2); }
+.passo .corpo { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.passo .corpo b { font-weight: 600; }
+.passo .corpo small { color: var(--tinta-2); font-size: 13.5px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { font-family: var(--f-mono); font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 3px; white-space: nowrap; border: 1px solid transparent; }
+.chip.api { color: var(--api); background: var(--api-fundo); border-color: var(--api); }
+.chip.arq { color: var(--arq); background: var(--arq-fundo); border-color: var(--arq); }
+.chip.pil { color: var(--pil); background: var(--pil-fundo); border-color: var(--pil); }
+.chip.feito { color: var(--ok); border-color: var(--ok); }
+.chip.medir { color: var(--pausa); background: var(--pausa-fundo); border-color: var(--pausa); }
+.passo.risco { background: linear-gradient(90deg, var(--pausa-fundo), transparent 70%); }
+@media (max-width: 560px) { .passo { grid-template-columns: 34px 1fr; } .chips { grid-column: 2; justify-content: flex-start; } }
+
+/* telas */
+.telas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.tela { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.janela { border: 1.5px solid var(--tinta); border-radius: 6px; background: var(--papel); overflow: hidden; font-size: 13px; }
+.janela .barra { display: flex; gap: 2px; border-bottom: 1px solid var(--linha); background: var(--bg); font-family: var(--f-tit); font-size: 15px; font-weight: 600; }
+.janela .barra span { padding: 6px 10px; color: var(--tinta-2); }
+.janela .barra span.ativa { color: var(--tinta); border-bottom: 2px solid var(--api); }
+.janela .barra span.tranca::after { content: " ●"; color: var(--tinta-2); font-size: 9px; vertical-align: 2px; }
+.janela .miolo { padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 230px; }
+.botao { display: inline-block; font-weight: 600; font-size: 12.5px; padding: 6px 12px; border-radius: 4px; border: 1.5px solid var(--tinta); background: var(--papel); color: var(--tinta); }
+.botao.cheio { background: var(--tinta); color: var(--papel); }
+.botao.pausa { border-color: var(--pausa); color: var(--pausa); }
+.botao.pare { border-color: var(--pare); color: var(--pare); }
+.linha-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.mute { color: var(--tinta-2); }
+.cartao { border: 1px solid var(--linha); border-radius: 4px; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+.cartao ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 2px; }
+.cartao .aviso { font-size: 12px; color: var(--pausa); }
+.prog { display: flex; flex-direction: column; gap: 4px; font-family: var(--f-mono); font-size: 11.5px; }
+.prog .l { display: flex; justify-content: space-between; gap: 8px; }
+.prog .ok { color: var(--ok); }
+.prog .agora { color: var(--pil); font-weight: 600; }
+.prog .falta { color: var(--tinta-2); }
+.borda-piloto { border: 4px solid var(--pil); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--pil-fundo); }
+.estados { display: flex; gap: 8px; flex-wrap: wrap; font-family: var(--f-mono); font-size: 11px; }
+.estados span { padding: 2px 6px; border-radius: 3px; border: 2px solid; }
+
+/* tabelas */
+.rolagem { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-2); font-weight: 600; }
+td.sim { color: var(--ok); font-weight: 600; } td.nao { color: var(--pare); font-weight: 600; }
+
+.regra { border: 2px solid var(--pare); border-radius: 6px; padding: 16px 18px; background: var(--pare-fundo); display: flex; flex-direction: column; gap: 8px; }
+.regra h3 { color: var(--pare); }
+.lista { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 72ch; }
+
+.fases { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.fase { border: 1px solid var(--linha); background: var(--papel); border-radius: 4px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.fase .nome { font-family: var(--f-tit); font-size: 26px; font-weight: 700; line-height: 1; }
+.fase b { font-weight: 600; font-size: 14px; }
+.fase small { color: var(--tinta-2); font-size: 13px; }
+.fase.critica { border-color: var(--pausa); box-shadow: inset 0 3px 0 var(--pausa); }
+
+.decisoes { counter-reset: d; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.decisoes li { counter-increment: d; display: grid; grid-template-columns: 30px 1fr; gap: 10px; }
+.decisoes li::before { content: counter(d); font-family: var(--f-tit); font-size: 22px; font-weight: 700; color: var(--tinta-2); line-height: 1.1; }
+.decisoes li.feita::before { content: "✓"; color: var(--ok); }
+.rodape { font-size: 13px; color: var(--tinta-2); border-top: 1px solid var(--linha); padding-top: 14px; }
+</style>
+
+<div class="pagina">
+
+<header class="abertura">
+  <span class="rotulo">Ciclo Assist · desenho de expansão · 31/10/2026</span>
+  <h1>O Assist Operador</h1>
+  <p class="tese">O editor abre o Ciclo Assist com todos os programas fechados, descreve um fluxo de trabalho, e o Assist o executa de ponta a ponta: abre o Resolve, converte, fecha, abre o Media Composer, sincroniza, faz os subclipes e organiza.</p>
+  <p class="citacao">"Importe o conteúdo da pasta X para o Avid usando o Resolve, depois sincronize o material, faça os subclipes e organize por cena."</p>
+</header>
+
+<section class="secao">
+  <span class="rotulo">1 · a arquitetura</span>
+  <h2>O modelo planeja. O código executa.</h2>
+  <p>Cada passo do fluxo é uma operação com nome, com o mesmo contrato das ferramentas de hoje: conferida antes do cartão, com resposta curta. O editor aprova o plano inteiro num cartão só. O piloto é um dos três jeitos de um passo acontecer, e é o último da fila.</p>
+  <div class="arq" role="img" aria-label="Organograma: o editor pede ao Assistir, que monta o plano; o editor aprova num cartão; o executor roda cada passo pela API, pelo arquivo ou pelo piloto, nessa ordem de preferência.">
+    <div class="fila"><div class="no editor"><b>O editor</b><small>pede em uma frase, aprova o plano, pode pausar ou cancelar a qualquer momento</small></div></div>
+    <div class="seta">pede</div>
+    <div class="fila"><div class="no"><b>Assistir</b><small>o <span class="mono">claude -p</span> com a conta do editor; transforma a frase num plano de passos com nome</small></div></div>
+    <div class="seta">um cartão com o plano inteiro (ADR 0008)</div>
+    <div class="fila"><div class="no"><b>Executor do fluxo</b><small>fila de fundo; cada passo: pré-condição → ação → conferência → estado gravado no disco. Chama o modelo de novo só quando um passo devolve uma pergunta.</small></div></div>
+    <div class="seta">cada passo escolhe a primeira via que alcança</div>
+    <div class="fila">
+      <div class="no via-api"><b>1 · API do NLE</b><small>gRPC 9100 do MC · ponte CEP do Premiere · API externa do Resolve Studio</small></div>
+      <div class="no via-arq"><b>2 · Arquivo</b><small>.avb pelo pyavb · AAF · .prproj · DRT</small></div>
+      <div class="no via-pil"><b>3 · Piloto</b><small>mouse, teclado, foto e catálogo de diálogos, só onde 1 e 2 não chegam</small></div>
+    </div>
+    <div class="nles"><span>Media Composer</span><span>Premiere</span><span>Resolve Studio</span><span>Órbita · DLPC (motores de dentro)</span></div>
+  </div>
+  <div class="porques">
+    <div class="porque"><b>Duração</b><p>Um render dura horas. Um turno vivo esse tempo todo relê o contexto a cada ida ao modelo.</p></div>
+    <div class="porque"><b>Previsibilidade</b><p>Oito passos dirigidos turno a turno pelo modelo são oito chances de improviso.</p></div>
+    <div class="porque"><b>Pausar e retomar</b><p>O estado fica no disco depois de cada conferência. O fluxo sobrevive a reiniciar o serviço.</p></div>
+    <div class="porque"><b>Human first</b><p>Se o fluxo é código, uma receita conhecida roda por um botão, sem conta.</p></div>
+  </div>
+  <div class="regra" style="border-color:var(--api);background:var(--api-fundo)">
+    <span class="rotulo">força do app</span>
+    <h3 style="color:var(--api)">Uma automação conhecida roda sem IA</h3>
+    <ul class="lista">
+      <li>Uma receita salva roda por um botão: sem modelo, sem conta, sem custo, e sempre do mesmo jeito.</li>
+      <li>Quando algo foge do previsto, quem decide é o editor, num cartão com as opções da própria receita. O fluxo nunca improvisa.</li>
+      <li>O piloto do produto também não é IA: ele acha os botões por padrão na tela, pela UI Automation e pelo catálogo de diálogos. Um diálogo desconhecido faz o fluxo parar.</li>
+      <li>A IA entra para montar uma receita a partir de uma frase, para adaptar quando a receita não cobre o caso e nos passos que são de IA por natureza, como decupar pelo Claude. Esses passos avisam antes do clique que gastam assinatura.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="secao">
+  <span class="rotulo">2 · o fluxo de ficção, contra o que o banco já sabe</span>
+  <h2>O ensaio: oito passos, um só pilotado</h2>
+  <p>Este fluxo é um exemplo para testar o desenho, não a especificação. O produto são as <b>operações</b> (importar, converter, abrir projeto, sincronizar, subclipar, organizar), cada uma servindo qualquer fluxo. O fluxo é só a composição que o modelo monta a partir da frase. Prova disso: antes do ensaio inteiro, o mesmo executor tem de rodar um segundo fluxo diferente sem uma linha nova de código.</p>
+  <div class="legenda">
+    <span><i class="ponto" style="background:var(--api)"></i>API</span>
+    <span><i class="ponto" style="background:var(--arq)"></i>Arquivo</span>
+    <span><i class="ponto" style="background:var(--pil)"></i>Piloto</span>
+    <span><i class="ponto" style="background:var(--pausa)"></i>A medir</span>
+  </div>
+  <ol class="fluxo">
+    <li class="passo"><div class="corpo"><b>Abrir o Resolve Studio e um projeto</b><small><code>abrir_programa</code> já faz isso. Sem Studio, o fluxo é recusado antes do cartão.</small></div><div class="chips"><span class="chip api">API</span><span class="chip feito">feito</span></div></li>
+    <li class="passo"><div class="corpo"><b>Importar a pasta X</b><small><code>MediaStorage.AddItemListToMediaPool</code></small></div><div class="chips"><span class="chip api">API</span><span class="chip feito">medido</span></div></li>
+    <li class="passo risco"><div class="corpo"><b>Converter para OP-Atom na Avid MediaFiles</b><small>O render MXF OP-Atom do Resolve nunca foi mapeado. Três perguntas: o MC aceita como mídia gerenciada? Sai o AAF que liga os masters? O som direto sai com os canais certos?</small></div><div class="chips"><span class="chip api">API</span><span class="chip medir">medir primeiro</span></div></li>
+    <li class="passo"><div class="corpo"><b>Fechar o Resolve</b><small>Pela API ou pelo processo; conferir se pergunta "salvar?".</small></div><div class="chips"><span class="chip api">API</span><span class="chip medir">trivial</span></div></li>
+    <li class="passo"><div class="corpo"><b>Abrir o Media Composer num projeto</b><small>Não há API antes do projeto aberto: a janela Select Project é só interface. É o primeiro passo pilotado, conferido depois pelo gRPC.</small></div><div class="chips"><span class="chip pil">piloto</span><span class="chip medir">F2</span></div></li>
+    <li class="passo"><div class="corpo"><b>Trazer o material para uma bin</b><small><code>ImportFile</code> do AAF ou <code>LinkFile</code> (100/100 no relink)</small></div><div class="chips"><span class="chip api">API</span><span class="chip medir">depende do 3</span></div></li>
+    <li class="passo"><div class="corpo"><b>Sincronizar</b><small>Motor do Órbita; hoje por HTTP para o standalone, depois de dentro.</small></div><div class="chips"><span class="chip api">API</span><span class="chip feito">rodando</span></div></li>
+    <li class="passo"><div class="corpo"><b>Subclipes e organizar por cena</b><small>Subclipes do Órbita (52/52) escritos na .avb. A cena vem da claquete gravada no metadado do som (iXML ou bext). Como o OP-Atom não guarda iXML, ela tem de ser lida antes da conversão ou das colunas da bin.</small></div><div class="chips"><span class="chip arq">arquivo</span><span class="chip medir">ler o metadado</span></div></li>
+  </ol>
+</section>
+
+<section class="secao">
+  <span class="rotulo">3 · as telas</span>
+  <h2>Três momentos da janela</h2>
+  <div class="telas">
+    <div class="tela">
+      <div class="janela" aria-label="Tela sem conta">
+        <div class="barra"><span>Preparar</span><span class="ativa tranca">Assistir</span><span>Conformar</span><span>Entregar</span></div>
+        <div class="miolo">
+          <h3>Entre para usar o Assistir</h3>
+          <p class="mute">Preparar, Conformar e Entregar funcionam sem conta. O Assistir usa a sua assinatura Claude, cobrada direto pela Anthropic, ou um modelo local no Mac.</p>
+          <div class="linha-botoes"><span class="botao cheio">Entrar com a conta Claude</span><span class="botao">Usar o modelo local</span></div>
+          <p class="mute" style="font-size:12px">O login abre no navegador, no site da Anthropic. O Ciclo Assist nunca vê a sua senha nem o seu token.</p>
+        </div>
+      </div>
+      <b>Sem conta</b><span class="mute">Só o Assistir fica trancado.</span>
+    </div>
+
+    <div class="tela">
+      <div class="janela" aria-label="Cartão do plano">
+        <div class="barra"><span>Preparar</span><span class="ativa">Assistir</span><span>Conformar</span><span>Entregar</span></div>
+        <div class="miolo">
+          <div class="cartao">
+            <b>Preparar a diária D04 · 212 arquivos</b>
+            <ol>
+              <li>Resolve Studio: importar <span class="mono">D:\D04</span></li>
+              <li>Converter para DNxHD OP-Atom (≈ 1 h 40)</li>
+              <li>Fechar o Resolve</li>
+              <li>Abrir o MC no projeto <span class="mono">PRODUCAO-A</span> <span class="mono" style="color:var(--pil)">· pilotado</span></li>
+              <li>Bin <span class="mono">D04</span> · sincronizar · subclipes</li>
+              <li>Uma bin por cena, pela claquete do metadado</li>
+            </ol>
+            <span class="aviso">O passo 4 usa o mouse e o teclado por cerca de 20 s. O resto roda no fundo.</span>
+            <div class="linha-botoes"><span class="botao cheio">Executar</span><span class="botao">Ajustar</span></div>
+          </div>
+        </div>
+      </div>
+      <b>O plano</b><span class="mute">Um cartão só, sem prazo, com o preço e o tempo antes do clique.</span>
+    </div>
+
+    <div class="tela">
+      <div class="janela" aria-label="Fluxo em execução">
+        <div class="barra"><span>Preparar</span><span class="ativa">Assistir</span><span>Conformar</span><span>Entregar</span></div>
+        <div class="miolo">
+          <div class="prog">
+            <div class="l ok"><span>✓ importar</span><span>212/212</span></div>
+            <div class="l ok"><span>✓ converter</span><span>1:38:12</span></div>
+            <div class="l ok"><span>✓ fechar o Resolve</span><span></span></div>
+            <div class="l agora"><span>▶ abrir o projeto no MC</span><span>pilotando</span></div>
+            <div class="l falta"><span>· bin, sync, subclipes</span><span></span></div>
+            <div class="l falta"><span>· organizar por cena</span><span></span></div>
+          </div>
+          <div class="borda-piloto"><b style="color:var(--pil)">O piloto está usando a tela</b><span class="mute" style="font-size:12px">Mexer no mouse pausa. ESPAÇO pausa, F12 para.</span></div>
+          <div class="linha-botoes"><span class="botao pausa">Pausar</span><span class="botao pare">Cancelar o fluxo</span></div>
+        </div>
+      </div>
+      <b>Rodando</b>
+      <div class="estados"><span style="border-color:var(--pil);color:var(--pil)">azul · agindo</span><span style="border-color:var(--pausa);color:var(--pausa)">âmbar · pausado</span><span style="border-color:var(--pare);color:var(--pare)">vermelho · parou</span></div>
+    </div>
+  </div>
+  <p><b>A janela fica sempre à vista</b>, para o editor acompanhar e poder interromper. Ela só sai da frente no instante em que um passo pilotado precisa da tela limpa, e volta sozinha quando o passo termina, como o terminal na bancada. Enquanto ela está fora, a borda do piloto mostra o estado.</p>
+  <p class="mute" style="font-size:13px">Os nomes e números das telas são exemplos para ilustrar o desenho.</p>
+</section>
+
+<section class="secao">
+  <span class="rotulo">4 · o piloto embutido</span>
+  <h2>De ferramenta de bancada a função do produto</h2>
+  <div class="rolagem"><table>
+    <thead><tr><th></th><th>Piloto de bancada (hoje)</th><th>Piloto do produto</th></tr></thead>
+    <tbody>
+      <tr><td>Quem decide o clique</td><td>O modelo, olhando a foto</td><td>O código do passo</td></tr>
+      <tr><td>O que o modelo recebe</td><td>Mãos e olhos crus</td><td><b>Nenhum mouse.</b> Só operações com nome, como <code>mc_abrir_projeto</code></td></tr>
+      <tr><td>Como acha o botão</td><td>Posição calibrada no notebook (1920×1080, 125 %)</td><td>Padrão na foto, UI Automation do Windows ou Acessibilidade do Mac, catálogo de diálogos</td></tr>
+      <tr><td>Diálogo desconhecido</td><td>Foto e parar</td><td>Foto, o fluxo para, e a foto aparece no cartão</td></tr>
+      <tr><td>Conferência</td><td>Pelo olho</td><td>Por fora, sem depender de posição (gRPC, processo, arquivo). Clique que não se confere por fora não entra no produto</td></tr>
+    </tbody>
+  </table></div>
+  <p>Dar ao modelo o poder de clicar onde quiser devolveria a máquina inteira, por outro caminho, ao chat que o <code>--restricted</code> fechou. O estudo do Post Producer mostrou essa brecha: eles deixam o Bash ligado e filtram depois.</p>
+</section>
+
+<section class="secao">
+  <div class="regra">
+    <span class="rotulo">decisão do autor · 31/10</span>
+    <h3>Só DaVinci Resolve Studio</h3>
+    <ul class="lista">
+      <li>Na versão gratuita não há scripting externo. Daria para fazer pelo piloto, mas não fazemos: <b>o piloto nunca substitui a API do Resolve</b>.</li>
+      <li>Sem <code>Studio</code> em <code>GetProductName()</code>, o passo e o fluxo são recusados antes do cartão.</li>
+      <li>Duas frases diferentes: "este fluxo exige o Resolve Studio" quando há prova de que é a gratuita; "não consegui falar com o Resolve" quando a API simplesmente não responde.</li>
+      <li>A medir: como reconhecer a gratuita sem a API. O executável é o mesmo <code>Resolve.exe</code> nas duas.</li>
+      <li>Vale também para o <code>abrir_programa</code> e o <code>conformar_no_resolve</code> de hoje.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="secao">
+  <span class="rotulo">5 · a conta</span>
+  <h2>O Claude Code oficial no instalador, com a conta do editor</h2>
+  <p>A regra da Anthropic permite levar o Claude Code dentro do produto, com três condições: o binário vai sem modificação, cada usuário entra com a própria conta, e ninguém revende nem intermedeia o uso. O login termina no site da Anthropic, e o Assist nunca toca na credencial.</p>
+  <p><b>Só assinatura, sem chave de API.</b> Quem chega ao limite compra crédito extra na própria conta Claude e continua. Quando o limite acabar, o aviso do painel diz isso. A estrutura é construída e publicada para teste nas máquinas da casa; distribuir fica para depois do consentimento da Anthropic.</p>
+  <div class="rolagem"><table>
+    <thead><tr><th>Gesto</th><th>O que roda</th><th>O que o Assist sabe</th></tr></thead>
+    <tbody>
+      <tr><td>Entrar com a conta Claude</td><td><code>claude auth login</code> numa pasta de configuração do Assist; abre o navegador</td><td>Só se há alguém logado, e o plano e o e-mail que o CLI informa</td></tr>
+      <tr><td>Sair</td><td><code>claude auth logout</code></td><td>Volta ao estado sem conta</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rolagem"><table>
+    <thead><tr><th>Função</th><th>Sem conta</th><th>Com conta</th></tr></thead>
+    <tbody>
+      <tr><td>Preparar · Conformar · Entregar, à mão</td><td class="sim">sim</td><td class="sim">sim</td></tr>
+      <tr><td>Busca, Vetores, transcrição, decupagem pelo Mac</td><td class="sim">sim</td><td class="sim">sim</td></tr>
+      <tr><td>Assistir e fluxos pedidos por frase, pelo Claude</td><td class="nao">não</td><td class="sim">sim</td></tr>
+      <tr><td>Assistir pelo modelo local (Mac)</td><td class="sim">sim</td><td class="sim">sim</td></tr>
+      <tr><td>Decupagem pelo Claude</td><td class="nao">não</td><td class="sim">sim</td></tr>
+      <tr><td>Fluxo conhecido por botão (futuro)</td><td class="sim">sim</td><td class="sim">sim</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mute">A página do Agent SDK diz que terceiros não podem oferecer login claude.ai "salvo aprovação prévia". Para uso interno o desenho fica do lado certo da linha; antes de distribuir fora da casa, o autor fala com a Anthropic.</p>
+  <h3>O assunto do chat é o trabalho</h3>
+  <p>O chat responde sobre pós-produção e sobre a máquina onde ela roda: material, programas de edição, cor, som, entrega, codec, disco, erros de programa. Num <code>PMM_Insufficient_Media</code>, ele ajuda com o que sabe, separa o que é conhecimento geral do que conferiu no projeto e oferece o conserto quando uma operação alcança. Num pedido de receita de bolo, recusa numa frase e diz com o que pode ajudar. Na dúvida, se a pergunta toca o trabalho, ele ajuda.</p>
+  <h3>Depois do ensaio: o ofício dos erros e o relatório anônimo</h3>
+  <p>Nenhum dos dois entra na primeira versão. O que o banco já mapeou de erros do Media Composer, do Premiere e do Resolve vira ofício do chat: o sintoma, as causas medidas, como distinguir uma da outra e o conserto. O olhar de fora é o que nos diferencia no mercado. Quando o erro for novo, o chat pode sugerir um relatório anônimo. Ele é sempre opcional, o editor vê e edita o texto exato antes de enviar, e nada que identifique a pessoa, a produção ou o material sai da máquina. Recusar não muda em nada a ajuda que o editor recebe.</p>
+  <h3>O motor é plural</h3>
+  <p>O Claude é o motor da primeira versão. Um modelo local que o substitua é parte do produto, e no futuro outros provedores podem entrar (Codex, Gemini, Copilot). Como quem executa o fluxo é código nosso, trocar o modelo fica mais fácil: ele só monta o plano e responde às exceções. Um motor novo só entra se passar nas duas provas que o Claude passou: zero ferramenta própria além das nossas, e o portão funcionando.</p>
+</section>
+
+<section class="secao">
+  <span class="rotulo">6 · os testes</span>
+  <h2>Mídia sintética e falhas plantadas</h2>
+  <p>Os primeiros testes não usam mídia real. O <code>laboratorio-de-midia</code> gera uma diária curta, que diz em cada quadro e canal o que é: 3 ou 4 cenas, 2 câmeras e som, uns 10 takes de 5 a 10 s. A conversão no Resolve passa de horas para segundos, e cada passo se acompanha olhando. Falta no laboratório uma receita: som com cena, take e rolo gravados no iXML e no bext.</p>
+  <div class="rolagem"><table>
+    <thead><tr><th>Falha plantada</th><th>Passo</th><th>O que o executor faz</th></tr></thead>
+    <tbody>
+      <tr><td>Arquivo corrompido no meio da pasta</td><td>importar</td><td>Segue com os outros e diz quais ficaram de fora</td></tr>
+      <tr><td>Disco de destino sem espaço</td><td>converter</td><td>Para o passo sem deixar nada pela metade na Avid MediaFiles</td></tr>
+      <tr><td>Resolve fechado à força no meio do render</td><td>converter</td><td>Percebe pelo processo e pela porta; ao retomar, refaz só o que faltou</td></tr>
+      <tr><td>Resolve gratuito ou scripting desligado</td><td>antes do cartão</td><td>Recusa com a frase certa</td></tr>
+      <tr><td>Diálogo inesperado</td><td>fechar, abrir</td><td>Foto, para, mostra a foto no cartão</td></tr>
+      <tr><td>Projeto pedido não existe no MC</td><td>abrir projeto</td><td>Para e lista os projetos que existem; nunca cria um</td></tr>
+      <tr><td>Take sem cena ou take no metadado</td><td>organizar</td><td>Vai para uma bin "sem claquete", dito no resumo</td></tr>
+      <tr><td>Mesma cena em dois rolos, take repetido</td><td>organizar</td><td>Não junta calado; diz</td></tr>
+      <tr><td>O editor mexe no mouse no passo pilotado</td><td>abrir projeto</td><td>Pausa (âmbar) e só retoma pelo gesto dele</td></tr>
+      <tr><td>F12 ou Cancelar no meio de qualquer passo</td><td>todos</td><td>O resumo diz o que ficou feito; retomar começa do último passo conferido</td></tr>
+      <tr><td>Serviço reiniciado no meio do fluxo</td><td>todos</td><td>O fluxo volta do disco e pergunta antes de retomar</td></tr>
+    </tbody>
+  </table></div>
+  <p class="mute">As falhas são do executor e das operações, não do ensaio: valem para qualquer fluxo. Mídia real só entra depois que o sintético passa inteiro, para conferir tempo e espaço.</p>
+</section>
+
+<section class="secao">
+  <span class="rotulo">7 · as fases</span>
+  <h2>Cada fase prova um elo</h2>
+  <div class="fases">
+    <div class="fase"><span class="nome">F0</span><b>A conta</b><small>Um turno de verdade num Windows sem <code>claude</code> instalado.</small></div>
+    <div class="fase"><span class="nome">F0b</span><b>O laboratório</b><small>A diária sintética, o iXML com cena e take, e as falhas como receitas.</small></div>
+    <div class="fase"><span class="nome">F1</span><b>O executor</b><small>Um fluxo só de API no sintético, cancelado e retomado, e um segundo fluxo sem código novo.</small></div>
+    <div class="fase"><span class="nome">F2</span><b>O piloto embutido</b><small><code>mc_abrir_projeto</code>, 5 de 5, com o editor mexendo no mouse no meio.</small></div>
+    <div class="fase critica"><span class="nome">F3</span><b>Resolve → OP-Atom</b><small>O maior risco, medido no sintético. Corre junto com a F0.</small></div>
+    <div class="fase"><span class="nome">F4</span><b>O ensaio inteiro</b><small>A diária sintética até as bins por cena, com cada falha plantada. Depois, uma real para escala.</small></div>
+    <div class="fase"><span class="nome">F5</span><b>O Mac</b><small>O mesmo fluxo no macOS.</small></div>
+  </div>
+</section>
+
+<section class="secao">
+  <span class="rotulo">8 · as decisões do autor</span>
+  <h2>Decidido e em aberto</h2>
+  <ol class="decisoes">
+    <li class="feita"><span><b>Resolve:</b> só Studio; a gratuita é recusada mesmo onde o piloto alcançaria.</span></li>
+    <li class="feita"><span><b>Anthropic:</b> construir a estrutura e publicar para teste, sem distribuir. O autor fala com eles quando chegar a hora.</span></li>
+    <li class="feita"><span><b>Conta:</b> só assinatura, sem chave de API. Crédito extra é escolha do editor na conta dele.</span></li>
+    <li class="feita"><span><b>Modelo local:</b> libera o Assistir. O motor é plural.</span></li>
+    <li class="feita"><span><b>Janela:</b> sempre à vista, fora da frente só quando o piloto precisa da tela.</span></li>
+    <li class="feita"><span><b>Organizar:</b> pela claquete do metadado, em geral do som. Roteiro fica fora por enquanto.</span></li>
+    <li class="feita"><span><b>O fluxo vira botão, como receita.</b> É um arquivo no formato de skill, com duas partes. Os passos são só operações com nome, que o executor roda sem o modelo, sem gastar assinatura e até sem conta. As condições são texto que o modelo lê só quando algo não casa (som sem claquete, material já em OP-Atom). A receita se compartilha com outros editores. Receita vinda de fora só chama as nossas operações, é mostrada inteira antes da primeira vez e não leva caminhos nem nomes da máquina de quem a fez. É um formato nosso, e não uma skill do Claude Code, para servir também ao modelo local e aos motores futuros.</span></li>
+  </ol>
+</section>
+
+<footer class="rodape">Fonte: <span class="mono">docs/plano/2026-10-31-o-assist-operador.md</span> no repositório do Ciclo Assist. Nada aqui foi construído ou medido ainda; a regra da Anthropic foi lida nas páginas públicas em 31/10/2026 e não é parecer jurídico.</footer>
+</div>

@@ -1,0 +1,58 @@
+# requirements.txt - a lista LEGIVEL: o que se pede e por que.
+# Quem se INSTALA e o requirements.lock, com as versoes exatas.
+#
+# ============================================================================
+# ESTE ARQUIVO E ASCII PURO. NAO ACRESCENTE ACENTO NEM EMOJI.
+#
+# O pip decodifica requirements com a CODEPAGE DO SISTEMA quando nao ha BOM --
+# nao com UTF-8. Um simbolo de aviso carrega o byte 0x8F, indefinido em cp1252:
+# o pip levanta UnicodeDecodeError e NAO INSTALA NADA.
+#
+# Medido neste projeto em 2026-09-10: a versao anterior deste arquivo era
+# ilegivel em cp1252 (byte 0x8F na posicao 7) e so instalava porque dev.ps1 e
+# instalar.ps1 setam PYTHONUTF8=1. Quem digitasse `pip install -r
+# requirements.txt` a mao -- o comando mais natural do mundo -- nao instalava
+# nada, com um erro que fala de codec e nao de dependencia.
+#
+# Um acento sobrevive (vira mojibake em cp1252 em vez de erro), entao um
+# arquivo com acento e sem emoji funciona POR SORTE. Aqui nao se conta com
+# sorte: ASCII puro, e a prosa acentuada fica no CLAUDE.md.
+# ============================================================================
+#
+# REGRA DA STACK, herdada do Decupador e NAO negociavel: nada de torch.
+# Tudo o que e modelo roda por onnxruntime, por CTranslate2, ou por binario
+# externo chamado em subprocesso. O openai-whisper levaria o pacote de ~2 GB
+# para ~6 GB.
+#
+# O HTTP e stdlib de proposito (ThreadingHTTPServer): menos dependencia para o
+# PyInstaller empacotar, e SSE sai da stdlib sem framework nenhum. Nao
+# adicionar FastAPI/Flask aqui sem um ADR que explique o que mudou.
+#
+# E o que NAO vem por aqui, de proposito, porque sao BINARIOS instalados a
+# parte:
+#   claude   o CLI do Claude Code -- e o motor (ADR 0001)
+#   ffmpeg   extracao de quadros e de audio
+#   ffprobe  metadados
+# O instalar.ps1 confere os tres e diz o que fazer quando faltam.
+
+# --- ponte com o Media Composer ---
+grpcio>=1.60.0            # backend mcapi em [::1]:9100
+protobuf>=7.35.1
+
+# --- formatos de projeto ---
+pyavb>=1.4.0              # ler bins e AUTORAR a timeline do corte zero
+pyaaf2>=1.4.0             # leitura de AAF
+
+# --- midia ---
+ffmpeg-python>=0.2.0      # extracao de quadros para a identificacao visual
+pymediainfo>=6.0.0        # metadados tecnicos
+
+# --- ASR, sem torch ---
+faster-whisper>=1.2.0     # transcricao; roda em CTranslate2, NAO em torch.
+                          # E o mesmo motor que o Media Composer 2025 embarca.
+                          # O modelo (~244 MB no `small`) baixa no primeiro uso.
+sherpa-onnx>=1.10.0       # segmentacao e embedding de voz (diarizacao futura)
+onnxruntime>=1.17.0       # runtime dos modelos ONNX
+
+# --- teste ---
+pytest>=8.0

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo Assist</title>
+<!-- O TOPO do guarda-chuva (autor, 2026-10-21): a moldura é UMA para os quatro apps. Em cima, o estado da conexão com
+     o NLE e o pino; embaixo, as abas Preparar · Assistir · Conformar · Entregar e a engrenagem ÚNICA, que abre as
+     configurações do app da aba visível. Página LOCAL: fala com o Rust. ⚠️ A CSP mora aqui E no tauri.conf.json. -->
+<link rel="stylesheet" href="topo.css">
+</head>
+<body>
+<header class="conexao">
+  <span class="ponto" id="ponto"></span>
+  <span class="texto" id="conexao">procurando o editor…</span>
+  <button type="button" class="aviso" id="aviso" hidden></button>
+  <button type="button" class="icone pino" id="pino" aria-pressed="false"
+          title="Manter a janela na frente do Media Composer e do Premiere" aria-label="Fixar na frente">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4"/><path d="M9 15l-4.5 4.5"/><path d="M14.5 4l5.5 5.5"/>
+    </svg>
+  </button>
+</header>
+<nav class="abas" role="tablist">
+  <button type="button" role="tab" data-aba="preparar" title="Sincronizar — sincronizar câmeras e som">Preparar</button>
+  <button type="button" role="tab" data-aba="assistir" title="O assistente: conversa com o agente">Assistir</button>
+  <button type="button" role="tab" data-aba="conformar" title="De Lá Pra Cá — relink e travessia entre NLEs">Conformar</button>
+  <button type="button" role="tab" data-aba="entregar" title="Em desenvolvimento">Entregar</button>
+  <button type="button" class="icone engrenagem" id="engrenagem" title="Configurações deste app" aria-label="Configurações">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  </button>
+</nav>
+<script src="topo.js"></script>
+</body>
+</html>

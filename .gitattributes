@@ -1,0 +1,36 @@
+* text=auto eol=lf
+
+# Scripts de shell (macOS/Linux) PRECISAM de LF.
+*.sh text eol=lf
+*.command text eol=lf
+
+# Batch/scripts do Windows PRECISAM de CRLF: o cmd.exe procura os labels de
+# `goto` byte a byte e NAO os encontra com LF puro. Herdado do Orbita.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# PowerShell tambem: assinatura e here-strings sofrem com LF puro.
+# Ver o aviso no dev.ps1 do Assist anterior: um script sem BOM lido como CP1252
+# fechou uma string no meio e morreu antes de rodar uma linha.
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.icns binary
+*.avpi binary
+
+# Midia e bins do Avid nunca deveriam chegar aqui (ver .gitignore), mas se
+# alguem forcar um `git add -f`, que ao menos nao sejam corrompidos por
+# normalizacao de fim de linha.
+*.mxf binary
+*.wav binary
+*.mp4 binary
+*.aaf binary
+*.avb binary
+
+# Stub gerado por tools/gerar_stubs.py a partir do bancodedadosnles. Fica
+# versionado para um clone rodar sem o banco ao lado, mas nao e codigo escrito
+# a mao: marcar como generated tira do diff e da estatistica de linguagem.
+cicloassist/avid/proto/*_pb2.py linguist-generated=true

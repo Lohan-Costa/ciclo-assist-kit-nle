@@ -1,0 +1,15 @@
+:root { color-scheme: dark; --fundo: #1a1a1a; --tinta: #e6e6e6; --tinta-2: #a3a3a3; --verde: #4cc4b8; --ambar: #e0a84a; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--fundo);
+       color: var(--tinta); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
+main { flex: 1; padding: 28px 18px; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+.sub { color: var(--tinta-2); margin: 0 0 24px; }
+.estado { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.ponto { width: 9px; height: 9px; border-radius: 50%; background: var(--tinta-2); }
+.ponto.parado { background: var(--ambar); }
+.ponto.em-breve { background: transparent; border: 1px solid var(--tinta-2); }
+.detalhe { color: var(--tinta-2); margin: 0; }
+.tentar { margin-top: 14px; background: #2a2a2a; color: var(--tinta); border: 1px solid #444; border-radius: 6px;
+          padding: 7px 14px; font: inherit; cursor: pointer; }
+.tentar:hover { border-color: var(--verde); }

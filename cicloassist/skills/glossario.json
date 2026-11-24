@@ -1,0 +1,2672 @@
+{
+ "_meta": {
+  "fonte": "planilha do editor, docs.google.com/spreadsheets/d/13np8z6RcDUMHYWfAatF5sroMF1M1DFghF9nQXOKqoa8",
+  "procedencia": "baseada no dicionário audiovisual da Bamboo Stock (dito na planilha); revisar o texto antes de distribuir o produto",
+  "importado_em": "2026-09-22 11:07",
+  "nao_edite": "FOTO da planilha — edite a planilha e rode tools/importar_glossario.py --gravar"
+ },
+ "termos": [
+  {
+   "termo": "AAF",
+   "formas": [
+    "AAF"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla de (Advanced Authoring Format). Extensão de arquivo extraído de um filme em processo de edição que contém todas as informações de seus arquivos originais/brutos (metadados) e os ajustes feitos pelo editor. Utilizado na pós-produção de imagem e som",
+   "como_se_diz": "- Mandar um AAF pro som.",
+   "area": "[Áudio] Especificação"
+  },
+  {
+   "termo": "A.C / Assistente de câmera",
+   "formas": [
+    "A.C",
+    "Assistente de câmera"
+   ],
+   "sinonimos": [],
+   "significado": "Assistente de câmera.",
+   "como_se_diz": "",
+   "area": "[profissão] função"
+  },
+  {
+   "termo": "AD / Assistente de direção",
+   "formas": [
+    "AD",
+    "Assistente de direção"
+   ],
+   "sinonimos": [],
+   "significado": "Assistente de direção. Profissional que auxilia o diretor(a) do filme em suas funções específicas.",
+   "como_se_diz": "",
+   "area": "[vídeo] função"
+  },
+  {
+   "termo": "ADR",
+   "formas": [
+    "ADR"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla de (Automated Dialogue Replacement). Áudio de diálogo gravado em estúdio. Caso haja alguma falha com a captação do som direto, ou seja necessária alguma alteração no diálogo de personagens, é realizada uma marcação em voz na edição de som para que, posteriormente, o ator grave esse áudio em estúdio.",
+   "como_se_diz": "",
+   "area": "[Áudio] técnica"
+  },
+  {
+   "termo": "After",
+   "formas": [
+    "After"
+   ],
+   "sinonimos": [],
+   "significado": "Abreviação de After Effects, software de edição da Adobe utilizado para animações e efeitos especiais.",
+   "como_se_diz": "- Aplica um After depois",
+   "area": "[Software] vídeo"
+  },
+  {
+   "termo": "Alexa",
+   "formas": [
+    "Alexa"
+   ],
+   "sinonimos": [],
+   "significado": "Modelo de câmera da marca ARRI.",
+   "como_se_diz": "",
+   "area": "[Equipamento] câmera"
+  },
+  {
+   "termo": "Anamórfica",
+   "formas": [
+    "Anamórfica"
+   ],
+   "sinonimos": [],
+   "significado": "Tipo de lente que capta a imagem comprimindo seu conteúdo de forma horizontal. Esse formato surgiu na década de 50, juntamente com o formato “widescreen”. Seu conceito era criar uma experiência de projeção e consumo de imagens diferente das que as pessoas tinham em casa, com telas quadradas de TV.",
+   "como_se_diz": "",
+   "area": "[Equipamento] lente"
+  },
+  {
+   "termo": "Animatic",
+   "formas": [
+    "Animatic"
+   ],
+   "sinonimos": [],
+   "significado": "Animação em vídeo simples produzida para visualizar o storyboard de maneira mais aproximada de como será a filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] linguagem"
+  },
+  {
+   "termo": "Aspect ratio",
+   "formas": [
+    "Aspect ratio"
+   ],
+   "sinonimos": [],
+   "significado": "Aspect ratio (ou proporção de tela) é a relação entre largura e altura de umaimagem/vídeo. Normalmente é escrita com dois números, como: 16:9 (16x9), 4:3(4x3), 1:1 (1x1).",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Assistente de montagem",
+   "formas": [
+    "Assistente de montagem"
+   ],
+   "sinonimos": [],
+   "significado": "Assistente do montador. Responsável por organizar o projeto e auxiliá-lo durante a montagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "Atendimento",
+   "formas": [
+    "Atendimento"
+   ],
+   "sinonimos": [],
+   "significado": "É o profissional que faz o atendimento “na linha de frente” com o cliente, pessoa responsável pelo contato com o cliente. Em português: é o porta-voz do caos.",
+   "como_se_diz": "",
+   "area": "[Comercial] função"
+  },
+  {
+   "termo": "Áudio embedded",
+   "formas": [
+    "Áudio embedded"
+   ],
+   "sinonimos": [],
+   "significado": "Tipo de exportação de um arquivo de áudio em OMF. Nesta opção, o arquivo é exportado com todas as informações e metadados de uma faixa de áudio, mesmo que elas estejam alteradas na edição.",
+   "como_se_diz": "",
+   "area": "[áudio] Especificação. Também: áudio embutido."
+  },
+  {
+   "termo": "Audiodescrição",
+   "formas": [
+    "Audiodescrição"
+   ],
+   "sinonimos": [],
+   "significado": "A audiodescrição (AD) é uma faixa de áudio adicional de um vídeo com uma locução descrevendo a narrativa e elementos visuais presentes na imagem. Tem como finalidade auxiliar pessoas com deficiências visuais, dislexia e idosas, no consumo de um produto visual.",
+   "como_se_diz": "",
+   "area": "[Áudio] especificação"
+  },
+  {
+   "termo": "Audio estourado",
+   "formas": [
+    "Audio estourado"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Autorização de imagem",
+   "formas": [
+    "Autorização de imagem"
+   ],
+   "sinonimos": [],
+   "significado": "Documento que permite a utilização da imagem pessoal de atores e figurantes na em um trabalho visual. É um documento fundamental, já que a veiculação da peça pode ser alterada e até cancelada se uma das pessoas que participe não tenha assinado o termo e solicite sua suspensão.",
+   "como_se_diz": "",
+   "area": "[Produção] documento"
+  },
+  {
+   "termo": "AVID",
+   "formas": [
+    "AVID"
+   ],
+   "sinonimos": [],
+   "significado": "Programa de edição linear da Avid Technology. Muito usado para editar séries e longa metragens.",
+   "como_se_diz": "",
+   "area": "[Software] vídeo"
+  },
+  {
+   "termo": "Balanço de branco",
+   "formas": [
+    "Balanço de branco"
+   ],
+   "sinonimos": [],
+   "significado": "Ajuste dos tons captados pela câmera a partir da temperatura das cores. Tem esse nome pois utiliza a cor branca para calibrar os sensores.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica."
+  },
+  {
+   "termo": "Base limpa",
+   "formas": [
+    "Base limpa"
+   ],
+   "sinonimos": [],
+   "significado": "Versão exportada do vídeo sem a presença de camadas que estejam sobrepondo a imagem como textos, legendas e elementos gráficos",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Barriga",
+   "formas": [
+    "Barriga"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Batendo",
+   "formas": [
+    "Batendo"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "black",
+   "formas": [
+    "black"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "BlackMagic",
+   "formas": [
+    "BlackMagic"
+   ],
+   "sinonimos": [],
+   "significado": "Empresa que desenvolve diferentes tipos de equipamentos, como: Câmeras, Softwares, Mesa de Corte e afins. Normalmente o nome é utilizado para se referir às câmeras fabricadas pela empresa.",
+   "como_se_diz": "",
+   "area": "[Equipamento] fabricante"
+  },
+  {
+   "termo": "BIN",
+   "formas": [
+    "BIN"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Bitrate",
+   "formas": [
+    "Bitrate"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "boletim de câmera",
+   "formas": [
+    "boletim de câmera"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "boletim de continuista",
+   "formas": [
+    "boletim de continuista"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "boletim de logagem",
+   "formas": [
+    "boletim de logagem"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Boom",
+   "formas": [
+    "Boom"
+   ],
+   "sinonimos": [],
+   "significado": "Microfone direcional utilizado para captar o som no set. Geralmente utilizado com uma vara comprida para que o microfone possa ser aproximado da cena sem que apareça na imagem",
+   "como_se_diz": "",
+   "area": "[Equipamento] Áudio"
+  },
+  {
+   "termo": "BOUNCE",
+   "formas": [
+    "BOUNCE"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Cama de áudio",
+   "formas": [
+    "Cama de áudio"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "CGI",
+   "formas": [
+    "CGI"
+   ],
+   "sinonimos": [],
+   "significado": "Imagens geradas por computador, também conhecidas como efeitos especiais. De forma prática: é tudo o que aparece visualmente no vídeo que não existe fisicamente.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Chroma Key",
+   "formas": [
+    "Chroma Key"
+   ],
+   "sinonimos": [],
+   "significado": "O famoso fundo verde (que também pode ser azul). Na hora da edição, ele é substituído por outra imagem ou filmagem.",
+   "como_se_diz": "",
+   "area": "[Equipamento] vídeo"
+  },
+  {
+   "termo": "Cinema Scope",
+   "formas": [
+    "Cinema Scope"
+   ],
+   "sinonimos": [],
+   "significado": "Tecnologia de filmagem e projeção onde os filmes se apresentam em formato widescreen (16:9).",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Claquete",
+   "formas": [
+    "Claquete"
+   ],
+   "sinonimos": [],
+   "significado": "Imagem com informações em texto para catalogação e registro da emissora que irá veicular o filme publicitário. Geralmente é colocada no início do filme finalizado.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Claquete eletrônica",
+   "formas": [
+    "Claquete eletrônica"
+   ],
+   "sinonimos": [],
+   "significado": "Versão aprimorada da tradicional claquete. Possui um visor digital onde as informações do take são inseridas.",
+   "como_se_diz": "",
+   "area": "[Equipamento] vídeo"
+  },
+  {
+   "termo": "Claquete de fim",
+   "formas": [
+    "Claquete de fim"
+   ],
+   "sinonimos": [],
+   "significado": "Ato de bater a claquete no final da cena, quando não foi realizada no início por que esqueceram ou por que era mais cômodo bater no final para agilizar o começo da cena.",
+   "como_se_diz": "",
+   "area": "[Produção] Técnica"
+  },
+  {
+   "termo": "Cliente",
+   "formas": [
+    "Cliente"
+   ],
+   "sinonimos": [],
+   "significado": "A razão do set ter sido montado e o motivo pelo qual todos estão nele",
+   "como_se_diz": "",
+   "area": "[Comercial] função"
+  },
+  {
+   "termo": "Clipar/clipado",
+   "formas": [
+    "Clipar",
+    "clipado"
+   ],
+   "sinonimos": [],
+   "significado": "Áudio com quantidade muito alta de decibéis que, por conta disso, perde seus detalhes e informações. É o famoso “som estourado”. Como o áudio é reproduzido em equipamentos com volumes ajustáveis, existe uma barra de referência medida em decibéis para que o som seja produzido e editado de forma eficiente",
+   "como_se_diz": "",
+   "area": "[Áudio] especificação"
+  },
+  {
+   "termo": "Closed caption (CC)",
+   "formas": [
+    "Closed caption",
+    "CC"
+   ],
+   "sinonimos": [],
+   "significado": "O Closed Caption (CC), também conhecido como Legenda Oculta, é uma legenda descritiva que tem como objetivo auxiliar pessoas com deficiência auditiva. O CC contém tanto falas como indicativos de outros sons presentes no vídeo que está sendo exibido.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Close Up",
+   "formas": [
+    "Close Up"
+   ],
+   "sinonimos": [],
+   "significado": "Enquadramento de filmagem aproximado com o objetivo de ressaltar detalhes específicos.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "CODEC",
+   "formas": [
+    "CODEC"
+   ],
+   "sinonimos": [],
+   "significado": "Formatos de codificação e decodificação de um arquivo de vídeo. São responsáveis por interpretar e transformar as imagens em extensões específicas como .mp4, .mov etc. É definido na hora de exportar um vídeo editado",
+   "como_se_diz": "",
+   "area": "[Vídeo/Áudio] especificação"
+  },
+  {
+   "termo": "Color Grading",
+   "formas": [
+    "Color Grading"
+   ],
+   "sinonimos": [],
+   "significado": "O Color Grading ou Colorização é uma etapa no processo de pós-produção de um vídeo, onde, por meio de um briefing do Diretor, equipe criativa ou do cliente, o profissional (Color Grader ou Colorista) faz o trabalho de ir além da correção de cores da imagem, ele faz um trabalho artístico de contar uma história através das cores – agregando sentimentos através de diversas gamas e composições de cores.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Comp/Composição/ Composition",
+   "formas": [
+    "Comp",
+    "Composição",
+    "Composition"
+   ],
+   "sinonimos": [],
+   "significado": "Nome de um projeto relacionado a efeitos visuais. O compositor de VFX é o profissional responsável pelo tratamento, integração e finalização de cenas com efeitos visuais.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Conform",
+   "formas": [
+    "Conform"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de converter, organizar e adequar o material recebido da filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Continuísta",
+   "formas": [
+    "Continuísta"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável por verificar a posição dos objetos e pessoas no set para que tudo permaneça no lugar entre as filmagens.",
+   "como_se_diz": "",
+   "area": "[Produção] função"
+  },
+  {
+   "termo": "Contra-luz",
+   "formas": [
+    "Contra-luz"
+   ],
+   "sinonimos": [],
+   "significado": "Luz posicionada no eixo oposto da câmera, contornando umo assunto de interesse a ser filmado em relação ao cenário. Normalmente o primeiro plano fica subexposto",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica/iluminação"
+  },
+  {
+   "termo": "Contra plongè",
+   "formas": [
+    "Contra plongè"
+   ],
+   "sinonimos": [],
+   "significado": "Enquadramento de câmera onde vemos a cena em uma perspectiva de baixo para cima. É utilizado para dar uma sensação de “poder” à personagem filmada.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Contraste",
+   "formas": [
+    "Contraste"
+   ],
+   "sinonimos": [],
+   "significado": "Diferença de luminância das cores que as fazem ser mais ou menos distinguíveis. Imagens mais contrastadas tendem a ter mais diferenças mais marcantes entre suas cores (e vice versa)",
+   "como_se_diz": "",
+   "area": "[Video] propriedade"
+  },
+  {
+   "termo": "Contrast ratio",
+   "formas": [
+    "Contrast ratio"
+   ],
+   "sinonimos": [],
+   "significado": "Relação medida na câmera referente à taxa de contraste entre tons de cinza.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Especificação"
+  },
+  {
+   "termo": "Coordenador",
+   "formas": [
+    "Coordenador"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional da produtora que elabora o orçamento e depois o executa. Também é responsável pelo cumprimento do cronograma e da entrega de produção",
+   "como_se_diz": "",
+   "area": "[Produção] funcão"
+  },
+  {
+   "termo": "Cópia(s)",
+   "formas": [
+    "Cópia"
+   ],
+   "sinonimos": [],
+   "significado": "Versão final do vídeo editado que é enviado para veiculação. É quando a adrenalina baixa e bate aquele sede pra comemorar",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Correção de cor",
+   "formas": [
+    "Correção de cor"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de pós-produção com o objetivo de equilibrar cores, contraste e luz de um vídeo ou imagem",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Corte",
+   "formas": [
+    "Corte"
+   ],
+   "sinonimos": [],
+   "significado": "Corte ou Edit, é a versão da montagem do vídeo. A versão aprovada é chamada de Edit Final ou Corte Final.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Especificação"
+  },
+  {
+   "termo": "corte seco",
+   "formas": [
+    "corte seco"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "corte em J",
+   "formas": [
+    "corte em J"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "corte em L",
+   "formas": [
+    "corte em L"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "CRT",
+   "formas": [
+    "CRT"
+   ],
+   "sinonimos": [],
+   "significado": "Certificado de Registro de um Título. É o documento que autoriza a veiculação comercial da peça audiovisual no Brasil.",
+   "como_se_diz": "",
+   "area": "[Produção] documentação"
+  },
+  {
+   "termo": "D.A",
+   "formas": [
+    "D.A"
+   ],
+   "sinonimos": [],
+   "significado": "Refere-se à Diretor de Arte. Embora exista no cinema e no universo de agência de publicidade, esse acrônimo é mais utilizado para o segundo meio.",
+   "como_se_diz": "",
+   "area": "[função] publicidade"
+  },
+  {
+   "termo": "DAW",
+   "formas": [
+    "DAW"
+   ],
+   "sinonimos": [],
+   "significado": "Nomenclaturas de programas que integram software e hardware para a edição, produção e pós-produção de áudio.",
+   "como_se_diz": "",
+   "area": "[Software] Áudio"
+  },
+  {
+   "termo": "Davinci Resolve",
+   "formas": [
+    "Davinci Resolve"
+   ],
+   "sinonimos": [],
+   "significado": "Software de color grading e edição da empresa Black Magic. (Melhor que o Premiere)",
+   "como_se_diz": "",
+   "area": "[Software] Vídeo"
+  },
+  {
+   "termo": "D.C",
+   "formas": [
+    "D.C"
+   ],
+   "sinonimos": [],
+   "significado": "Diretor de Criação, que é oriundo do universo das agências de publicidade",
+   "como_se_diz": "",
+   "area": "função] publicidade"
+  },
+  {
+   "termo": "DCP",
+   "formas": [
+    "DCP"
+   ],
+   "sinonimos": [],
+   "significado": "Um pacote de cinema digital é uma coleção de arquivos digitais usados para armazenar e transmitir fluxos de áudio, imagem e dados de cinema digital. Segue padrões de configurações e formatos de arquivos especificados pelo exibidor do cinema.",
+   "como_se_diz": "",
+   "area": "[vídeo] especificação"
+  },
+  {
+   "termo": "Decupar material",
+   "formas": [
+    "Decupar material"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Desfoque",
+   "formas": [
+    "Desfoque"
+   ],
+   "sinonimos": [],
+   "significado": "Efeito visual realizado a partir do ajuste da lente da câmera, onde objetos ficam menos nítidos.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Diegético",
+   "formas": [
+    "Diegético"
+   ],
+   "sinonimos": [],
+   "significado": "Realidade própria da narrativa. Aquilo que o personagem e o público conseguem escutar e ver em cena.. Exemplo: Uma música que toca em uma rádio na cena.",
+   "como_se_diz": "",
+   "area": "[Cenografia] Conceito"
+  },
+  {
+   "termo": "Director’s Cut",
+   "formas": [
+    "Director’s Cut"
+   ],
+   "sinonimos": [],
+   "significado": "É a versão da montagem que o diretor quer finalizar de acordo com seus critérios depois do filme da agência/cliente ser entregue. É utilizada como portfólio e não é veiculada comercialmente. Normalmente odiada pela pós- produção, porque tem que fazer tudo de novo e ninguém paga por isso.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Especificação. Também: Versão do Diretor"
+  },
+  {
+   "termo": "Diretor",
+   "formas": [
+    "Diretor"
+   ],
+   "sinonimos": [],
+   "significado": "O maestro do set de filmagem. Mais do que literalmente direcionar a produção, é quem dita o ritmo e a energia do lugar, pensa em toda a narrativa e todos os elementos intrínsecos da estória",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "Diretor Artístico",
+   "formas": [
+    "Diretor Artístico"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": "TV"
+  },
+  {
+   "termo": "Diretor de Arte",
+   "formas": [
+    "Diretor de Arte"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável pela parte estética da filmagem. É quem define as cores, vestuários e características do cenário. Mas não é só sobre um set bonitinho e colorido – é sobre as caracteristicas e subtextos da emoção e vida dos personagens envolvidos na trama",
+   "como_se_diz": "",
+   "area": "[Produção] função (do cinema)"
+  },
+  {
+   "termo": "Diretor de Cena",
+   "formas": [
+    "Diretor de Cena"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": "TV"
+  },
+  {
+   "termo": "D.I.T",
+   "formas": [
+    "D.I.T"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla de Digital imaging technician. É o profissional técnico responsável pela transmissão de imagens entre os monitores e câmeras dentro de um set. Essa função foi criada na transição do cinema para a era digital.",
+   "como_se_diz": "",
+   "area": "[Produção] Função"
+  },
+  {
+   "termo": "DNxHD / DNxHR",
+   "formas": [
+    "DNxHD",
+    "DNxHR"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Dolly",
+   "formas": [
+    "Dolly"
+   ],
+   "sinonimos": [],
+   "significado": "Espécie de carrinho acoplado na parte de baixo de um tripé para a movimentação suave da câmera.",
+   "como_se_diz": "",
+   "area": "[Equipamento] movimento"
+  },
+  {
+   "termo": "Dolly Zoom",
+   "formas": [
+    "Dolly Zoom"
+   ],
+   "sinonimos": [],
+   "significado": "Movimento de câmera em que o carrinho de Dolly se movimenta para trás ao mesmo tempo em que a lente dá um zoom no objeto de interesse. Provoca uma distorção do espaço filmado e é utilizado para dar dramaticidade à cena.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "DOP",
+   "formas": [
+    "DOP"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla em inglês que significa Diretor de Fotografia. Sua tradução é: Director of Photography. temos aqui mais um exemplo de como sempre podemos criar um termo em inglês para tudo.",
+   "como_se_diz": "",
+   "area": "[Direção] função"
+  },
+  {
+   "termo": "Drop frame",
+   "formas": [
+    "Drop frame"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Edit",
+   "formas": [
+    "Edit"
+   ],
+   "sinonimos": [],
+   "significado": "É a versão da montagem do vídeo. A versão aprovada é chamada de Edit Final ou Corte Final.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Especificação. Também: Corte"
+  },
+  {
+   "termo": "Editor",
+   "formas": [
+    "Editor"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável por transformar o arquivo bruto organizado das filmagens no produto final usando um softwares de edição (premiere, avid, final cut). É também quem adiciona efeitos, transições e elementos gráficos ao filme",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "EDL",
+   "formas": [
+    "EDL"
+   ],
+   "sinonimos": [],
+   "significado": "Tipo de arquivo que pode ser lido na maioria dos programas de edição. Na EDL, os cortes feitos em um vídeo são salvos no código do arquivo e servem para serem reeditados por cima do vídeo original (ou em um export dele) em outro programa. Costuma ser utilizado no processo de Color Grading.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Embedado",
+   "formas": [
+    "Embedado"
+   ],
+   "sinonimos": [],
+   "significado": "Versão aportuguesada da palavra embedded, que é usada para dizer que o áudio está embutido no arquivo de formato OMF.",
+   "como_se_diz": "",
+   "area": "[Áudio] especificação"
+  },
+  {
+   "termo": "Escala de cinza",
+   "formas": [
+    "Escala de cinza"
+   ],
+   "sinonimos": [],
+   "significado": "Tom das colorações entre o preto e o branco em uma cena sem cores. Uma imagem não colorida também tem seus ajustes de cor (por mais que pareça sem sentido)",
+   "como_se_diz": "",
+   "area": "[Vídeo] Especificação"
+  },
+  {
+   "termo": "Especs",
+   "formas": [
+    "Especs"
+   ],
+   "sinonimos": [],
+   "significado": "Abreviação de especificação. São as características técnicas que os arquivos devem ter para serem reproduzidos em determinadas plataformas (cada uma tem o seu próprio padrão)",
+   "como_se_diz": "",
+   "area": "[Vídeo/Áudio] especificações"
+  },
+  {
+   "termo": "Estéreo",
+   "formas": [
+    "Estéreo"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Export",
+   "formas": [
+    "Export"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Fade in",
+   "formas": [
+    "Fade in"
+   ],
+   "sinonimos": [],
+   "significado": "Início de uma transição gradual de opacidade de uma cena para outra.",
+   "como_se_diz": "",
+   "area": "[Vídeo/áudio] técnica/efeito"
+  },
+  {
+   "termo": "Fade Out",
+   "formas": [
+    "Fade Out"
+   ],
+   "sinonimos": [],
+   "significado": "Final de uma transição gradual de opacidade de uma cena para outra.",
+   "como_se_diz": "",
+   "area": "[Vídeo/áudio] técnica/efeito"
+  },
+  {
+   "termo": "Fakeada / Fakear",
+   "formas": [
+    "Fakeada",
+    "Fakear"
+   ],
+   "sinonimos": [],
+   "significado": "Tradução abrasileirada de “enganada”, sinônimo da expressão “roubada no jogo”, muito utilizada no audiovisual.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Técnica"
+  },
+  {
+   "termo": "Filmmaker",
+   "formas": [
+    "Filmmaker"
+   ],
+   "sinonimos": [],
+   "significado": "Indivíduo que produz 100% de um filme/vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "Final Cut",
+   "formas": [
+    "Final Cut"
+   ],
+   "sinonimos": [],
+   "significado": "Software de edição da Apple. Usuários desse programa atualmente são considerados uma espécie ameaçada de extinção.",
+   "como_se_diz": "",
+   "area": "[Software] vídeo"
+  },
+  {
+   "termo": "Finalização",
+   "formas": [
+    "Finalização"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Flare",
+   "formas": [
+    "Flare"
+   ],
+   "sinonimos": [],
+   "significado": "Aberração cromática que acontece quando a luz entra diretamente através da abertura da lente da câmera. Cria uma espécie de mancha em forma de círculo ou hexágono",
+   "como_se_diz": "",
+   "area": "[Vídeo] Técnica"
+  },
+  {
+   "termo": "Foco",
+   "formas": [
+    "Foco"
+   ],
+   "sinonimos": [],
+   "significado": "Ponto de maior nitidez da imagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Foco doce",
+   "formas": [
+    "Foco doce"
+   ],
+   "sinonimos": [],
+   "significado": "Tipo de foco parcial no objeto de interesse da filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Foquista",
+   "formas": [
+    "Foquista"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável pelo foco da câmera na filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "Formato de vídeo",
+   "formas": [
+    "Formato de vídeo"
+   ],
+   "sinonimos": [],
+   "significado": "Um contêiner que armazena os metadados de um vídeo. As extensões dos vídeos (.mov, .mp4) são as representações desses containers.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "FPS",
+   "formas": [
+    "FPS"
+   ],
+   "sinonimos": [],
+   "significado": "Unidade de medida referente a quantidade de frames por segundo de determinado trecho do vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Frame rate",
+   "formas": [
+    "Frame rate"
+   ],
+   "sinonimos": [],
+   "significado": "Número que se refere a quantidade de quadros (frames) presentes em um segundo do vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Frame",
+   "formas": [
+    "Frame"
+   ],
+   "sinonimos": [],
+   "significado": "Unidade mínima de um vídeo. Sucessivos frames em sequência formam uma cena.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Full Hd",
+   "formas": [
+    "Full Hd"
+   ],
+   "sinonimos": [],
+   "significado": "Nomenclatura referente imagens que possuem as dimensões de 1920 pixels de largura e 1080 pixels de altura.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Gain (GANHO)",
+   "formas": [
+    "Gain",
+    "GANHO"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "GC",
+   "formas": [
+    "GC"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla para Gerador de Caracteres. São aquelas Informações por escrito que sobrepõem a imagem durante um vídeo ou programa de tv. Os exemplos mais comuns são os nomes que aparecem na tela enquanto alguém é entrevistado, ou algum texto ressaltando algum dado que foi dito por alguém.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "H.264",
+   "formas": [
+    "H.264"
+   ],
+   "sinonimos": [],
+   "significado": "Codec utilizado no processo de exportar um vídeo de um software de edição. Pode gerar arquivos nas extensões MP4 e MOV.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Handle",
+   "formas": [
+    "Handle"
+   ],
+   "sinonimos": [],
+   "significado": "Frames de segurança de um clipe. É uma espécie de “excesso” de determinada cena em um vídeo para que, caso seja necessária uma reedição, ela possa ser ajustada da melhor forma.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Recurso"
+  },
+  {
+   "termo": "HD",
+   "formas": [
+    "HD"
+   ],
+   "sinonimos": [],
+   "significado": "HD é um acrônimo de Hard Drive (Disco Rígido). Pode ser usado para se referir tanto ao Disco Rígido quanto ao Disco Externo que armazena arquivos do computador.",
+   "como_se_diz": "",
+   "area": "[Equipamento] informática"
+  },
+  {
+   "termo": "HDMI",
+   "formas": [
+    "HDMI"
+   ],
+   "sinonimos": [],
+   "significado": "Interface de transmissão de imagem e áudio em alta definição através de um cabo. Sua sigla significa High-Definition Multimedia Interface.",
+   "como_se_diz": "",
+   "area": "[Equipamento] Conexão"
+  },
+  {
+   "termo": "HDR",
+   "formas": [
+    "HDR"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Hyperlapse",
+   "formas": [
+    "Hyperlapse"
+   ],
+   "sinonimos": [],
+   "significado": "Técnica fotográfica que utiliza o timelapse ao mesmo tempo em que a câmera se movimenta. Cria uma sensação de se mover em alta veocidade.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Illustrator",
+   "formas": [
+    "Illustrator"
+   ],
+   "sinonimos": [],
+   "significado": "Programa da Adobe voltado para ilustração e vetorização de imagens.",
+   "como_se_diz": "",
+   "area": "[Software] Design"
+  },
+  {
+   "termo": "iImagem em LOG",
+   "formas": [
+    "iImagem em LOG"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Janela",
+   "formas": [
+    "Janela"
+   ],
+   "sinonimos": [],
+   "significado": "Formato utilizado para gravação. Pode ser um filme widescreen (16:9) mais wide ainda (21:9) ou quadrado 4:3. Pode-se definir a janela como a relação da altura x largura do frame.",
+   "como_se_diz": "",
+   "area": "[especificação] especificação"
+  },
+  {
+   "termo": "Job",
+   "formas": [
+    "Job"
+   ],
+   "sinonimos": [],
+   "significado": "A razão de termos escrito esse dicionário. Job é o trabalho a ser feito. Muitos já foram e muitos ainda virão (é o que esperamos).",
+   "como_se_diz": "",
+   "area": "[Expressão]"
+  },
+  {
+   "termo": "Kill de entrada",
+   "formas": [
+    "Kill de entrada"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Kill de saída",
+   "formas": [
+    "Kill de saída"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Lapela",
+   "formas": [
+    "Lapela"
+   ],
+   "sinonimos": [],
+   "significado": "Microfone pequeno que fica acoplado à roupa do ator para captar voz.",
+   "como_se_diz": "",
+   "area": "[Equipamento] microfone"
+  },
+  {
+   "termo": "Latitude",
+   "formas": [
+    "Latitude"
+   ],
+   "sinonimos": [],
+   "significado": "Relação da quantidade de tons de cinza que uma câmera consegue ler. Em outras palavras, quanto mais latitude uma câmera tiver, mais qualidade e detalhes nas altas e baixas luzes a imagem terá.",
+   "como_se_diz": "",
+   "area": "[fotografia] parâmetro"
+  },
+  {
+   "termo": "Layer",
+   "formas": [
+    "Layer"
+   ],
+   "sinonimos": [],
+   "significado": "Recurso usado nos processos de edição por camadas, como Photoshop. Em termos técnicos, qualquer trabalho visual digital é composto e criado por diversas camadas e suas interposições. Sendo uma sobreposta pela outra, como um empilhamento.",
+   "como_se_diz": "",
+   "area": "[Design] recurso"
+  },
+  {
+   "termo": "Layout",
+   "formas": [
+    "Layout"
+   ],
+   "sinonimos": [],
+   "significado": "Disposição de elementos visuais em um projeto gráfico. Você provavelmente já usou essa palavra de várias maneiras. Se ninguém te repreendeu até hoje, você está fazendo certo.",
+   "como_se_diz": "",
+   "area": "[Design] conceito"
+  },
+  {
+   "termo": "Legenda",
+   "formas": [
+    "Legenda"
+   ],
+   "sinonimos": [],
+   "significado": "Transcrição das falas de um vídeo ou a tradução de falas em língua estrangeira, que vão sobrepostas a imagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Legenda queimada",
+   "formas": [
+    "Legenda queimada"
+   ],
+   "sinonimos": [],
+   "significado": "Legenda exportada junto ao vídeo, sobreposta a imagem. Neste caso, a legenda não pode ser desabilitada caso a plataforma tenha essa opção, já que ela faz parte da imagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Lettering",
+   "formas": [
+    "Lettering"
+   ],
+   "sinonimos": [],
+   "significado": "Material de texto adicionado à imagem do vídeo na fase da pós-produção.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Levantar cena",
+   "formas": [
+    "Levantar cena"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Loc",
+   "formas": [
+    "Loc"
+   ],
+   "sinonimos": [],
+   "significado": "Abreviação de locução. Mensagem em forma de voz que é reproduzida em um vídeo. Pode ser tanto de uma personagem quanto de um texto publicitário.",
+   "como_se_diz": "",
+   "area": "[Áudio] recurso"
+  },
+  {
+   "termo": "Loc guia",
+   "formas": [
+    "Loc guia"
+   ],
+   "sinonimos": [],
+   "significado": "Locução usada como referência para a montagem e marcação do tempo no vídeo. Não é a versão final da locução.",
+   "como_se_diz": "",
+   "area": "[Áudio] recurso"
+  },
+  {
+   "termo": "Lock edit",
+   "formas": [
+    "Lock edit"
+   ],
+   "sinonimos": [],
+   "significado": "Na edição aprovada pelo cliente, o nome expressa a ideia de que está trancada, não se pode mais alterar.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "LOG",
+   "formas": [
+    "LOG"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": "registro"
+  },
+  {
+   "termo": "LOG",
+   "formas": [
+    "LOG"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": "imagem"
+  },
+  {
+   "termo": "Logagem (LOG)",
+   "formas": [
+    "Logagem",
+    "LOG"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de transferir os arquivos dos cartões de memória e HDs externos das câmeras para o computador.",
+   "como_se_diz": "",
+   "area": "[Vídeo] processo"
+  },
+  {
+   "termo": "Logger",
+   "formas": [
+    "Logger"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável pelo LOG",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "Look",
+   "formas": [
+    "Look"
+   ],
+   "sinonimos": [],
+   "significado": "Aparência estética do filme, referente a sua iluminação, enquadramento e cores",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Loudness (Lufs)",
+   "formas": [
+    "Loudness",
+    "Lufs"
+   ],
+   "sinonimos": [],
+   "significado": "Loudness é o padrão de medição de intensidade de áudio (volume) que mais se aproxima da audição humana. Através dele que as plataformas (como TV, Spotify e Netflix) estabelecem o padrão de volume para que todo o catálogo esteja com o volume mais ou menos padronizado.",
+   "como_se_diz": "",
+   "area": "[Áudio] conceito"
+  },
+  {
+   "termo": "Lut",
+   "formas": [
+    "Lut"
+   ],
+   "sinonimos": [],
+   "significado": "Vídeo Sigla para “look up table”. É a alteração da interpretação das cores da câmera ou de um software de edição, com objetivo de corrigir ou alterar criativamente sua estética. Se assemelha a filtros de fotografia.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Making Of",
+   "formas": [
+    "Making Of"
+   ],
+   "sinonimos": [],
+   "significado": "Vídeo contendo os bastidores da filmagem. É criado para mostrar os processos criativos e técnicos de uma produção.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Master (áudio)",
+   "formas": [
+    "Master"
+   ],
+   "sinonimos": [],
+   "significado": "Versão do áudio revisitada para correção ou alteração de determinadas questões técnicas. É considerada a versão final do som, que servirá de matriz para suas reproduções.",
+   "como_se_diz": "",
+   "area": "[Áudio] conceito"
+  },
+  {
+   "termo": "Master (vídeo)",
+   "formas": [
+    "Master"
+   ],
+   "sinonimos": [],
+   "significado": "Arquivo em alta resolução do filme finalizado. Normalmente um arquivo em .mov ou prores 422 HQ.",
+   "como_se_diz": "",
+   "area": "[Vídeo] vídeo"
+  },
+  {
+   "termo": "Material Bruto",
+   "formas": [
+    "Material Bruto"
+   ],
+   "sinonimos": [],
+   "significado": "Arquivo extraído das câmeras e gravadores de som após a produção que vão para a edição. É o arquivo da forma como ele foi gravado, sem nenhum tipo de alteração.",
+   "como_se_diz": "",
+   "area": "[Áudio/vídeo ] especificação"
+  },
+  {
+   "termo": "Media Composer",
+   "formas": [
+    "Media Composer"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Media Management",
+   "formas": [
+    "Media Management"
+   ],
+   "sinonimos": [],
+   "significado": "Também conhecido como Gerenciamento de Projeto, é uma função presente em programas de edição de vídeo com a finalidade de copiar todos os materiais utilizados em uma sequência (timeline) para um determinado lugar.",
+   "como_se_diz": "",
+   "area": "[Software] recurso"
+  },
+  {
+   "termo": "Metadado",
+   "formas": [
+    "Metadado"
+   ],
+   "sinonimos": [],
+   "significado": "Dados e informações embutidas de um arquivo digital. No caso de imagens, os metadados se referem ao tipo da câmera que foi utilizada na captura, suas configurações, palavras chaves e descrições.",
+   "como_se_diz": "",
+   "area": "[Informática] conceito"
+  },
+  {
+   "termo": "MIDI",
+   "formas": [
+    "MIDI"
+   ],
+   "sinonimos": [],
+   "significado": "Interface de produção musical que simula diferentes sons e instrumentos de acordo com sua programação pelo software de edição. O tipo mais comum é um teclado musical",
+   "como_se_diz": "",
+   "area": "[Equipamento] Áudio"
+  },
+  {
+   "termo": "Mix",
+   "formas": [
+    "Mix"
+   ],
+   "sinonimos": [],
+   "significado": "Arquivo de áudio mixado, contendo trilha musical, efeitos, diálogos e locução. Todos devidamente balanceados de acordo com a intenção da peça",
+   "como_se_diz": "",
+   "area": "[Áudio] formato"
+  },
+  {
+   "termo": "Mixagem",
+   "formas": [
+    "Mixagem"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de organizar e balancear os diferentes elementos que compõem um som (instrumento, vozes efeito) de acordo com um objetivo específico.",
+   "como_se_diz": "",
+   "area": "[Áudio] técnica"
+  },
+  {
+   "termo": "Mockup",
+   "formas": [
+    "Mockup"
+   ],
+   "sinonimos": [],
+   "significado": "Modelo em escala real ou simulado digitalmente de algum objeto com o objetivo de demonstração ou avaliação. Nos sets de filmagem é mais conhecido como uma embalagem fake, mais bonitinha, geralmente sem muitas informações visuais obrigatórias na embalagem.",
+   "como_se_diz": "",
+   "area": "[Design/cenografia] formato"
+  },
+  {
+   "termo": "Monitor de referência",
+   "formas": [
+    "Monitor de referência"
+   ],
+   "sinonimos": [],
+   "significado": "Monitor utilizado para pré-visualizar a filmagem captada de maneira mais eficiente e com qualidade",
+   "como_se_diz": "",
+   "area": "[Equipamento] Vídeo"
+  },
+  {
+   "termo": "Monstro",
+   "formas": [
+    "Monstro"
+   ],
+   "sinonimos": [],
+   "significado": "Edição com as referências do filme. Pretende antecipar as intenções de corte, movimento, edição do filme, usando imagens de outros filmes e de banco de imagens. Que inclusive você pode baixar todos da Bamboo Stock pra montar seu monstro. De graça. Só fazer o cadastro.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Montador",
+   "formas": [
+    "Montador"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável por contar a história do filme através da edição. Diz-se que existem três filmes: o que você escreve, o que você dirige e o que você edita. A Edição é uma forma de contar história, unindo sequências de clipes, agregando infinitos sentidos à história.",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "Montagem",
+   "formas": [
+    "Montagem"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de organização, segundo o roteiro, do material audiovisual que veio do set, com o objetivo de contar uma história em uma narrativa.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Mood board",
+   "formas": [
+    "Mood board"
+   ],
+   "sinonimos": [],
+   "significado": "Quadro de referências visuais que se relacionam com a estética da produção. Serve de referência.",
+   "como_se_diz": "",
+   "area": "[Design] formato"
+  },
+  {
+   "termo": "Mosca",
+   "formas": [
+    "Mosca"
+   ],
+   "sinonimos": [],
+   "significado": "Logo posicionada em um dos cantos superiores do vídeo",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Motion",
+   "formas": [
+    "Motion"
+   ],
+   "sinonimos": [],
+   "significado": "Animação de elementos gráficos. Podem ser inseridas em uma filmagem ou poder ser todo o vídeo em si.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Motion Designer",
+   "formas": [
+    "Motion Designer"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional responsável por fazer animações 2D e 3D para vídeos",
+   "como_se_diz": "",
+   "area": "[Vídeo] função"
+  },
+  {
+   "termo": "MP4 / MP5",
+   "formas": [
+    "MP4",
+    "MP5"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "MXF",
+   "formas": [
+    "MXF"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "MXF OP-Atom",
+   "formas": [
+    "MXF OP-Atom"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Nuke",
+   "formas": [
+    "Nuke"
+   ],
+   "sinonimos": [],
+   "significado": "Programa de edição não linear (sistema nodal) usado para fazer composições de imagem. O arquivo pode ser exportando tanto por um programa de edição (seja através de uma opção nativa ou por um plug-in adicionado) ou por um programa específico.",
+   "como_se_diz": "",
+   "area": "[Software] Vídeo"
+  },
+  {
+   "termo": "O.D",
+   "formas": [
+    "O.D"
+   ],
+   "sinonimos": [],
+   "significado": "Abreviação de Ordem do Dia, documento elaborado para que os profissionais saibam o que vai acontecer em cada momento da filmagem.",
+   "como_se_diz": "",
+   "area": "[Produção] expressão"
+  },
+  {
+   "termo": "Off",
+   "formas": [
+    "Off"
+   ],
+   "sinonimos": [],
+   "significado": "Áudio de depoimento ou diálogo com cobertura de outra imagem. É qualquer voz que é reproduzida sem que alguém a esteja dizendo cenograficamente na imagem/cena.",
+   "como_se_diz": "",
+   "area": "[Áudio] formato"
+  },
+  {
+   "termo": "Off-line",
+   "formas": [
+    "Off-line"
+   ],
+   "sinonimos": [],
+   "significado": "Edição aprovada pelo diretor e que será apresentada para agência e/ou cliente. É apresentada sem recursos gráficos, apenas o básico pois o objetivo é aprovar a montagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "OMF",
+   "formas": [
+    "OMF"
+   ],
+   "sinonimos": [],
+   "significado": "Extensão de arquivo de áudio, é presente na maioria dos programas de edição. Serve para fazer a transferência do áudio editado em um vídeo de um programa para outro, com todos seus ajustes editáveis.",
+   "como_se_diz": "",
+   "area": "[Áudio] formato"
+  },
+  {
+   "termo": "On-line",
+   "formas": [
+    "On-line"
+   ],
+   "sinonimos": [],
+   "significado": "Edição de um filme já aprovada e finalizada, com cor, mix e eventuais motions e VFX",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Ordem do Dia",
+   "formas": [
+    "Ordem do Dia"
+   ],
+   "sinonimos": [],
+   "significado": "Cronograma de filmagem da diária. Todos os participantes do set recebem este documento para se programarem e acompanharem o andamento da filmagem.",
+   "como_se_diz": "",
+   "area": "[Produção] documento"
+  },
+  {
+   "termo": "P.A",
+   "formas": [
+    "P.A"
+   ],
+   "sinonimos": [],
+   "significado": "Plano americano. Plano que enquadra a pessoa do joelho pra cima.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "P.A",
+   "formas": [
+    "P.A"
+   ],
+   "sinonimos": [],
+   "significado": "Se refere ao microfone com caixa de som para se comunicar com os atores no set quando o mesmo é muito grande",
+   "como_se_diz": "",
+   "area": "[Produção] Equipamento"
+  },
+  {
+   "termo": "Pan",
+   "formas": [
+    "Pan"
+   ],
+   "sinonimos": [],
+   "significado": "Movimento de câmera no sentido horizontal sob o próprio eixo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Parallax (paralaxe)",
+   "formas": [
+    "Parallax",
+    "paralaxe"
+   ],
+   "sinonimos": [],
+   "significado": "Diferença da posição de um objeto em relação ao plano de fundo. Objetos ao fundo movem-se em uma velocidade diferente dos do primeiro plano. Isso cria uma dinâmica, denominada parallax",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Película",
+   "formas": [
+    "Película"
+   ],
+   "sinonimos": [],
+   "significado": "Filme cinematográfico ou película cinematográfica (por vezes abreviado como película ou filme), é qualquer filme fotográfico que é utilizado para a realização de filmes para cinema ou televisão.",
+   "como_se_diz": "",
+   "area": "[Equipamento] fotografia/filme"
+  },
+  {
+   "termo": "Pesquisador",
+   "formas": [
+    "Pesquisador"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional que realiza pesquisas de referências ou encontra histórias e personagens reais para um filme",
+   "como_se_diz": "",
+   "area": "[Produção] função"
+  },
+  {
+   "termo": "PGM",
+   "formas": [
+    "PGM"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla de “programa”. Em uma transmissão ou gravação de projetos com mais de uma câmera, a tela de PGM é onde se visualiza o que o telespectador irá ver.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Plano de filmagem",
+   "formas": [
+    "Plano de filmagem"
+   ],
+   "sinonimos": [],
+   "significado": "Todo o cronograma da equipe que irá realizar a produção. Teoricamente, era pra ser seguido à risca.",
+   "como_se_diz": "",
+   "area": "[Produção] documento"
+  },
+  {
+   "termo": "Plano sequência",
+   "formas": [
+    "Plano sequência"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Plate",
+   "formas": [
+    "Plate"
+   ],
+   "sinonimos": [],
+   "significado": "Imagem captada no set sem atores e/ou objetos. É produzida para ajudar no processo de pós-produção e efeitos visuais.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Plongè",
+   "formas": [
+    "Plongè"
+   ],
+   "sinonimos": [],
+   "significado": "Enquadramento de câmera onde vemos a cena na orientação de cima para baixo. É utilizado para dar uma sensação de “fragilidade” à personagem filmada.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Plural Eyes",
+   "formas": [
+    "Plural Eyes"
+   ],
+   "sinonimos": [],
+   "significado": "Programa utilizado para fazer a sincronização (Sinc) de áudio e vídeo de uma filmagem.",
+   "como_se_diz": "",
+   "area": "[Software] áudio"
+  },
+  {
+   "termo": "P.M",
+   "formas": [
+    "P.M"
+   ],
+   "sinonimos": [],
+   "significado": "Plano de mídia. Detalhamento de informações de veiculação e especificações de uma peça audiovisual.",
+   "como_se_diz": "",
+   "area": "[Comercial] documento"
+  },
+  {
+   "termo": "PNG",
+   "formas": [
+    "PNG"
+   ],
+   "sinonimos": [],
+   "significado": "Extensão de arquivo de imagem que pode possuir partes com transparência.",
+   "como_se_diz": "",
+   "area": "[Design] formato"
+  },
+  {
+   "termo": "Ponto de tracking",
+   "formas": [
+    "Ponto de tracking"
+   ],
+   "sinonimos": [],
+   "significado": "Pontos distribuídos na cena (objetos, pessoas, fundo) que facilitam o processo de adição de elementos gráficos na pós-produção. Eles serão apagados da cena pelo compositor VFX.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Pós (Pós produção)",
+   "formas": [
+    "Pós",
+    "Pós produção"
+   ],
+   "sinonimos": [],
+   "significado": "Tudo que abrange o pós da filmagem: da edição à finalização.",
+   "como_se_diz": "",
+   "area": "[Vídeo] processo"
+  },
+  {
+   "termo": "Premiere",
+   "formas": [
+    "Premiere"
+   ],
+   "sinonimos": [],
+   "significado": "Programa de edição de vídeos da Adobe. Se tornou muito popular por sua integração a outros softwares, como o photoshop, e por suas possibilidades técnicas.",
+   "como_se_diz": "",
+   "area": "[Software] vídeo"
+  },
+  {
+   "termo": "Primeiro corte (primeiro edit)",
+   "formas": [
+    "Primeiro corte",
+    "primeiro edit"
+   ],
+   "sinonimos": [],
+   "significado": "Primeira edição que o montador (editor) mostra para o diretor. Normalmente chega na quinquagésima terceira versão antes da aprovação",
+   "como_se_diz": "",
+   "area": "[Vídeo] processo"
+  },
+  {
+   "termo": "Primeiro plano",
+   "formas": [
+    "Primeiro plano"
+   ],
+   "sinonimos": [],
+   "significado": "Numa relação de distância, é o que está mais próximo à câmera.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Pro Tools",
+   "formas": [
+    "Pro Tools"
+   ],
+   "sinonimos": [],
+   "significado": "Programa de edição, produção e pós-produção de áudio da empresa AVID",
+   "como_se_diz": "",
+   "area": "[Software] Áudio"
+  },
+  {
+   "termo": "Proress (422, HQ, 4444)",
+   "formas": [
+    "Proress",
+    "422",
+    "HQ",
+    "4444"
+   ],
+   "sinonimos": [],
+   "significado": "Codec de export de vídeo que preserva mais a qualidade da imagem, comprimindo menos o arquivo. Porém, o peso dos arquivos é maior em relação a outros codecs, como o H.264",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Pulldown",
+   "formas": [
+    "Pulldown"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Quadros por segundo",
+   "formas": [
+    "Quadros por segundo"
+   ],
+   "sinonimos": [],
+   "significado": "Quantidade de frames por segundo em um vídeo. É uma unidade de medida temporal que também pode ser utilizada como forma de linguagem, já que altera esteticamente o movimento das imagens.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "raccord",
+   "formas": [
+    "raccord"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Rampa",
+   "formas": [
+    "Rampa"
+   ],
+   "sinonimos": [],
+   "significado": "Variação de velocidade de determinada cena dentro de um vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "RAW",
+   "formas": [
+    "RAW"
+   ],
+   "sinonimos": [],
+   "significado": "Arquivo captado pela câmera sem nenhum tipo de processamento digital",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Rec 709",
+   "formas": [
+    "Rec 709"
+   ],
+   "sinonimos": [],
+   "significado": "O Rec. 709 é um padrão internacional de cores para televisores e projetores que foi introduzido na década de 1990, para garantir a reprodução precisa da cor que é exibida.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Conceito"
+  },
+  {
+   "termo": "Rec 2020",
+   "formas": [
+    "Rec 2020"
+   ],
+   "sinonimos": [],
+   "significado": "Fabricante de câmera. Muito popular em produções para cinema.",
+   "como_se_diz": "",
+   "area": "[Equipamento] câmera"
+  },
+  {
+   "termo": "REF",
+   "formas": [
+    "REF"
+   ],
+   "sinonimos": [],
+   "significado": "Referência estética ou conceitual. São os pontos de partida na concepção de um projeto artístico.",
+   "como_se_diz": "",
+   "area": "[Produção] recurso"
+  },
+  {
+   "termo": "RMS",
+   "formas": [
+    "RMS"
+   ],
+   "sinonimos": [],
+   "significado": "Antigo padrão de medição de intensidade de volume. É uma métrica que simula a percepção auditiva, muito utilizada em equipamentos analógicos de áudio. Com a popularização dos meios digitais, vem sendo substituído pelo Loudness.",
+   "como_se_diz": "",
+   "area": "[Áudio] conceito"
+  },
+  {
+   "termo": "Roteirista",
+   "formas": [
+    "Roteirista"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional que escreve e cria o roteiro de uma produção.",
+   "como_se_diz": "",
+   "area": "[Produção] função"
+  },
+  {
+   "termo": "Roteiro",
+   "formas": [
+    "Roteiro"
+   ],
+   "sinonimos": [],
+   "significado": "Sequência escrita de cenas, planos e diálogos do filme. Sempre siga o roteiro, não importa o que.",
+   "como_se_diz": "",
+   "area": "[Produção] documento"
+  },
+  {
+   "termo": "Rotoscopia (rotô)",
+   "formas": [
+    "Rotoscopia",
+    "rotô"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de separar um objeto presente na cena, pode ser feito de forma frame a frame ou automatizada.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Rough cut",
+   "formas": [
+    "Rough cut"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "RTV/RTVC",
+   "formas": [
+    "RTV",
+    "RTVC"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla para Rádio, tv e cinema. Nomenclatura do profissional de agência de publicidade que intermedia a execução do filme entre cliente e produtora.",
+   "como_se_diz": "",
+   "area": "Comercial] função"
+  },
+  {
+   "termo": "Safe area",
+   "formas": [
+    "Safe area"
+   ],
+   "sinonimos": [],
+   "significado": "Área segura para posicionar elementos gráficos como textos e logos em um vídeo, baseada em seu formato de veiculação (instagram, broadcast, cinema, youtube). Garante que a informação inserida poderá ser visualizada sem interferências.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Saturação",
+   "formas": [
+    "Saturação"
+   ],
+   "sinonimos": [],
+   "significado": "Intensidade das cores de uma imagem. Imagens sem saturação não possuem cores",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Screenshots",
+   "formas": [
+    "Screenshots"
+   ],
+   "sinonimos": [],
+   "significado": "Captura de tela de um vídeo, resultando em uma imagem única. Também conhecido com still",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "SD (cartão)",
+   "formas": [
+    "SD"
+   ],
+   "sinonimos": [],
+   "significado": "Cartão de memória que armazena os arquivos produzidos em uma câmera ou gravador de áudio.",
+   "como_se_diz": "",
+   "area": "[Equipamento] informática"
+  },
+  {
+   "termo": "SDI",
+   "formas": [
+    "SDI"
+   ],
+   "sinonimos": [],
+   "significado": "Serial Digital Interface. Conecta as câmeras e monitores entre si no set.",
+   "como_se_diz": "",
+   "area": "[Equipamento] conexão"
+  },
+  {
+   "termo": "Select",
+   "formas": [
+    "Select"
+   ],
+   "sinonimos": [],
+   "significado": "Processo de selecionar os principais e melhores momentos do material bruto antes de iniciar a montagem de um vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] Vídeo"
+  },
+  {
+   "termo": "SFX (sound effects)",
+   "formas": [
+    "SFX",
+    "sound effects"
+   ],
+   "sinonimos": [],
+   "significado": "Efeitos de som diegético e não diegéticos adicionados a um vídeo. Podem ser efeitos criados para ressaltar ações ou simulações de sons ambientes da cena.",
+   "como_se_diz": "",
+   "area": "[Áudio] técnica"
+  },
+  {
+   "termo": "Shutter Encoder",
+   "formas": [
+    "Shutter Encoder"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Sync (audio sync)",
+   "formas": [
+    "Sync",
+    "audio sync"
+   ],
+   "sinonimos": [],
+   "significado": "É o processo de sincronizar sons de vozes captados com gravadores com as imagens filmadas dos atores",
+   "como_se_diz": "",
+   "area": "[Áudio] técnica"
+  },
+  {
+   "termo": "Slow Motion",
+   "formas": [
+    "Slow Motion"
+   ],
+   "sinonimos": [],
+   "significado": "O efeito camera lenta. É um filme captado com uma alta taxa de quadros e reproduzido em uma taxa menor.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Smoke",
+   "formas": [
+    "Smoke"
+   ],
+   "sinonimos": [],
+   "significado": "Programa para realizar composições de vídeo. É uma espécie de Photoshop voltado ao vídeo",
+   "como_se_diz": "",
+   "area": "[Software] vídeo"
+  },
+  {
+   "termo": "Sobe Som",
+   "formas": [
+    "Sobe Som"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Som direto",
+   "formas": [
+    "Som direto"
+   ],
+   "sinonimos": [],
+   "significado": "Áudio captado na filmagem pelo operador de som (cara do boom)",
+   "como_se_diz": "",
+   "area": "[Áudio] recurso"
+  },
+  {
+   "termo": "Sound design",
+   "formas": [
+    "Sound design"
+   ],
+   "sinonimos": [],
+   "significado": "Criação e edição de efeitos sonoros no filme. Comumente usado como SFX também",
+   "como_se_diz": "",
+   "area": "[Áudio] recurso"
+  },
+  {
+   "termo": "Split screen",
+   "formas": [
+    "Split screen"
+   ],
+   "sinonimos": [],
+   "significado": "Dividir a tela em 2 ou mais imagens.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "SRT",
+   "formas": [
+    "SRT"
+   ],
+   "sinonimos": [],
+   "significado": "Extensão de arquivo usado para exportar legendas.",
+   "como_se_diz": "",
+   "area": "[Vídeo] especificação"
+  },
+  {
+   "termo": "Still",
+   "formas": [
+    "Still"
+   ],
+   "sinonimos": [],
+   "significado": "Fotografia da cena durante a filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Stock Footage",
+   "formas": [
+    "Stock Footage"
+   ],
+   "sinonimos": [],
+   "significado": "Vídeos e cenas provenientes de Bancos de Imagem como a Bamboo Stock. A diferença é que na Bamboo, todos os criadores são brasileiros",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Stock Shoot",
+   "formas": [
+    "Stock Shoot"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Storyboard",
+   "formas": [
+    "Storyboard"
+   ],
+   "sinonimos": [],
+   "significado": "Série de ilustrações organizadas na sequência do roteiro, que orientam a produção e ajudam a visualizar o filme a ser produzido na pré produção.",
+   "como_se_diz": "",
+   "area": "[Produção] recurso"
+  },
+  {
+   "termo": "Streaming",
+   "formas": [
+    "Streaming"
+   ],
+   "sinonimos": [],
+   "significado": "Transmissão de arquivos de mídia em tempo real através da internet. Pode ser tanto de um arquivo finalizado como uma transmissão ao vivo. Suas vantagens são a possibilidade de reproduzir um arquivo de mídia sem ter que realizar o download do mesmo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "PRODUCAO-V",
+   "formas": [
+    "PRODUCAO-V"
+   ],
+   "sinonimos": [],
+   "significado": "meu gato",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Switcher",
+   "formas": [
+    "Switcher"
+   ],
+   "sinonimos": [],
+   "significado": "A mesa de corte (também chamada de switcher de vídeo, mixer vídeo ou switcher de produção) é um equipamento usado para selecionar entre vários tipos de video, e em alguns casos adiciona efeitos especiais, fazendo mix de vídeo, semelhante ao remix, usando amplamente em áudios",
+   "como_se_diz": "",
+   "area": "[Equipamento] vídeo"
+  },
+  {
+   "termo": "Taxa de quadros",
+   "formas": [
+    "Taxa de quadros"
+   ],
+   "sinonimos": [],
+   "significado": "Número que se refere a quantidade de quadros (frames) presentes em um segundo do vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Temperatura",
+   "formas": [
+    "Temperatura"
+   ],
+   "sinonimos": [],
+   "significado": "Variação da cor medida em K (Kelvin). É ajustada na hora da filmagem e pode ser corrigida na hora da edição. Imagens quentes possuem tons mais amarelados e imagens frias, possuem tons azulados",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Tilt",
+   "formas": [
+    "Tilt"
+   ],
+   "sinonimos": [],
+   "significado": "Movimento de câmera no sentido vertical sob próprio eixo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Timecode",
+   "formas": [
+    "Timecode"
+   ],
+   "sinonimos": [],
+   "significado": "Unidade de medida temporal da filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Timelapse",
+   "formas": [
+    "Timelapse"
+   ],
+   "sinonimos": [],
+   "significado": "Sequência de fotografias disparadas com um determinado intervalo de tempo que, colocadas em sequência, se tornam um vídeo onde o tempo parece correr de forma rápida",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Timeline",
+   "formas": [
+    "Timeline"
+   ],
+   "sinonimos": [],
+   "significado": "Linha do tempo. Área de um software de edição audiovisual onde os arquivos de imagem e som são organizados e editados para se tornarem o arquivo final.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "TP",
+   "formas": [
+    "TP"
+   ],
+   "sinonimos": [],
+   "significado": "Sigla de Teleprompter. Tela acoplada à lente da câmera para que a atriz ou o ator possam ler o texto a ser falado na filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Tracking",
+   "formas": [
+    "Tracking"
+   ],
+   "sinonimos": [],
+   "significado": "Ação de rastrear digitalmente algum elemento da cena, para copiar seu movimento, ou de criar um movimento específico de algum elemento gráfico a ser inserido no vídeo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Trailer",
+   "formas": [
+    "Trailer"
+   ],
+   "sinonimos": [],
+   "significado": "Edição de alguns momentos do vídeo/filme para divulgação comercial. É uma peça que tem a intenção de despertar o desejo no espectador de assistir o projeto completo.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Transmissão ao vivo/remota",
+   "formas": [
+    "Transmissão ao vivo",
+    "remota"
+   ],
+   "sinonimos": [],
+   "significado": "Também conhecido como streaming, é quando fazemos a transmissão ao vivo do que está sendo filmado, feito normalmente através de softwares de reunião online.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Tratamento",
+   "formas": [
+    "Tratamento"
+   ],
+   "sinonimos": [],
+   "significado": "Etapa da da produção onde o diretor da sua visão do roteiro. Nesse documento, encontramos referências à casting, mood, recursos visuais, fotografia e etc.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Travelling in",
+   "formas": [
+    "Travelling in"
+   ],
+   "sinonimos": [],
+   "significado": "Qualquer movimento com a câmera em que ela se movimenta em direção ao objeto de interesse.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Travelling out",
+   "formas": [
+    "Travelling out"
+   ],
+   "sinonimos": [],
+   "significado": "Qualquer movimento com a câmera em que ela se afasta do objeto de interesse de forma estabilizada",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "TRIM",
+   "formas": [
+    "TRIM"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "Tripa",
+   "formas": [
+    "Tripa"
+   ],
+   "sinonimos": [],
+   "significado": "Sequência de vídeos em fila na timeline de algum software de edição.",
+   "como_se_diz": "",
+   "area": "[Vídeo] conceito"
+  },
+  {
+   "termo": "Upscalle",
+   "formas": [
+    "Upscalle"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "V.O (voice over)",
+   "formas": [
+    "V.O",
+    "voice over"
+   ],
+   "sinonimos": [],
+   "significado": "Locução inserida no vídeo na pós produção",
+   "como_se_diz": "",
+   "area": "[Áudio] recurso"
+  },
+  {
+   "termo": "Vertical",
+   "formas": [
+    "Vertical"
+   ],
+   "sinonimos": [],
+   "significado": "Orientação da tela do vídeo no sentido vertical. Mais conhecido com vídeo com a “tela em pé”. Formato popularizado pelas redes sociais.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "VFX (visual effects)",
+   "formas": [
+    "VFX",
+    "visual effects"
+   ],
+   "sinonimos": [],
+   "significado": "Efeitos visuais adicionados a um vídeo na etapa de pós produção. Podem ser desde elementos gráficos até efeitos na imagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "Video Assist",
+   "formas": [
+    "Video Assist"
+   ],
+   "sinonimos": [],
+   "significado": "Equipamento utilizado para monitorar as cenas filmadas no set. É um monitor pequeno com as informações de ajustes da câmera e suas imagens captadas.",
+   "como_se_diz": "",
+   "area": "[Equipamento] vídeo"
+  },
+  {
+   "termo": "Videomaker",
+   "formas": [
+    "Videomaker"
+   ],
+   "sinonimos": [],
+   "significado": "Profissional que produz vídeos com uma câmera. O Mesmo que Filmmaker",
+   "como_se_diz": "",
+   "area": "[Profissional] função"
+  },
+  {
+   "termo": "Vimeo",
+   "formas": [
+    "Vimeo"
+   ],
+   "sinonimos": [],
+   "significado": "Plataforma de vídeos online, mais utilizada por profissionais do meio publicitário e do audiovisual para a veiculação de filmes, curtas, clipes, entre outros. Também utilizado para hospedar portfólio em vídeo",
+   "como_se_diz": "",
+   "area": "[Vídeo] plataforma"
+  },
+  {
+   "termo": "Wav (Waves)",
+   "formas": [
+    "Wav",
+    "Waves"
+   ],
+   "sinonimos": [],
+   "significado": "Extensão de arquivo de áudio. Possui mais qualidade, informações de som e, consequentemente, tamanho de arquivo.",
+   "como_se_diz": "",
+   "area": "[Áudio] formato"
+  },
+  {
+   "termo": "WAV Monophonic",
+   "formas": [
+    "WAV Monophonic"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "WAV Poliphonic",
+   "formas": [
+    "WAV Poliphonic"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "White balance",
+   "formas": [
+    "White balance"
+   ],
+   "sinonimos": [],
+   "significado": "Termo em inglês para “balanço de branco”. É o ajuste dos tons captados pela câmera a partir da temperatura das cores. Tem esse nome pois utiliza a cor branca para calibrar os sensores.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "Wipe",
+   "formas": [
+    "Wipe"
+   ],
+   "sinonimos": [],
+   "significado": "O mesmo que varrer a câmera com um pan ou uma tilta.",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "XML",
+   "formas": [
+    "XML"
+   ],
+   "sinonimos": [],
+   "significado": "Formato de arquivo que tem leitura universal, normalmente é utilizado para mandar timelines de edição feitas de um programa para outro.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "Zoom",
+   "formas": [
+    "Zoom"
+   ],
+   "sinonimos": [],
+   "significado": "Movimento de aproximação da imagem a algum objeto ou personagem. Pode ser feito pela lente ou digitalmente na pós produção",
+   "como_se_diz": "",
+   "area": "[Vídeo] técnica"
+  },
+  {
+   "termo": "1:1 (1x1)",
+   "formas": [
+    "1:1",
+    "1x1"
+   ],
+   "sinonimos": [],
+   "significado": "Proporção de tela/vídeo com sua altura e largura iguais (quadrada).",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "16:9 (16x9)",
+   "formas": [
+    "16:9",
+    "16x9"
+   ],
+   "sinonimos": [],
+   "significado": "Proporção de tela horizontal, conhecida também como widescreen. É o formato padrão mundial de HDTV",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "1920x1080",
+   "formas": [
+    "1920x1080"
+   ],
+   "sinonimos": [],
+   "significado": "Dimensão da tela indicada pelos pixels. 1920 pixels de largura por 1080 pixels de altura. Conhecida também como Full Hd",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "2:3 (2x3)",
+   "formas": [
+    "2:3",
+    "2x3"
+   ],
+   "sinonimos": [],
+   "significado": "Proporção da tela/vídeo de dois terços. É a fração da sua relação entre sua largura e altura, independente do tamanho.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "23,976 fps",
+   "formas": [
+    "23,976 fps"
+   ],
+   "sinonimos": [],
+   "significado": "Taxa de 23,976 frames (quadros) por segundo em um vídeo",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "24 fps",
+   "formas": [
+    "24 fps"
+   ],
+   "sinonimos": [],
+   "significado": "Taxa de 24 frames (quadros) por segundo em um vídeo",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "30 fps",
+   "formas": [
+    "30 fps"
+   ],
+   "sinonimos": [],
+   "significado": "Taxa de 30 frames (quadros) por segundo em um vídeo",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "3D",
+   "formas": [
+    "3D"
+   ],
+   "sinonimos": [],
+   "significado": "Imagem em 3 dimensões geradas por computador. Podem ser desde cenas inteiras como elementos específicos a serem adicionados em uma filmagem.",
+   "como_se_diz": "",
+   "area": "[Vídeo] recurso"
+  },
+  {
+   "termo": "4:3 (4x3)",
+   "formas": [
+    "4:3",
+    "4x3"
+   ],
+   "sinonimos": [],
+   "significado": "Proporção da tela/vídeo de 4 por 3. É a fração da sua relação entre sua largura e altura, independente do tamanho. É considerada a proporção original do cinema, que depois migrou para as primeiras televisões (televisões de tubo).",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "4:5 (4x5)",
+   "formas": [
+    "4:5",
+    "4x5"
+   ],
+   "sinonimos": [],
+   "significado": "Proporção da tela/vídeo de 4 por 5. É a fração da sua relação entre sua largura e altura, independente do tamanho. Padrão de imagens e vídeos do feed do instagram.",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "48 fps",
+   "formas": [
+    "48 fps"
+   ],
+   "sinonimos": [],
+   "significado": "Taxa de 48 frames (quadros) por segundo em um vídeo",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "4K",
+   "formas": [
+    "4K"
+   ],
+   "sinonimos": [],
+   "significado": "Dimensão de tela aproximada de 3840 pixels de largura e 2160 pixels de altura. Também é conhecida como Ultra HD (UHD)",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  },
+  {
+   "termo": "5K",
+   "formas": [
+    "5K"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "5.1",
+   "formas": [
+    "5.1"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "6K",
+   "formas": [
+    "6K"
+   ],
+   "sinonimos": [],
+   "significado": "",
+   "como_se_diz": "",
+   "area": ""
+  },
+  {
+   "termo": "9:16 (9x16)",
+   "formas": [
+    "9:16",
+    "9x16"
+   ],
+   "sinonimos": [],
+   "significado": "Proporção de tela na vertical. Se tornou popular por conta do tamanho das telas touch screen de celular e pela maneira de consumir de conteúdo nele. (exemplo: stories do instagram, tik tok)",
+   "como_se_diz": "",
+   "area": "[Vídeo] formato"
+  }
+ ]
+}

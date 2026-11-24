@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>De Lá Pra Cá</title>
+<link rel="stylesheet" href="/static/painel.css">
+</head>
+<body>
+<!-- Fechar com trabalho em andamento (organograma de 2026-10-19): a pergunta mora DENTRO da janela. `dlpcAoFechar`. -->
+<div class="fechar-aviso" id="fecharAviso" role="alertdialog" aria-labelledby="fecharAvisoTxt" hidden>
+  <p id="fecharAvisoTxt"><strong>Há trabalho em andamento.</strong> Fechar agora interrompe a importação, o relink ou a
+    conferência.</p>
+  <div class="fechar-acoes">
+    <button type="button" class="sm" id="fecharContinuar">Continuar trabalhando</button>
+    <button type="button" class="sm perigo" id="fecharMesmo">Fechar mesmo</button>
+  </div>
+</div>
+
+<div class="head">
+  <div class="marca">
+    <h1>De Lá Pra Cá</h1>
+  </div>
+  <span class="head-dir">
+    <span class="conn" id="conn"><span class="ponto"></span><span id="connTexto">verificando…</span></span>
+    <!-- O pino (autor, 2026-10-18): só na janela do APP (`casca=app`) — dentro do Avid a janela é dele. Fixada, ela fica
+         na frente do Media Composer enquanto o editor pega coisas na bin. -->
+    <button class="pino" id="pino" type="button" hidden aria-pressed="false"
+            title="Manter esta janela na frente das outras">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+           stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4" />
+        <path d="M9 15l-4.5 4.5" />
+        <path d="M14.5 4l5.5 5.5" />
+      </svg>
+    </button>
+  </span>
+</div>
+
+<!-- ══ Prontidão (autor, 2026-10-04): as opções só aparecem com o motor PRONTO, não só no ar. Antes, o
+     editor fez o Importar inteiro e só no fim viu tudo offline (o motor estava sem ffprobe). A ordem
+     de abertura não importa: sem motor, esta tela pede o app e conecta sozinha quando ele abre. -->
+<!-- ⚠️ `div`, não `section`: o painel esconde toda `section` que não é a aba ativa (painel.css,
+     `section { display:none }`) — a 1ª versão sumia junto com as opções, e a tela ficava vazia. -->
+<div id="prontidao" class="bloco prontidao">
+  <p class="bloco-titulo" id="prTitulo">procurando o De Lá Pra Cá…</p>
+  <p id="prTexto"></p>
+  <div id="prItens"></div>
+  <div class="acoes">
+    <button id="prAbrirApp" class="primary" hidden>Abrir o De Lá Pra Cá</button>
+    <button id="prConferir" class="sm ghost">Conferir de novo</button>
+  </div>
+</div>
+
+<!-- O plugin DESTE programa é de outra versão que o app (organograma do instalador, 2026-10-05): o motor
+     novo pode pedir ao plugin o que ele não sabe fazer. `avisarPluginAntigo`. -->
+
+<nav class="tabs" role="tablist">
+  <button id="tabDeLaPraCa" class="on" role="tab">De Lá Pra Cá</button>
+  <button id="tabDaquiPraLa" role="tab">Daqui Pra Lá</button>
+  <!-- A engrenagem é ícone, não palavra: é a convenção, e economiza a largura que
+       uma janela de 400px não tem. Ícone `settings` do Tabler, o mesmo do Órbita. -->
+  <button id="tabAjustes" class="engrenagem" role="tab" title="Ajustes" aria-label="Ajustes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  </button>
+</nav>
+
+<!-- ══ Aba 1: De Lá Pra Cá — o material chega ═══════════════════════════════ -->
+<section id="paneDeLaPraCa" class="on" role="tabpanel">
+
+  <!-- ── passo 1: a timeline ─────────────────────────────────────────────── -->
+
+  <!-- ⭐ TRÊS CAMINHOS (organograma aprovado pelo autor em 2026-09-25): (1) a timeline do próprio
+       NLE, (2) um arquivo, (3) o Magic Link, em CANAIS por setor (`canais.py`). O passo 1 é o
+       mesmo no Media Composer e no Resolve; o relink (passos 2 e 3) é só do Media Composer. -->
+  <div class="passo" id="passoOrigem">
+    <!-- ⭐ `data-solta` declara O QUE ESTE BLOCO RECEBE, e é a ÁREA onde o arrasto cai
+         que decide a ação. Uma timeline e uma pasta chegam à webview como arrastos
+         parecidos — e ficarão mais parecidos quando "Importar timeline" aceitar
+         .aaf/.xml/.drt soltos, que são ARQUIVOS, como a mídia. Adivinhar pelo conteúdo
+         acertaria quase sempre e erraria calado no resto (a timeline entrando no acervo,
+         ou a diária virando timeline). Com zona, quem decide é o editor, no gesto. -->
+    <!-- Sub-abas da página (autor, 2026-10-12): "Atualizar" troca a tela inteira, então o seletor vem ANTES dos blocos. -->
+    <div class="seg sub-abas" id="modoOrigem">
+        <!-- ⭐ UMA caixa (organograma "Um painel, três NLEs", 2026-10-12): a timeline de DENTRO (a sequência
+             aberta no record, ou arrastada da bin) e a de FORA (arquivo) entram no mesmo lugar; quem decide o
+             caminho é o que chegou. Por dentro o painel ainda guarda `mc` (sequência) × `aaf` (arquivo) — ver
+             `irParaModo`. Atualizar fica à parte: outro objetivo (organograma de 2026-09-28). -->
+        <button data-modo="importar" class="on">Importar / relinkar</button>
+        <button data-modo="atualizar" data-so="resolve">Atualizar timeline</button>
+        <button data-modo="atualizar" data-so="mc" disabled>Atualizar timeline <span class="em-breve">em breve</span></button>
+      </div>
+    <div class="bloco" data-solta="timeline" id="blocoTimeline">
+      <p class="bloco-titulo">1 · a timeline</p>
+
+
+      <!-- ⭐ SÓ arrasto. A lista de sequences saiu: ela vinha da SELEÇÃO das bins
+           abertas, e uma seleção esquecida numa bin qualquer fazia o plugin relinkar
+           a timeline errada — o editor não tinha como saber. O arrasto é 1:1: o que
+           ele soltou é o que vai. (Decisão do usuário, 2026-08-16.) -->
+      <div id="origemMC">
+        <!-- A sequência aberta no monitor Record: uma só, sem ambiguidade de seleção (`/mc/record`). -->
+        <button type="button" class="sm" id="btnSeqAberta">Carregar a sequência aberta</button>
+        <!-- Só os clipes SELECIONADOS na timeline (`/mc/selecao`, 2026-10-25): o relink toca só neles. -->
+        <button type="button" class="sm" id="btnSelecaoTL">Carregar a seleção da timeline</button>
+        <!-- O mesmo alvo do Resolve (`rcBtnAbrir`): soltar a sequência da bin ou um arquivo, ou clicar para escolher. -->
+        <button type="button" class="drop-alvo" id="btnAlvoEscolher">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/>
+            <path d="M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <strong>Arraste a timeline</strong>
+          <span id="dicaSeq">(interna ou externa) ou clique para escolher</span>
+          <span class="drop-formatos">sequência da bin · AAF · bin do Avid (.avb) · projeto do Premiere (.prproj)</span>
+        </button>
+        <!-- O que foi carregado ocupa o lugar do alvo, no MESMO cartão do Resolve (`rcCarga`): nome, de onde veio,
+             os fatos da bin e o × que volta à seleção (autor, 2026-10-12). Desenhado por `mostrarEscolhidoMC`. -->
+        <div class="carga" id="mcCarga" hidden>
+          <div class="carga-topo">
+            <div class="carga-texto">
+              <p class="carga-nome" id="mcCargaNome"></p>
+              <p class="carga-de" id="mcCargaDe"></p>
+            </div>
+            <button type="button" class="carga-tirar" id="mcCargaTirar" aria-label="Tirar o que foi carregado">×</button>
+          </div>
+          <dl class="fatos" id="mcCargaFatos"></dl>
+          <!-- Bin de fora com várias sequências: o editor marca qual relinkar (o mesmo desenho do Resolve, `rcSequencias`). -->
+          <!-- Bin com muitas timelines: um filtro (autor, 2026-10-12: "92 sequências, demorei até achar a animatte").
+               Fica FORA da lista, que é redesenhada a cada escolha — dentro dela perderia o foco a cada letra. -->
+          <input type="search" class="busca-seq" id="mcSeqBusca" placeholder="filtrar timelines…"
+                 aria-label="filtrar as timelines da bin" spellcheck="false" hidden>
+          <div class="seqs" id="mcSequencias" role="radiogroup" aria-label="sequências da bin" hidden></div>
+          <!-- Marcar não é carregar (autor, 2026-10-12): o botão lê a sequência e o cartão vira o da timeline da bin. -->
+          <button type="button" class="sm primary" id="mcSeqCarregar" hidden disabled>Carregar sequência</button>
+        </div>
+      </div>
+
+      <div id="origemAAF" hidden>
+        <!-- O caminho do AAF escolhido: o campo fica (o Relinkar o lê), o nome aparece no alvo do bloco. -->
+        <div data-so="mc" hidden>
+          <div class="linha">
+            <input type="text" id="campoAaf" placeholder="nenhum arquivo escolhido" spellcheck="false">
+            <button id="btnEscolherAaf" class="sm">Escolher…</button>
+          </div>
+          <p class="dica">O AAF que você recebeu. Poupa o export — é o caso comum.
+             Também pode ser <strong>arrastado do Explorer</strong> para este bloco.
+             Carta, bin, XML, DRT, PRPROJ e OTIO: em breve.</p>
+        </div>
+        <!-- No Resolve, o arquivo vira DRT no serviço e a casca o importa. A Carta e a bin de
+             uma sequência só vêm direto; a bin com várias mostra a lista. -->
+        <!-- ⭐ Redesenho aprovado pelo autor (2026-10-05): CARREGAR NÃO É IMPORTAR. A área recebe o
+             arquivo solto ou abre o seletor no clique; o arquivo entra no cartão com a leitura rápida
+             (duração, taxa, trilhas, planos), e só então aparece o Importar, embaixo das opções. Antes,
+             a Carta, o AAF e a bin de uma sequência começavam a importar no instante da escolha, sem o
+             editor ter apontado os originais. Desenhado por `pintarCarga`. -->
+        <div data-so="resolve">
+          <!-- O mesmo botão dos outros programas. No Resolve (2026-10-19) ele traz a timeline ABERTA para a conferência
+               pela referência, o mesmo destino do arrasto do Media Pool; o relink dentro do próprio Resolve virá depois. -->
+          <button type="button" class="sm" id="rcBtnSeqAberta">Carregar a sequência aberta</button>
+          <!-- Só os clipes SELECIONADOS na timeline do Resolve (`/resolve/selecao-da-timeline`, 2026-10-25): a
+               conferência roda só neles. Igual ao botão do Media Composer. Resolve antigo sem a seleção cai na inteira. -->
+          <button type="button" class="sm" id="rcBtnSelecaoTL">Carregar a seleção da timeline</button>
+          <button type="button" class="drop-alvo" id="rcBtnAbrir">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/>
+              <path d="M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+            <strong>Arraste a timeline</strong>
+            <span>(interna ou externa) ou clique para escolher</span>
+            <span class="drop-formatos">AAF · Carta Aberta (.json) · bin do Avid (.avb) · projeto do Premiere (.prproj)</span>
+          </button>
+          <div class="carga" id="rcCarga" hidden>
+            <div class="carga-topo">
+              <div class="carga-texto">
+                <p class="carga-nome" id="rcCargaNome"></p>
+                <p class="carga-de" id="rcCargaDe"></p>
+              </div>
+              <button type="button" class="carga-tirar" id="rcCargaTirar" aria-label="Tirar o que foi carregado">×</button>
+            </div>
+            <dl class="fatos" id="rcCargaFatos"></dl>
+            <div id="rcAvulso" hidden>
+              <p class="sub-titulo" id="rcAvulsoTitulo">sequências da bin</p>
+              <div class="seqs" id="rcSequencias" role="radiogroup" aria-labelledby="rcAvulsoTitulo"></div>
+            </div>
+          <!-- ══ O projeto do Premiere, ANTES de montar (organograma de 2026-10-02, atualizado em
+             2026-10-03): quantos casaram com os originais, o que falta e o que cada efeito vira.
+             O editor confirma. Desenhado por `pintarAntesDeMontar`. Mora DENTRO do cartão do bloco 1, no
+             lugar da lista de sequências (autor, 2026-10-06: o cabeçalho com as informações da timeline fica);
+             o Cancelar e o Montar estão na barra fixa do rodapé (`barraAcoes`). -->
+        <div class="antes-montar" id="rcPrproj" hidden>
+          <p class="sub-titulo" id="rcPrprojTitulo">antes de montar</p>
+          <div class="placar" id="rcPrprojPlacar"></div>
+          <!-- ══ Lista de mídias (autor, 2026-10-06): TODO arquivo de vídeo da sequência, na MESMA tabela do MC desde
+               2026-10-19 (`criarTabela`): ● situação · Na timeline · Codec · Encontrado · De onde veio, filtros nas
+               etiquetas. O × de uma linha e o botão de baixo IGNORAM: "sem versão em alta, tudo bem" — sai o marcador
+               "REFAZER no original", o arquivo entra pelo proxy como sempre; ⛔ o que nem o proxy existe continua "sem
+               mídia". Lembrado por projeto. Desenhado por `pintarMidias`.
+               ABERTA e logo abaixo do cartão (autor, 2026-10-24: o editor quer revisar as mídias antes das traduções). -->
+          <details class="acordeao midias" id="rcMidias" open>
+            <summary><span>Lista de mídias</span><span class="midias-conta" id="rcMidiasConta"></span></summary>
+            <div class="filtro-pills" id="rcMidiasFiltros" role="group" aria-label="filtrar por situação"></div>
+            <div class="tab-caixa" id="rcMidiasCaixa" tabindex="0" aria-label="Lista de mídias">
+              <table class="tab-midias" id="rcMidiasTabela"></table>
+            </div>
+            <!-- "Relinkar só as offline" (autor, 2026-10-24, como o "só offline" do MC): o que está online no projeto
+                 fica como está. Por ora no Premiere → Premiere. "Ignorar todos" virou botão pequeno. -->
+            <div class="midias-rodape" id="rcMidiasRodape">
+              <label class="so-offline" id="rcSoOfflineLinha" hidden
+                     title="O que já está online no projeto fica como está; só o que está offline é religado">
+                <input type="checkbox" role="switch" class="chave" id="rcSoOffline">Relinkar só as offline</label>
+              <button type="button" class="sm" id="rcMidiasIgnorar">Ignorar todos</button>
+            </div>
+            <!-- AAF, bin e Carta (organograma de 2026-10-19): as ações da lista do MC, por master -->
+            <p class="mc-manual" id="rcManualMsg" hidden></p>
+            <div class="mc-lista-acoes" id="rcCartaAcoes" hidden>
+              <button type="button" class="sm" id="rcRevisar">Revisar mídias</button>
+              <button type="button" class="sm" id="rcIgnorarC" disabled>Ignorar</button>
+              <button type="button" class="sm" id="rcManual" disabled>Relink manual</button>
+            </div>
+          </details>
+          <!-- A escala digitada para OUTRA mídia (autor, 2026-10-18: marcar e oferecer): o projeto diz Scale 50 % num
+               arquivo que ele mesmo declara 1920 — os 50 % eram de um 4K que não está mais no projeto. Nada vem marcado. -->
+          <div id="rcEscalas" hidden>
+            <p class="sub-titulo">escala de outra mídia</p>
+            <p class="dica">O projeto foi religado a outros arquivos sem corrigir o enquadramento: escala digitada para uma
+              mídia maior (× fator) ou a proporção de um arquivo esticado. Marque os que devem ser ajustados; todos entram
+              com marcador amarelo para conferir.</p>
+            <div class="lista rc-lista" id="rcEscalasLista"></div>
+            <div class="acoes"><button type="button" class="sm" id="rcEscalasTodas">Ajustar todos</button></div>
+          </div>
+          <!-- O vídeo de referência (organograma de 2026-10-04): o achado na timeline, ou um arquivo
+               indicado à mão (trilha nova acima de todas, desligada). E o som dele: A = trilha nova
+               abaixo de todo o áudio, com solo; B = só ele; ou nenhum. -->
+          <p class="sub-titulo">vídeo de referência</p>
+          <!-- Área de soltar como a do arquivo (autor, 2026-10-06). Achada na timeline, ela vira o cartão com o
+               selo "achada na timeline"; escolhida à mão, o selo "escolhida" e o × (volta à achada, se houver).
+               Desenhado por `pintarReferencia`. -->
+          <div class="zona-ref" data-solta="referencia">
+            <button type="button" class="drop-alvo drop-baixo" id="rcRefEscolher">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/>
+                <path d="M17 10l5-3v10l-5-3"/></svg>
+              <span class="drop-texto"><strong>Arraste o vídeo de referência</strong>
+                <span>ou clique para escolher · MOV, MP4, MXF</span></span>
+            </button>
+            <div class="ref-cartao" id="rcRefCartao" hidden>
+              <div class="carga-topo">
+                <div class="carga-texto">
+                  <span class="ref-selo" id="rcRefSelo"></span>
+                  <p class="carga-nome" id="rcRefNome"></p>
+                  <p class="carga-de" id="rcRefDe"></p>
+                </div>
+                <button type="button" class="carga-tirar" id="rcRefTirar" aria-label="Tirar o vídeo escolhido" hidden>×</button>
+              </div>
+              <button type="button" class="link" id="rcRefTrocar">Usar outro vídeo…</button>
+            </div>
+          </div>
+          <div class="seg" id="rcRefSom" hidden>
+            <button data-som="A" class="on" title="O som da referência numa trilha nova abaixo de todo o áudio, com solo">som em trilha nova</button>
+            <button data-som="B" title="Nenhum áudio da timeline: só o som da referência (o colorista não trabalha com áudio)">só o som dela</button>
+            <button data-som="nenhum">sem o som</button>
+          </div>
+          <!-- O que cada efeito vira, por ÚLTIMO e fechado (autor, 2026-10-24: interessa menos que as mídias). Some na
+               cópia Premiere → Premiere: nada se traduz no mesmo programa. -->
+          <details class="acordeao midias" id="rcTraducao">
+            <summary><span>Resumo da tradução</span></summary>
+            <div class="lista rc-lista" id="rcPrprojLinhas"></div>
+          </details>
+          <!-- As opções (áudio, Compound Clip, conferir) moraram aqui até 2026-10-05; agora ficam em
+               "Opções avançadas › deste projeto" (`rcAvProjeto`), com os mesmos ids. -->
+        </div>
+          <button type="button" class="link" id="rcCargaTrocar">Trocar arquivo…</button>
+          </div>
+        </div>
+
+        <!-- ══ Magic Link: UMA tabela com os dois sentidos de cada canal conectado (sem papel,
+             autor 2026-09-25). O filtro escolhe (Novos, Da Edição, Da Cor, Já importados…); o
+             cabeçalho ordena. As pastas dos canais ficam SÓ em Ajustes. Ver `pintarTabela`. -->
+        <!-- Acordeão (redesenho de 2026-10-05): fechado até o editor abrir; o selo diz quantos novos. -->
+        <details class="acordeao ml-acordeao" id="mlAcordeao">
+        <summary><span>Magic Link</span><span class="selo" id="mlSelo" hidden></span></summary>
+        <div id="mlReceber">
+          <div class="linha ml-barra">
+            <select id="mlFiltro" aria-label="o que mostrar"></select>
+            <button id="mlBtnProcurar" class="sm">Procurar novos</button>
+          </div>
+          <div class="tabela-envios">
+            <!-- Uma linha por envio, sem quebra: o que não cabe rola para o lado. As colunas se
+                 redimensionam pela divisa do cabeçalho (`.alca`); só a do botão fica fixa. As
+                 larguras são desenhadas por `aplicarLarguras`. -->
+            <table id="mlTabela">
+              <colgroup id="mlColunas"></colgroup>
+              <thead><tr id="mlCabecalho"></tr></thead>
+              <tbody id="mlCorpo"></tbody>
+            </table>
+          </div>
+          <p class="dica" id="mlDicaReceber"></p>
+        </div>
+        </details>
+      </div>
+
+      <!-- ══ Atualizar timeline (organograma de 2026-09-28): três escolhas e Comparar. A versão
+           antiga vem sugerida quando esta máquina sabe de onde a timeline veio; senão, Escolher…
+           Desenhado por `abaAtualizar` / `compararAtualizar`. -->
+      <div id="origemAtualizar" data-so="resolve" hidden>
+        <label class="at-campo" for="atTrabalho">timeline de trabalho
+          <select id="atTrabalho"></select></label>
+        <div class="at-campo">versão antiga <span class="leve">(de onde a timeline de trabalho veio)</span>
+          <div class="linha"><select id="atAntiga"></select><button id="atBtnAntiga" class="sm">Escolher…</button></div></div>
+        <div class="at-campo">versão nova
+          <div class="linha"><select id="atNova"></select><button id="atBtnNova" class="sm">Escolher…</button></div></div>
+        <p class="dica">As duas no mesmo formato: AAF com AAF, ou Carta Aberta (.json) e bin do Avid (.avb), que valem uma pela outra.</p>
+        <div class="acoes"><button id="atComparar" class="sm primary">Comparar</button></div>
+      </div>
+
+    </div>
+
+    <div class="bloco" id="rcTrazendo" data-so="resolve" hidden>
+      <!-- Nas etapas em que o app USA o Resolve (6–10), o editor espera (organograma de 2026-10-04). -->
+      <div class="alerta-espera" id="rcAlerta" role="alert" hidden>
+        <span class="alerta-ic" aria-hidden="true">!</span>
+        <span><b>Não mexa no Resolve até terminar</b>
+          <span id="rcAlertaTexto">O De Lá Pra Cá está usando o Resolve. Mexer agora pode cair na timeline errada.</span></span>
+      </div>
+      <p class="bloco-titulo" id="rcTrazendoTitulo">Importando</p>
+      <div class="linha prog-linha"><span id="rcEtapa">—</span><span id="rcEtapaN"></span></div>
+      <div class="barra" id="rcBarraFundo"><div class="barra-preenche" id="rcBarra"></div></div>
+      <div class="linha prog-linha"><span id="rcConta"></span><span id="rcTempo"></span></div>
+      <!-- O que está acontecendo AGORA: o arquivo lido (nome + pasta) ou o que está sendo escrito
+           (pedido do autor, 2026-10-04). Desenhado por `pintarAndamento`. -->
+      <div class="prog-atual" id="rcAtual" aria-live="polite">
+        <span class="prog-atual-o-que" id="rcAtualOQue"></span>
+        <span class="prog-atual-nome" id="rcAtualNome"></span>
+        <span class="prog-atual-pasta" id="rcAtualPasta"></span>
+      </div>
+      <div class="acoes"><button id="rcBtnCancelar" class="ghost sm">Cancelar</button></div>
+    </div>
+    <div class="bloco" id="rcFeito" data-so="resolve" hidden></div>
+
+    <!-- ══ O resumo do Atualizar (organograma aprovado em 2026-09-27): o que muda, decidido ANTES
+         de mexer. A execução reescreve a timeline do próprio colorista (caminho B). Desenhado por
+         `pintarAtualizar`; as escolhas ficam na aba "Atualizar timeline", acima. -->
+    <div class="bloco" id="rcAtualizar" data-so="resolve" hidden>
+      <p class="bloco-titulo" id="atTitulo">Atualizar</p>
+      <p class="dica" id="atMotivo"></p>
+      <div id="atResumo"></div>
+      <label class="chk">
+        <input type="checkbox" id="atAudio">
+        <span>contar as mudanças de áudio<em>desligado: o sound design não conta como mudança de
+          montagem, e o áudio vem inteiro da versão nova</em></span>
+      </label>
+      <div class="acoes">
+        <button id="atComoNova" class="sm">Importar como nova</button>
+        <button id="atAplicar" class="sm primary" disabled
+                title="a sua timeline vai para o Backup e a atualizada fica no lugar dela">Atualizar</button>
+      </div>
+      <p class="dica" id="atBackup"></p>
+      <div class="acoes"><button id="atFechar" class="sm">Fechar</button></div>
+    </div>
+
+    <!-- ── passo 2: as pastas ────────────────────────────────────────────── -->
+    <div class="bloco" data-solta="midia">
+      <!-- O "(opcional)" aparece só com banco conectado — ver `pintarBanco`. -->
+      <!-- No Resolve (ADR 0020): com pasta, o Importar casa cada master com o original em alta (o mesmo
+           motor do relink do Avid) e o DRT já nasce online nos originais. A explicação é dica flutuante no
+           ⓘ, em texto neutro, sem nome de NLE (autor, 2026-10-06); o "(opcional)" saiu. -->
+      <p class="bloco-titulo">2 · onde estão os originais
+        <span class="leve" id="pastasOpcional" hidden>(opcional — o banco sabe)</span><span class="info" data-so="resolve"
+          tabindex="0" role="note" aria-label="Indique o local onde estão as mídias originais ou em alta. Sem ele, a timeline entra com as mídias referenciadas ou offline."
+          title="Indique o local onde estão as mídias originais ou em alta. Sem ele, a timeline entra com as mídias referenciadas ou offline.">i</span></p>
+      <!-- ⭐ DOIS GESTOS, e os dois usam superfície QUE O EDITOR JÁ CONHECE: o botão
+           abre o Explorer (`IFileOpenDialog`, com barra de endereço, Acesso rápido e
+           várias pastas de uma vez — ver `dialogo_win.py`), e a pasta também pode ser
+           arrastada de uma janela do Explorer para cá.
+
+           ⛔ HOUVE AQUI um campo "cole o caminho e tecle Enter", e ele foi um ERRO DE
+           LEITURA DE REQUISITO — vale registrar para não voltar. O editor reclamou de
+           navegar pasta a pasta na árvore antiga e disse que precisava colar um
+           caminho; foi lido como "falta um lugar para colar" e virou um campo NOSSO.
+           Mas colar já é capacidade nativa do Explorer: o que faltava era o Explorer,
+           não o campo. A pergunta que teria evitado a volta inteira não é só *qual
+           gesto está impedido*, é **em que superfície ele deveria acontecer** — na
+           janela que a pessoa já usa todo dia, ou numa que ela teria de aprender. -->
+      <!-- A explicação vira `title` (tooltip) em vez de linha fixa: ela ensina uma vez e
+           depois só ocupa altura, numa janela de 400px onde altura é o recurso escasso.
+           O overlay do arrasto já diz o essencial no momento em que importa. -->
+      <!-- Área de soltar como a do arquivo (autor, 2026-10-06: "tímida nesse layout"); o clique abre o mesmo
+           seletor de pastas de antes. Fica depois da lista: com pastas escolhidas, ela é o "adicionar mais". -->
+      <button type="button" id="btnEscolherPasta" class="drop-alvo drop-baixo"
+              title="Escolha uma ou várias pastas. As subpastas entram junto — aponte a raiz da diária. A lista acumula.">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span class="drop-texto"><strong>Arraste as pastas dos originais</strong>
+          <span>ou clique para escolher · as subpastas entram junto</span></span>
+      </button>
+      <!-- As pastas escolhidas ficam ABAIXO da área (autor, 2026-10-06). -->
+      <div id="listaPastas" class="lista-pastas"></div>
+
+    </div>
+
+    <!-- ══ Lista de mídias do Media Composer (organograma "Um painel, três NLEs": "a lista de mídias como no Resolve";
+         autor, 2026-10-13: "deixá-la 1:1 como é no Resolve"). É o MESMO componente (`#rcMidias`): no MC, o boot o muda
+         para cá. Quem o enche é a prévia (`rodarPrevia`); o resto — Codec, ordenar, divisor, seleção, ignorar, filtro —
+         é o código do Resolve. -->
+    <!-- ══ Lista de mídias do MC (organograma "Ler Sequência e Relink Manual", aprovado em 2026-10-13): nada casa
+         sozinho — o botão principal "Ler sequência" lê e casa; aqui o editor confere (filtros = as etiquetas), ignora,
+         corrige à mão (Relink manual: a palavra dele vence, só o impossível é recusado) e então relinka. Colunas:
+         ● (fixa, ordena por situação) · Na timeline · Codec · Encontrado · De onde veio — largura e posição pelo
+         título, lembradas nesta máquina. Também recebe um ARQUIVO solto do Explorer: relink manual da linha sob o
+         cursor. Desenhado por `pintarListaMC`. -->
+    <div class="bloco mc-lista" id="mcLista" data-so="mc" data-solta="midiaManual" hidden>
+      <div class="mc-lista-topo"><p class="bloco-titulo">lista de mídias</p><span class="midias-conta" id="mcListaConta"></span></div>
+      <!-- O andamento da leitura, no próprio bloco (autor, 2026-10-13: "o usuário sempre saber onde está"). -->
+      <div class="previa-prog" id="mcPreviaProg" hidden>
+        <div class="linha prog-linha"><span id="mcPreviaEtapa">—</span><span id="mcPreviaTempo"></span></div>
+        <div class="barra" id="mcPreviaBarraFundo"><div class="barra-preenche" id="mcPreviaBarra"></div></div>
+        <div class="linha prog-linha"><span id="mcPreviaConta"></span></div>
+        <div class="prog-atual" aria-live="polite"><span class="prog-atual-nome" id="mcPreviaAtual"></span></div>
+      </div>
+      <div class="filtro-pills" id="mcListaFiltros" role="group" aria-label="filtrar por situação"></div>
+      <div class="tab-caixa" id="mcListaCaixa" tabindex="0" aria-label="Lista de mídias">
+        <table class="tab-midias" id="mcListaTabela"></table>
+      </div>
+      <p class="mc-manual" id="mcManualMsg" hidden></p>
+      <div class="mc-lista-acoes">
+        <button type="button" class="sm" id="mcRevisar">Revisar mídias</button>
+        <button type="button" class="sm" id="mcIgnorar" disabled>Ignorar</button>
+        <button type="button" class="sm" id="mcManual" disabled>Relink manual</button>
+      </div>
+      <!-- A escala digitada para OUTRA mídia no projeto do Premiere (autor, 2026-10-29: "como o Resolve"): a mesma
+           oferta do `rcEscalas`. Nada vem marcado; todos entram com marcador amarelo. Desenhado por `pintarEscalasMC`. -->
+      <div id="mcEscalas" hidden>
+        <p class="sub-titulo">escala de outra mídia</p>
+        <p class="dica">O projeto foi religado a outros arquivos sem corrigir o enquadramento: a escala foi digitada para
+          uma mídia maior (× fator). Marque os que devem ser ajustados; todos entram com marcador amarelo para conferir.</p>
+        <div class="lista rc-lista" id="mcEscalasLista"></div>
+        <div class="acoes"><button type="button" class="sm" id="mcEscalasTodas">Ajustar todos</button></div>
+      </div>
+    </div>
+    <!-- O nome da bin entregue (veio da antiga tela de revisão, que saiu): OPCIONAL de propósito — vazio = nome do
+         PROJETO numerado (`PRODUCAO-A 1`, `PRODUCAO-A 2`…). Duas bins não podem ter o mesmo nome: o serviço numera. -->
+    <div class="campo" id="campoNomeBin" data-so="mc" hidden>
+      <label for="nomeBin">nome da bin <span class="leve">(opcional)</span></label>
+      <input type="text" id="nomeBin" placeholder="nome do projeto, numerado"
+             spellcheck="false" maxlength="60" autocomplete="off">
+      <em>em branco usa o nome do projeto. Se já existir uma bin com o nome, entra
+          como “nome 2”, “nome 3”…</em>
+    </div>
+
+    <!-- ══ Opções avançadas (redesenho de 2026-10-05): abaixo dos originais, fechadas, cada opção com o
+         interruptor à direita. Os Sinais do Import (organograma de 2026-09-27: marcador e cor ligados, a
+         trilha de notas desligada) valem para o Importar e o Atualizar; "deste projeto" só aparece com
+         um projeto do Premiere carregado. Os ids são os de antes: quem lê `.checked` não mudou. -->
+    <details class="acordeao avancadas" id="rcAvancadas" data-so="resolve" hidden>
+      <summary><span>Opções avançadas</span></summary>
+      <div data-so="drt">
+      <p class="grupo">sinais na timeline</p>
+      <label class="op">
+        <span class="op-texto">Marcar o que pede atenção<em>um marcador no início de cada segmento, com a
+          nota e a palavra-chave DLPC</em></span>
+        <input type="checkbox" role="switch" class="chave" id="rcMarcar" checked>
+      </label>
+      <label class="op">
+        <span class="op-texto">Colorir esses segmentos<em id="rcLegenda">cor local (só o segmento, nunca o clipe
+          na bin): Pink = possível distorção (Stretch), Chocolate = refazer, Yellow = conferir</em></span>
+        <input type="checkbox" role="switch" class="chave" id="rcColorir" checked>
+      </label>
+      <label class="op">
+        <span class="op-texto">Criar a trilha de notas<em>um texto acima de tudo explicando cada efeito e seus
+          valores; os clipes vão desligados e não saem no render</em></span>
+        <input type="checkbox" role="switch" class="chave" id="rcNotas">
+      </label>
+      </div>
+      <!-- ⭐ O BASELIGHT (proposta 2026-11-22-baselight-no-app, etapa 2): o job da produção (um job por produção; a
+           timeline entra numa scene NOVA, nunca sobrescreve — "… · import 02") e os markers dos planos com problema. -->
+      <div data-so="baselight">
+        <p class="grupo">no Baselight</p>
+        <label class="op">
+          <span class="op-texto">Job da produção<em id="rcBlJobInfo">um job por produção: cada timeline entra numa scene
+            nova dele, nunca por cima de outra</em></span>
+          <input type="text" class="campo-texto" id="rcBlJob" maxlength="100" spellcheck="false" list="rcBlJobs">
+          <datalist id="rcBlJobs"></datalist>
+        </label>
+        <!-- ⭐ ATUALIZAR CORTE (etapa 5; decisões do autor, 2026-11-22): a montagem nova entra numa scene nova COM a cor
+             que o colorista já fez numa scene do job — o Multi-Paste do Baselight + a conferência do Ciclo; o plano
+             que o colorista dividiu é dividido igual; os markers dele vão junto, pela fonte. -->
+        <label class="op">
+          <span class="op-texto">Levar a cor de uma scene<em>a montagem nova entra numa scene nova com a cor que o
+            colorista já fez na escolhida — conferida plano a plano; a scene dele não é tocada</em></span>
+          <select id="rcBlAtualizar"><option value="">não — timeline nova, sem cor</option></select>
+        </label>
+        <label class="op">
+          <span class="op-texto">Marcar os planos com problema<em>um marker “[Ciclo]” no plano que entrou offline, fora
+            do ponto ou que o Baselight não achou, com o motivo</em></span>
+          <input type="checkbox" role="switch" class="chave" id="rcBlMarkers" checked>
+        </label>
+        <label class="op">
+          <span class="op-texto">Trazer os títulos para a scene<em>em geral o texto não vai à cor (cada título vira um
+            marker); ligue quando o título for narrativo ou artístico — ele entra como camada Text, na fonte da montagem
+            se ela estiver nesta máquina</em></span>
+          <input type="checkbox" role="switch" class="chave" id="rcBlTitulos">
+        </label>
+      </div>
+      <div id="rcAvProjeto" hidden>
+        <p class="grupo">deste projeto</p>
+        <label class="op" id="rcPrprojAudioLinha" data-so="drt">
+          <span class="op-texto">Trazer o áudio<em id="rcPrprojAudioInfo"></em></span>
+          <input type="checkbox" role="switch" class="chave" id="rcPrprojAudio" checked>
+        </label>
+        <label class="op" id="rcPrprojCompoundLinha" data-so="drt">
+          <span class="op-texto">Nest como Compound Clip (TL do Premiere)<em id="rcPrprojCompoundInfo"></em><em>desligado:
+            o nest entra aberto em trilhas (o que algumas casas de cor pedem)</em></span>
+          <input type="checkbox" role="switch" class="chave" id="rcPrprojCompound" checked>
+        </label>
+        <label class="op" id="rcNomeCopiaLinha" hidden>
+          <span class="op-texto">Nome da cópia no Premiere<em>a sequência original não muda: a cópia relinkada entra
+            na bin De Lá Pra Cá › este nome</em></span>
+          <input type="text" class="campo-texto" id="rcNomeCopia" maxlength="120" spellcheck="false">
+        </label>
+        <label class="op" id="rcPrprojConferirLinha" hidden>
+          <span class="op-texto">Conferir pela referência ao terminar<em id="rcPrprojConferirInfo"></em><em>exporta
+            o 1º e o último quadro visível de cada plano e compara com o vídeo de referência; dá para cancelar</em></span>
+          <input type="checkbox" role="switch" class="chave" id="rcPrprojConferir">
+        </label>
+      </div>
+    </details>
+
+    <!-- ══ A barra de AÇÕES, fixa no rodapé da janela (autor, 2026-10-06): o passo seguinte sempre à vista,
+         sem rolar até ele. O `body` ganha embaixo a altura dela (`ajustarBarra`), para ela nunca cobrir nada.
+         Só existe com algo carregado (`pintarCarga`): "Ler Timeline Selecionada" (o arquivo) ou "Importar
+         como nova" + "Atualizar timeline" (o envio do Magic Link; o Atualizar leva o envio para a aba
+         "Atualizar timeline" como versão nova); na tela "antes de montar", Cancelar + Montar timeline. -->
+    <!-- ⭐ O RODAPÉ FIXO do app (organograma de 2026-10-18, aprovado pelo autor; cobrado em 2026-10-19): os botões do
+         passo, e abaixo "Idealizado por" centralizado + a versão à direita. O topo fica para a conexão. -->
+    <div class="barra-acoes" id="barraAcoes" hidden>
+      <!-- MC: o "Ler sequência" → "Relinkar sequência" sobe para cá no boot (`pintarBarraMC`) -->
+      <div class="acoes-mc" id="mcAcoesBarra" data-so="mc" hidden></div>
+      <div class="acoes-importar" id="rcAcoes" hidden>
+        <button type="button" class="primary" id="rcImportar">Ler Timeline Selecionada</button>
+        <button type="button" id="rcAtualizarEnvio" hidden>Atualizar timeline</button>
+      </div>
+      <div class="acoes-montar" id="rcAcoesMontar" hidden>
+        <button type="button" id="rcPrprojCancelar">Cancelar</button>
+        <button type="button" class="primary" id="rcPrprojMontar">Montar timeline</button>
+      </div>
+      <div class="barra-assinatura">
+        <span></span>
+        <p class="assinatura">Idealizado por
+          <button class="autor" id="autor" type="button" title="Abrir o LinkedIn de Lohan Costa">Lohan Costa, edt.</button>
+        </p>
+        <span class="barra-versao"><span class="versao" id="versao">—</span>
+          <button class="versao-nova" id="versaoNovaLink" hidden></button></span>
+      </div>
+    </div>
+
+    <div id="soRelink" data-so="mc">
+    <!-- ── passo 3: o banco de mídias ────────────────────────────────────────
+         ⭐ BLOCO PRÓPRIO, e não um apêndice do 2, porque é uma decisão de outra
+         natureza e de outro prazo: as pastas mudam a cada trabalho, o banco vale para
+         a produção inteira e sobrevive ao projeto.
+
+         ⭐ Não há caixa de "ativar": conectar um banco É a opção. Um interruptor
+         separado criaria o estado sem sentido de "ligado, mas sem banco" — e é por isso
+         que o recurso nasce desligado sem precisar de um padrão.
+
+         ⚠️ Sem `data-solta`: este bloco não recebe arrasto. Soltar aqui cai na recusa
+         que diz para onde ir, que é o certo. -->
+    <!-- ⛔ RETIRADO da tela (autor, 2026-10-12: "não funcionou tanto quanto vislumbrei"). Fica escondido, e não
+         apagado, porque o painel.js ainda liga os botões dele; um banco já conectado continua valendo no casamento. -->
+    <div class="bloco" id="blocoBanco" hidden>
+      <p class="bloco-titulo">3 · banco de mídia <span class="leve">(opcional)</span></p>
+
+      <div id="bancoDesligado">
+        <p class="dica">Lembra o que já foi confirmado e acelera os próximos relinks.
+           O ganho aparece do segundo em diante — o primeiro é quem o alimenta.</p>
+        <div class="linha">
+          <button id="btnCriarBanco" class="sm"
+                  title="Cria um banco novo: você dá o nome e escolhe onde ele fica, na janela do Windows.">Criar</button>
+          <button id="btnConectarBanco" class="sm"
+                  title="Aponta para o banco.json de um banco que já existe — o seu ou o de outra pessoa da produção.">Conectar</button>
+        </div>
+        <p class="dica aviso-leve" id="bancoAviso" hidden></p>
+      </div>
+
+      <div id="bancoLigado" hidden>
+        <div class="linha">
+          <span class="banco-nome" id="bancoNome"></span>
+          <button id="btnDesconectarBanco" class="x"
+                  title="Desconecta este projeto do banco. Não apaga o banco.">✕</button>
+        </div>
+        <p class="dica" id="bancoResumo"></p>
+      </div>
+    </div>
+
+    <!-- ── opções avançadas: fechadas por padrão ─────────────────────────────
+         Os defaults são os certos para o caso comum. Quem precisa mexer sabe o que
+         procura; quem não precisa não deve gastar tela com isso. -->
+    <details class="avancado">
+      <summary>opções avançadas</summary>
+      <div class="avancado-corpo">
+        <label class="chk">
+          <input type="checkbox" id="optSubclipes" checked>
+          <span>desfazer subclipes<em>entrega os clipes originais na timeline</em></span>
+        </label>
+        <label class="chk">
+          <input type="checkbox" id="optGrupos" checked>
+          <span>desfazer group clips<em>troca cada multicam pela câmera selecionada</em></span>
+        </label>
+
+        <div class="campo" id="campoPreset">
+          <span>preset de export</span>
+          <div class="linha">
+            <span class="estado-preset" id="estadoPreset">verificando…</span>
+            <button id="btnInstalarPreset" class="sm" hidden>Instalar</button>
+          </div>
+          <em>o plugin usa um preset próprio, de AAF puro. Não é escolha:
+              o formato do export é requisito, e um preset errado faz o Media
+              Composer renderizar a timeline inteira.</em>
+          <p class="aviso" id="avisoPreset" hidden></p>
+        </div>
+
+        <!-- Aparece quando o relink foi feito editando a bin: aí não há export, e o
+             preset acima deixa de existir no caminho. Ver ADR 0013. -->
+        <p class="aviso" id="notaRotaAvb" hidden>
+          esta timeline foi lida direto da bin — sem export, sem preset e sem import.
+        </p>
+      </div>
+    </details>
+
+    <!-- ⭐ RELINK PARCIAL. Uma timeline meio relinkada é o caso comum, não a exceção:
+         o editor já trouxe metade por AMA e não quer refazer. Os dois filtros são
+         independentes e se somam — marcados juntos, só entra o que é importado E está
+         offline. Desmarcados, entra tudo. (Pedido do usuário, 2026-08-16.) -->
+    <div class="filtros-relink" id="filtrosRelink">
+      <label class="chk lado-a-lado">
+        <input type="checkbox" id="optSoImportados">
+        <span>só importados<em>deixa de fora o que já está AMA-linkado</em></span>
+      </label>
+      <label class="chk lado-a-lado">
+        <input type="checkbox" id="optSoOffline">
+        <span>só offline<em>deixa de fora o que já está online</em></span>
+      </label>
+    </div>
+
+    <div class="acoes">
+      <!-- UM botão que muda de função (organograma de 2026-10-13): "Ler sequência" (casa) → "Relinkar sequência".
+           Trocar a timeline ou as pastas o volta para "Ler sequência". `pintarBotaoPrincipalMC`. -->
+      <button id="btnPreparar" class="primary" disabled>Ler sequência</button>
+    </div>
+    </div><!-- /soRelink -->
+  </div>
+
+  <!-- ── passo 4: revisão ────────────────────────────────────────────────── -->
+  <div class="passo" id="passoRevisao" hidden>
+    <div class="placar" id="placar"></div>
+
+    <!-- ⭐ O CONVITE À REVISÃO — o miolo deste passo no painel estreito.
+         Aqui NÃO se lista mais ocorrência: a lista mora na janela larga, onde os dois
+         nomes de arquivo cabem lado a lado. O painel diz quantas divergências há e abre
+         a porta; ler nome de arquivo espremido em 400px nunca foi revisar de verdade. -->
+    <section class="convite" id="conviteRevisao">
+      <p class="convite-resumo" id="resumoRevisao"></p>
+      <!-- ⚠️ Botão de verdade (era um `sm ghost` perdido no meio do texto), mas SEM a
+           classe `primary`: o acento é do "Relinkar no Media Composer", que é a ação.
+           Dois botões em acento no mesmo passo fazem o opcional parecer obrigatório e
+           roubam o destaque justamente de quem devia tê-lo. -->
+      <button id="btnJanelaRevisao">Revisar mídias</button>
+      <!-- ⚠️ Dizer que é OPCIONAL, e em voz alta. Sem isto um botão em destaque no meio
+           do fluxo lê como etapa obrigatória, e o editor que só quer relinkar o que casou
+           com segurança fica esperando uma permissão que ninguém ia pedir. -->
+      <p class="convite-nota" id="notaRevisao"></p>
+      <span class="leve" id="avisoJanelaRevisao" hidden></span>
+    </section>
+
+    <!-- A lista e os filtros são da JANELA LARGA (`?vista=revisao`). Ficam no HTML porque
+         é a mesma página nas duas superfícies; o CSS os esconde no painel. -->
+    <div class="linha filtros">
+      <div class="seg" id="filtro">
+        <button data-filtro="revisao" class="on">a decidir</button>
+        <button data-filtro="tudo">tudo</button>
+      </div>
+      <button id="btnVoltar" class="sm ghost">refazer</button>
+      <!-- O caminho de volta. Só existe na janela larga: no painel não há o que fechar. -->
+      <button id="btnConcluirRevisao" class="primary sm" hidden>Concluir revisão</button>
+    </div>
+
+    <div id="listaMasters" class="lista"></div>
+
+    <!-- O nome da bin mora agora no passo 1, abaixo da lista de mídias (organograma de 2026-10-13). -->
+
+    <div class="acoes">
+      <button id="btnAplicar" class="primary">Relinkar no Media Composer</button>
+    </div>
+  </div>
+
+  <!-- ── progresso ───────────────────────────────────────────────────────── -->
+  <div class="passo" id="passoProgresso" hidden>
+    <div class="bloco">
+      <p class="bloco-titulo" id="progEtapa">trabalhando</p>
+      <div class="barra"><div class="barra-preenche" id="progBarra"></div></div>
+      <div class="linha prog-linha">
+        <span id="progPct">0%</span>
+        <span class="caminho" id="progDetalhe"></span>
+        <span id="progTempo"></span>
+      </div>
+      <!-- ⚠️ Boa parte do trabalho (áudio, achatamento, remap) roda FORA do Media
+           Composer, e nessas etapas a interface dele fica livre — o editor não tem como
+           saber que a bin ainda está sendo montada. Abri-la no meio é o gesto natural de
+           quem está ansioso, e o serviço não tem como impedir: quem manda na janela do
+           Avid é o Avid. Então avisa-se, com o nome da bin, enquanto durar. -->
+      <p class="aviso" id="avisoTrabalho" hidden></p>
+    </div>
+    <div class="acoes">
+      <button id="btnCancelar" class="ghost">Abortar</button>
+    </div>
+  </div>
+
+  <!-- ── feito ───────────────────────────────────────────────────────────── -->
+  <div class="passo" id="passoFeito" data-so="mc" hidden>
+    <div class="bloco">
+      <p class="bloco-titulo">pronto</p>
+      <div id="resumoFinal"></div>
+    </div>
+    <div class="acoes">
+      <!-- "Voltar" (autor, 2026-10-13): a tela principal, sem timeline no bloco 1 e com as pastas mantidas. -->
+      <button id="btnNovo" class="primary">Voltar</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══ Aba 2: Daqui Pra Lá ══════════════════════════════════════════════════ -->
+<!-- ⛔⛔ A timeline sai LENDO A BIN — nunca por ExportFile (ADR 0015). -->
+<section id="paneDaquiPraLa" role="tabpanel">
+
+  <!-- No Resolve, enviar (de volta para a edição) é a entrega 3: a aba já existe, com a mesma
+       estrutura, e diz o que vem. -->
+  <div class="bloco" data-so="resolve">
+    <p class="bloco-titulo">Daqui Pra Lá <span class="em-breve">em breve</span></p>
+    <p class="dica">Enviar do Resolve — a timeline ou um insert de volta para a edição, pelo
+       Magic Link, ou exportado para um arquivo — chega numa próxima etapa.</p>
+  </div>
+
+  <div data-so="mc">
+  <!-- ⭐ TIMELINE COMPLETA ou INSERT. O destino é decidido pelo BOTÃO do fim: Exportar… (onde o
+       editor quiser, perguntado na hora) ou Enviar para <setor> (a caixa daquele canal). -->
+  <div class="seg" id="exModo" role="tablist">
+    <button type="button" data-modo="timeline" class="on">Timeline completa</button>
+    <button type="button" data-modo="insert">Insert</button>
+  </div>
+
+  <!-- ══ modo INSERT ══ -->
+  <div id="exModoInsert" hidden>
+    <div class="bloco">
+      <p class="bloco-titulo">1 · clipes do insert</p>
+      <div class="acoes"><button id="insBtnColetar" class="primary">Coletar seleção</button></div>
+      <p class="msg" id="insMsg"></p>
+      <!-- ⚠️ Dizer como o Avid copia: o TRECHO entre o primeiro e o último segmento
+           selecionado em cada trilha, não os segmentos soltos (medido com o autor). -->
+      <p class="dica">Selecione na timeline e aperte Coletar. Para clipes separados, colete um
+         de cada vez — o Avid leva junto o que estiver entre eles.</p>
+      <div class="bloco" id="insConfirmar" hidden>
+        <p class="aviso" id="insConfirmarTexto"></p>
+        <div class="acoes">
+          <button id="insBtnOk" class="primary sm">OK</button>
+          <button id="insBtnCancelarColeta" class="ghost sm">Cancelar</button>
+        </div>
+      </div>
+      <div class="lista" id="insLista"></div>
+      <p class="dica" id="insVazia">nenhum clipe coletado</p>
+      <div class="linha">
+        <span class="dica" id="insResumo"></span>
+        <button id="insBtnLimpar" class="ghost sm" hidden>Limpar lista</button>
+      </div>
+      <label class="dica"><input type="checkbox" id="insSoVideo"> só vídeo (sem o som linkado)</label>
+    </div>
+
+    <!-- ⭐ O nome é do EDITOR: vira o nome da timeline do outro lado. Nome é convenção da
+         equipe (autor, 2026-09-25) — o painel oferece os campos e alguns prefixos, e lembra
+         o último padrão usado; não impõe nenhum. -->
+    <div class="bloco">
+      <p class="bloco-titulo">2 · nome <span class="leve">(é o nome da timeline do outro lado)</span></p>
+      <input type="text" id="insNome" spellcheck="false" autocomplete="off" value="%{sequencia}">
+      <div class="chips" id="insCampos"></div>
+      <div class="chips" id="insPrefixos" title="prefixos: um clique põe no começo do nome">
+        <button type="button" data-prefixo="INSERT PARA %{tipo} — ">INSERT PARA %tipo — </button>
+        <button type="button" data-prefixo="%{tipo}_">%tipo_</button>
+        <button type="button" data-prefixo="%{data}_">%data_</button>
+      </div>
+      <p class="dica" id="insPrevia"></p>
+    </div>
+
+    <div class="bloco">
+      <p class="bloco-titulo">3 · comentário <span class="leve">(opcional)</span></p>
+      <textarea id="insComentario" rows="2" spellcheck="true"
+                placeholder="o que a cor ou o VFX precisa saber"></textarea>
+    </div>
+
+    <!-- Um botão por canal conectado: o insert pega o tipo do canal (COR, VFX…). -->
+    <div class="bloco">
+      <p class="bloco-titulo">Magic Link</p>
+      <div class="acoes botoes-canal" id="mlEnviarInsert"></div>
+      <p class="dica" id="mlDicaInsert"></p>
+    </div>
+    <div class="acoes">
+      <button id="insBtnExportar" disabled>Exportar…</button>
+    </div>
+    <div id="insFeito" hidden></div>
+  </div>
+
+  <!-- ══ modo TIMELINE COMPLETA (o export de sempre + Enviar pelo Magic Link) ══ -->
+  <div id="exModoTimeline">
+
+  <!-- ⚠️ `data-solta="exportTimeline"`, e não "timeline": as duas abas recebem o MESMO
+       arrasto (uma sequência da bin), e é a ZONA que diz o que fazer com ele — importar
+       ou exportar. Reusar "timeline" mandaria o arrasto para o fluxo de relink. -->
+  <div class="bloco" data-solta="exportTimeline">
+    <p class="bloco-titulo">1 · a timeline</p>
+    <div class="alvo-drop">
+      <p class="dica" id="exDica"><strong>Arraste a timeline da bin</strong> para cá.</p>
+      <p class="escolhido" id="exSequencia" hidden></p>
+    </div>
+    <div id="exResumo" hidden></div>
+  </div>
+
+  <!-- ⭐ A Carta Aberta vem PRIMEIRO de propósito (pedido do autor): o painel lembra a
+       última escolha, e o formato que fica no fim da lista nunca é escolhido. -->
+  <div class="bloco">
+    <p class="bloco-titulo">2 · formato</p>
+    <select id="exFormato">
+      <option value="carta_aberta">Carta Aberta (.json) — o nosso, legível</option>
+      <option value="drt">DaVinci Resolve (.drt)</option>
+      <option value="prproj" disabled>Premiere Pro (.prproj) — em breve</option>
+      <option value="aaf" disabled>AAF — em breve</option>
+      <option value="xml" disabled>XML — em breve</option>
+      <option value="otio" disabled>OpenTimelineIO (.otio) — em breve</option>
+    </select>
+  </div>
+
+  <div class="bloco">
+    <p class="bloco-titulo">3 · nome <span class="leve">(do arquivo, e da timeline no Magic Link)</span></p>
+    <input type="text" id="exNome" spellcheck="false" autocomplete="off"
+           placeholder="o nome da sequência entra aqui ao arrastar">
+    <div class="chips" id="exCampos"></div>
+    <p class="dica" id="exPrevia"></p>
+  </div>
+
+  <!-- ⭐ A PRODUÇÃO (proposta Baselight no app, etapa 4; autor, 2026-11-22): opcional; vai na Carta e, do outro lado,
+       vira o JOB do Baselight (um job por produção). Vazio = o nome do projeto aberto no Media Composer. -->
+  <div class="bloco">
+    <p class="bloco-titulo">produção <span class="leve">(opcional — vira o job no Baselight; vazio = o nome do projeto)</span></p>
+    <input type="text" id="exProducao" spellcheck="false" autocomplete="off" maxlength="100"
+           placeholder="o nome do projeto aberto">
+  </div>
+
+  <div class="bloco">
+    <p class="bloco-titulo">4 · comentário <span class="leve">(opcional)</span></p>
+    <textarea id="exComentario" rows="2" spellcheck="true"
+              placeholder="vira um marcador no início da timeline"></textarea>
+    <!-- ⚠️ Dizer o que ainda NÃO acontece. Sem isto o editor escreve, exporta o DRT, abre
+         no Resolve, não acha o marcador e conclui que perdeu o texto. -->
+    <p class="dica" id="exNotaComentario">No DRT o marcador ainda não é escrito — o texto
+       vai junto na Carta Aberta.</p>
+  </div>
+
+  <div class="bloco" id="exProgresso" hidden>
+    <p class="bloco-titulo" id="exEtapa">trabalhando</p>
+    <div class="barra"><div class="barra-preenche" id="exBarra"></div></div>
+    <div class="linha prog-linha">
+      <span id="exPct"></span>
+      <span class="caminho" id="exDetalhe"></span>
+    </div>
+  </div>
+
+  <!-- Um botão por canal conectado ("Enviar para a Cor", "Enviar para o VFX"). As pastas dos
+       canais ficam em Ajustes. -->
+  <div class="bloco">
+    <p class="bloco-titulo">Magic Link</p>
+    <div class="acoes botoes-canal" id="mlEnviarTimeline"></div>
+    <p class="dica" id="mlDicaTimeline"></p>
+  </div>
+
+  <div class="acoes">
+    <button id="exBtnExportar" disabled>Exportar…</button>
+    <button id="exBtnCancelar" class="ghost" hidden>Abortar</button>
+  </div>
+  <div id="exFeito" hidden></div>
+  </div><!-- /exModoTimeline -->
+  </div><!-- /data-so mc -->
+</section>
+
+<!-- ══ Aba 3: Ajustes ═══════════════════════════════════════════════════════ -->
+<section id="paneAjustes" role="tabpanel">
+  <!-- ⭐ Magic Link em CANAIS: a ilha é o que ela CONECTA (sem papel). As pastas seguem o
+       projeto do Avid (no Resolve, a máquina). É o ÚNICO lugar com o caminho dos canais.
+       Desenhado por `pintarAjustesCanais`. -->
+  <div class="bloco">
+    <p class="bloco-titulo">Magic Link · canais</p>
+    <div class="lista" id="ajCanais"></div>
+    <p class="dica" id="ajCanaisDica"></p>
+  </div>
+  <!-- ⭐ O código de cores dos Sinais do Import (organograma aprovado em 2026-09-27): guardado
+       NESTA máquina, as categorias fixas (a lista de cada uma é só leitura), cor repetida avisa
+       e deixa. Desenhado por `pintarCodigoDeCores`. -->
+  <div class="bloco" data-so="resolve">
+    <p class="bloco-titulo">Sinais do Import · código de cores</p>
+    <div id="ajCores"></div>
+    <label class="cores-palavra" for="ajPalavra">palavra-chave dos marcadores
+      <input type="text" id="ajPalavra" maxlength="32" spellcheck="false"></label>
+    <p class="dica">Os marcadores já importados ficam com a palavra antiga. Vale a partir do
+      próximo Trazer.</p>
+    <p class="aviso" id="ajCoresAviso" hidden></p>
+    <div class="acoes"><button id="btnCoresFabrica" class="sm">Voltar ao de fábrica</button></div>
+  </div>
+  <!-- ⭐ Cache e logs (organograma aprovado em 2026-10-05), no MC e no Resolve: abrir, limpar e
+       abrir os logs. O local e o teto se escolhem no app (⚙ Configurações = `?vista=configuracoes`,
+       o bloco `#paneConfig` abaixo). Desenhado por `pintarCache`. -->
+  <div class="bloco" id="ajBlocoCache">
+    <p class="bloco-titulo">Cache e logs</p>
+    <div class="uso-linha"><span class="uso-grande" id="ajUsoGrande">—</span><span class="uso-de" id="ajUsoDe"></span></div>
+    <div class="uso-barra"><span id="ajUsoBarra"></span></div>
+    <p class="dica" id="ajCacheUso"></p>
+    <div class="cache-antigo" data-cache-antigo hidden></div>
+    <p class="cf-sub">Onde fica</p>
+    <span class="caminho caminho-inteiro"><bdi id="ajCacheDir">—</bdi></span>
+    <p class="aviso" id="ajCacheAviso" hidden></p>
+    <div class="acoes">
+      <button class="sm" data-cache="abrir-cache">Abrir pasta do cache</button>
+      <button class="sm" data-cache="limpar">Limpar cache</button>
+      <button class="sm" data-cache="abrir-logs">Abrir pasta de logs</button>
+    </div>
+    <p class="dica">O local e o tamanho máximo se escolhem no app (⚙ Configurações).</p>
+  </div>
+  <div class="bloco" data-so="resolve">
+    <p class="bloco-titulo">DaVinci Resolve</p>
+    <div id="dvEstado" class="dica">—</div>
+  </div>
+  <div class="bloco" data-so="mc" id="ajBlocoMC">
+    <p class="bloco-titulo">Media Composer</p>
+    <div id="mcEstado" class="dica">—</div>
+    <div class="acoes"><button id="btnConsultar" class="sm">Consultar</button></div>
+  </div>
+  <div class="bloco">
+    <p class="bloco-titulo">Serviço</p>
+    <div class="caminho" id="ajServico">—</div>
+  </div>
+  <!-- ⭐ O último arrasto, cru. Vive AQUI, nos ajustes, e não no fluxo: quem está
+       trabalhando não deve ver protocolo. Mas este caminho depende de um contrato que a
+       Avid não publica, e quando ele muda ou surge um tipo novo, a pergunta é sempre a
+       mesma — o que exatamente chegou? Uma foto desta tela responde. -->
+  <div class="bloco" data-so="mc" id="ajBlocoArrasto">
+    <p class="bloco-titulo">Último arrasto</p>
+    <pre class="cru" id="ajArrasto">nada arrastado nesta sessão</pre>
+  </div>
+</section>
+
+<!-- ══ ⚙ Configurações do APP (`?vista=configuracoes`) ═══════════════════════════
+     A janela que o botão ⚙ do aplicativo abre (`lib.rs › abrir_configuracoes`). É esta mesma UI,
+     servida, pela razão da revisão: same-origin com a API, sem exceção no portão. Organograma de
+     cache e logs aprovado em 2026-10-05. Desenhado por `pintarConfig`. -->
+<section id="paneConfig">
+  <div class="bloco">
+    <!-- Organograma de 2026-10-05 (pedido do autor: "não ficou muito intuitiva"): primeiro QUANTO
+         ocupa, o cache antigo logo abaixo dele, depois onde fica, o limite e o limpar. -->
+    <p class="bloco-titulo">Cache</p>
+    <div class="uso-linha"><span class="uso-grande" id="cfUsoGrande">—</span><span class="uso-de" id="cfUsoDe"></span></div>
+    <div class="uso-barra"><span id="cfUsoBarra"></span></div>
+    <p class="dica" id="cfUso"></p>
+    <div class="cache-antigo" data-cache-antigo hidden></div>
+    <p class="cf-sub">Onde fica</p>
+    <span class="caminho caminho-inteiro"><bdi id="cfDir">—</bdi></span>
+    <div class="acoes">
+      <button class="sm" id="cfAbrir">Abrir pasta</button>
+      <button class="sm" id="cfEscolher">Escolher…</button>
+      <button class="sm" id="cfPadrao">Usar padrão</button>
+    </div>
+    <p class="aviso" id="cfAviso" hidden></p>
+    <p class="cf-sub">Tamanho máximo</p>
+    <label class="cf-teto" for="cfTeto"><input type="number" id="cfTeto" min="1" max="2000" step="1"> GB</label>
+    <p class="dica">Ao passar do limite, o que foi usado há mais tempo sai primeiro.</p>
+    <div class="acoes"><button class="sm" id="cfLimpar">Limpar cache</button></div>
+  </div>
+  <!-- ⚙ › Diagnóstico (organograma de 2026-10-19, uma janela só): o que a janela antiga do app mostrava. -->
+  <div class="bloco" id="cfBlocoDiag">
+    <p class="bloco-titulo">Diagnóstico</p>
+    <p class="dica" id="cfDiag">—</p>
+    <div class="acoes"><button class="sm" id="cfLiberar">Liberar a porta do Media Composer</button></div>
+    <p class="dica" id="cfLiberarMsg" hidden></p>
+    <p class="dica">Use se o Media Composer não conectar: ele deixa um processo segurando as portas ao sair. Feche o
+      Avid antes.</p>
+  </div>
+  <div class="bloco">
+    <p class="bloco-titulo">Logs</p>
+    <p class="dica">Onde o app registra o que fez. É o que anexar ao reportar um problema.</p>
+    <span class="caminho"><bdi id="cfLogs">—</bdi></span>
+    <div class="acoes"><button class="sm" id="cfAbrirLogs">Abrir pasta de logs</button></div>
+  </div>
+  <!-- Versão nova (organograma de 2026-10-05): em dia, versão nova ou "não consegui conferir"; a
+       caixa desliga o aviso (salva com o Salvar). `pintarVersao`. -->
+  <div class="bloco" id="cfBlocoVersao">
+    <p class="bloco-titulo">Versão</p>
+    <div class="ver-linha"><span id="cfVersaoAtual">—</span><span class="ver-tag" id="cfVersaoTag"></span></div>
+    <p class="dica" id="cfVersaoTexto" hidden></p>
+    <div class="acoes" id="cfVersaoAcoes" hidden>
+      <button class="sm primary" id="cfBaixar" hidden>Baixar</button>
+      <button class="sm" id="cfConferirVersao" hidden>Conferir agora</button>
+    </div>
+    <label class="cf-check" for="cfAvisar"><input type="checkbox" id="cfAvisar"> Avisar quando houver versão nova</label>
+  </div>
+  <div class="acoes">
+    <button class="ghost" id="cfCancelar">Cancelar</button>
+    <button class="primary" id="cfSalvar">Salvar</button>
+  </div>
+</section>
+
+<p class="msg" id="msg"></p>
+
+
+<!-- ══ Importar sem pasta de originais (redesenho de 2026-10-05): só aparece no clique do Importar, nunca
+     sozinha. "Não perguntar de novo" vale para o projeto aberto no Resolve nesta sessão; outro projeto
+     pergunta de novo (autor). Desenhado por `perguntarOriginais`. -->
+<div class="veu" id="semOriginais" hidden>
+  <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="semOriginaisTitulo">
+    <h2 id="semOriginaisTitulo">Montar sem a pasta dos originais?</h2>
+    <p id="semOriginaisTexto"></p>
+    <label class="chk-linha"><input type="checkbox" id="semOriginaisNaoPerguntar">
+      <span id="semOriginaisProjeto">Não perguntar de novo neste projeto</span></label>
+    <div class="acoes">
+      <button type="button" class="sm" id="semOriginaisIndicar">Indicar a pasta…</button>
+      <button type="button" class="primary" id="semOriginaisMontar">Montar assim</button>
+    </div>
+  </div>
+</div>
+
+<!-- O job do Baselight (etapa 4): a produção não é a do job ABERTO na interface → o colorista escolhe -->
+<div class="veu" id="jobBl" hidden>
+  <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="jobBlTitulo">
+    <h2 id="jobBlTitulo">Em que job do Baselight?</h2>
+    <p id="jobBlTexto"></p>
+    <label class="chk-linha"><input type="checkbox" id="jobBlNaoPerguntar">
+      <span>Não perguntar novamente</span></label>
+    <div class="acoes">
+      <button type="button" class="sm" id="jobBlAberto">No job aberto</button>
+      <button type="button" class="primary" id="jobBlMeu">No job da produção</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/painel.js"></script>
+</body>
+</html>

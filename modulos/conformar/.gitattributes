@@ -1,0 +1,7 @@
+# Lançadores (banco, transversal/bugs-do-mundo-real B073): o SSD é a MESMA pasta no Mac e no Windows — um
+# checkout do Windows com autocrlf punha CRLF no .command e ele parava de rodar no Mac.
+*.sh      text eol=lf
+*.command text eol=lf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.ps1     text eol=crlf

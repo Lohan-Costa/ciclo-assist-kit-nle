@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laboratório de casamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head><body>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Baselight · laboratório de casamento</p>
+  <h1>Quem põe o arquivo certo em cada plano?</h1>
+  <div class="barra"></div>
+  <p class="lead">Dez pegadinhas de mídia sintética, montadas no Premiere e no Media Composer e conformadas no Baselight por três caminhos. O que conta: <strong>nenhum plano com o arquivo errado sem aviso.</strong></p>
+  <div class="numeros">
+    <div class="numero"><b>10</b><span>pegadinhas (P1–P10)</span></div>
+    <div class="numero"><b>3</b><span>caminhos: A, B e C</span></div>
+    <div class="numero"><b>2</b><span>transportes: xmeml e AAF</span></div>
+    <div class="numero"><b>~20</b><span>planos na montagem</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">Os três caminhos</p><h2>Do Baselight sozinho ao Ciclo decidindo e conferindo</h2></div>
+  <div class="grade">
+    <div class="card"><span class="selo">A</span><h3>Baselight sozinho</h3>
+      <p><code>bl-conform</code> com o filtro Filename, depois ClipName, depois None, com <code>--multiples</code>. Nada nosso: é o que acontece hoje.</p></div>
+    <div class="card acao"><span class="selo">B</span><h3>O Ciclo decide, o Baselight obedece</h3>
+      <p>O Conformar casa (nome, UMID, TC, duração como veto; empate vai para o editor) e a entrega leva o caminho resolvido. Mede-se qual forma o <code>bl-conform</code> respeita: modelo de arquivo por fonte, um <code>--src</code> por pasta ou um nome único por plano.</p></div>
+    <div class="card"><span class="selo">C</span><h3>B mais a conferência</h3>
+      <p>Depois do conform, a FLAPI lê o arquivo e o TC de cada plano e compara com a decisão do Ciclo. Diferente: troca o arquivo do plano ou põe um marker "[Ciclo]" com o motivo.</p></div>
+  </div>
+  <div class="card aviso"><p class="eyebrow">Se B não prender o caminho</p>
+    <p>B vira A + C, como você decidiu: <strong>entrega com alerta é melhor que entrega com erro calado.</strong></p></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O placar</p><h2>O que a rodada vai preencher</h2>
+    <p class="muted">Cada clipe mostra no quadro quem é (código de barras com o rótulo, a câmera e o quadro), então o render do Baselight diz sozinho qual arquivo entrou. Um placar para o xmeml do Premiere e outro para o AAF do MC.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>#</th><th>Pegadinha</th><th>O que o Ciclo deve fazer</th><th class="c">A</th><th class="c">B</th><th class="c">C</th></tr></thead>
+  <tbody id="placar"></tbody></table></div>
+  <div class="legenda-marcas">
+    <span><i class="marca certo">ok</i>certo</span>
+    <span><i class="marca alerta">!</i>alerta: você foi avisado</span>
+    <span><i class="marca errado">×</i>errado calado: o único inaceitável</span>
+    <span><i class="marca">–</i>a medir</span>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">A receita</p><h2>O que o laboratório gera para cada pegadinha</h2>
+    <p class="muted">Receita nova <code>BL08_CASAMENTO</code>: uns 16 originais em <code>ORIGINAIS/DIA01</code> e <code>DIA02</code>, e os dailies que o editor monta em <code>DAILIES/</code>. A montagem tem uns 20 planos, dois por pegadinha, V1 em corte seco.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>#</th><th>Os arquivos</th></tr></thead><tbody id="receita"></tbody></table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">A ordem</p><h2>Cada etapa fecha antes da próxima</h2></div>
+  <div class="provas" id="ordem"></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Para você decidir</p><h2>Três respostas antes das montagens</h2></div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">1</span><h3>Posso pilotar as montagens?</h3>
+      <p>Etapas 3 e 4. O Baselight fica fechado nesse trecho: a estação não aguenta dois programas pesados juntos.</p></div>
+    <div class="card acao"><span class="selo">2</span><h3>Plano ambíguo (P2), na entrega</h3>
+      <p>Vai offline com marker, para você escolher e religar? Ou vai com o primeiro candidato e um marker "confira"? A regra "empate é do editor" puxa para offline.</p></div>
+    <div class="card acao"><span class="selo">3</span><h3>Os dois NLEs, ou o Premiere primeiro?</h3>
+      <p>O Premiere é mais rápido de montar pela ponte; o MC entraria depois, com o mesmo placar.</p></div>
+  </div>
+  <p class="muted">As etapas 1 e 2 não dependem dessas respostas e podem começar já.</p>
+</section>
+
+<footer class="rodape"><span>Ciclo Assist · Conformar → Baselight</span><span>Plano de 22/11/2026</span></footer>
+</main>
+
+<script>{
+const P=[
+["P1","Mesmo nome, TC zerado, durações diferentes (cartão A × B)","A duração separa","A001C003 no cartão A (20 s) e no B (12 s), TC 00:00:00:00 nos dois"],
+["P2","Mesmo nome, TC e duração; imagem diferente","Ambíguo: vai para o editor, sem palpite","A001C004 em DIA01 e DIA02, mesmo TC e duração"],
+["P3","Proxy de outra taxa e duração arredondada","Duração em segundos, com tolerância","Original 59,94p e daily 23,976 da mesma tomada"],
+["P4","Daily renomeado","UMID, ou TC + duração","CENA12_T3.mov, daily do original B001C007"],
+["P5","Caixa, acento NFD ou extensão diferentes","Normalizar o nome","a001c008.MOV × A001C008.mov; CORAÇÃO_01 gravado em NFD"],
+["P6","Número no fim do nome","Arquivo, não sequência","PLACA_298.mov ao lado de uma sequência PLACA_0001…"],
+["P7","Rótulo DF × NDF","O TC certo","Original 29,97 DF, daily rotulado NDF (divergem depois do 1º minuto)"],
+["P8","Reel/fita vazio ou trocado","Não depender da fita","Fita vazia num clipe; a fita de outro clipe noutro"],
+["P9","O mesmo clipe em duas pastas","Qualquer uma serve, e dizer qual","C001C002 idêntico em DIA01 e BACKUP/DIA01"],
+["P10","Sequência de imagens que é vídeo","Um clipe só, não N imagens","Uma tomada em DPX, um arquivo por quadro"]];
+const m='<td class="c"><i class="marca">–</i></td>';
+document.getElementById('placar').innerHTML=P.map(p=>`<tr><td class="cod">${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td>${m+m+m}</tr>`).join('');
+document.getElementById('receita').innerHTML=P.map(p=>`<tr><td class="cod">${p[0]}</td><td>${p[3]}</td></tr>`).join('');
+const O=[
+["Gerar e verificar a mídia","Sem NLE; o Baselight pode ficar aberto.","receita + verificar"],
+["B no papel","O Conformar casa a montagem contra as pastas e diz o que faria em cada plano. Mostra onde o nosso casador também erra, antes de abrir qualquer programa.","sem NLE"],
+["Montar no Premiere 2027","Pela ponte, sem mouse; o xmeml sai pelo leitor do Conformar.","Baselight fechado"],
+["Montar no Media Composer","Pela API, como a BL01, e exportar o AAF.","Baselight fechado"],
+["Conformar no Baselight","Os caminhos A, B e C nos dois transportes, render de cada scene e o placar.","Baselight aberto"],
+["Registrar e relatar","Banco, relatório da etapa e o que vai para o produto.","página + banco"]];
+document.getElementById('ordem').innerHTML=O.map((o,i)=>`<div class="prova"><div class="n">${String(i+1).padStart(2,'0')}</div><div class="corpo"><h3>${o[0]}</h3><p class="pergunta">${o[1]}</p><p class="medido">${o[2]}</p></div></div>`).join('');
+}</script>
+</body></html>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- Uma claquete que também é um balão de fala: as duas metades do produto.
+       Traço só, sem preenchimento — é assim que os ícones do menu Tools do Media
+       Composer se comportam, e um ícone cheio destoaria da barra inteira. -->
+  <path d="M3 8.5h18v9.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8.5Z"/>
+  <path d="M3 8.5 5.2 4h13.6L21 8.5"/>
+  <path d="m8.3 4-1.6 4.5M13.1 4l-1.6 4.5M17.9 4l-1.6 4.5"/>
+  <path d="M8.5 13h7M8.5 16h4"/>
+</svg>

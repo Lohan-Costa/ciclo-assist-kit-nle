@@ -1,0 +1,4042 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sincronizar</title>
+<!--
+  A INTERFACE do painel do Órbita no Media Composer.
+
+  ⚠️ Este arquivo NÃO vai dentro do `.avpi`. Ele é SERVIDO pelo app em
+  `GET /avid/panel` (ver `ui_do_painel_avid` em `src-tauri/src/nle_install.rs`), e é
+  isso que o coloca na MESMA ORIGEM da API — sem preflight, sem CORS, e sem o teto de
+  duas rotas do esquema `avpi://`. Quem carrega esta página é o loader
+  (`static/index.html`, esse sim empacotado). Ver ADR 0017.
+
+  CREDENCIAL: a própria origem. O portão aceita `http://127.0.0.1:7817` no lugar do
+  token — e por isso **nenhum token é injetado aqui**: um segredo na página seria uma
+  cópia a mais para vazar, sem comprar nada que a origem já não dê. Ver ADR 0017
+  §"Por que a página não carrega o token".
+
+  O marcador de i18n logo abaixo (um comentário HTML com SINC_I18N no nome) é
+  substituído pelo app na hora de servir — pelo dicionário JÁ dentro de uma tag script.
+  Com o marcador intacto o arquivo continua abrindo direto no navegador durante o
+  desenvolvimento, só sem tradução.
+
+  ⚠️ NÃO escreva o marcador literal em nenhum outro lugar deste arquivo, nem em
+  comentário: a montagem exige que ele apareça UMA vez e recusa o resto (era o bug de
+  2026-08-09 — o dicionário entrava também dentro deste cabeçalho).
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    /* ⭐ Os tokens vieram do Assist anterior (`ui/preparar/painel.css`), onde as abas
+       Subclipar e Renomear já foram desenhadas e exercitadas com material real.
+       Não havia o que reinventar aqui — e ter DOIS vocabulários de cor nos dois
+       painéis do mesmo autor é o começo de duas interfaces diferentes.
+       ⚠️ As regras antigas deste arquivo continuam com as cores literais que
+       sempre tiveram: trocá-las de uma vez seria um diff enorme no que já
+       funciona, sem ganho nenhum para quem usa. Elas convergem quando forem
+       tocadas por outro motivo. */
+    --bg:#2b2b2b; --panel:#333; --panel-2:#242424; --border:#3f3f3f;
+    --fg:#e2e2e2; --muted:#a8a8a8; --faint:#8a8a8a;
+    --accent:#3f66a5; --accent-forte:#5183cc; --accent-ink:#fff;
+    --accent-escuro:#2d4a7a; --accent-borda:#5c8ad6; --accent-rgb:63, 102, 165;
+    --ok:#7ec97e; --err:#e08080; --warn:#d9a95a;
+    --radius:6px;
+    --s1:6px; --s2:10px; --s3:16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font: 13px -apple-system, "Segoe UI", sans-serif;
+    background: #2b2b2b; color: #ddd; margin: 0; padding: 14px;
+  }
+  #status {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 10px; border-radius: 5px; font-size: 12px; margin-bottom: 12px;
+  }
+  #status .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  /* O pino da janela do app: apagado = solta; aceso = na frente das outras. */
+  .pino { margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
+          width: 24px; height: 24px; padding: 0; border: 1px solid transparent; border-radius: 4px;
+          background: none; color: inherit; opacity: .55; cursor: pointer; flex: none; }
+  .pino svg { width: 15px; height: 15px; }
+  .pino:hover { opacity: 1; border-color: rgba(255,255,255,.25); }
+  .pino[aria-pressed="true"] { opacity: 1; color: #fff; background: #3a6ea5; border-color: #3a6ea5; }
+  .up { background: #1b3a1b; color: #a8e6a8; } .up .dot { background: #4caf50; }
+  .down { background: #3a1b1b; color: #f0a0a0; } .down .dot { background: #e05050; }
+  .wait { background: #333; color: #aaa; } .wait .dot { background: #888; }
+
+  /* ⚠️ O painel do Avid é DOCÁVEL, e o editor o encolhe até onde quiser: com
+     quatro abas mais a assinatura, o rótulo quebrava em duas linhas e a barra
+     virava duas ("From bin" partido ao meio, visto na tela do autor). Três
+     regras seguram isso sem tirar nada da vista:
+       · `white-space: nowrap` — rótulo de aba não quebra, nunca;
+       · `overflow-x: auto` — se não couber, a barra ROLA em vez de empilhar;
+       · a assinatura só aparece quando há folga (ver a media query abaixo). */
+  nav {
+    display: flex; gap: 2px; margin-bottom: 12px; border-bottom: 1px solid #444;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  nav button {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: #999; padding: 7px 9px; font-size: 12px; cursor: pointer;
+    white-space: nowrap; flex: none;
+  }
+  nav button.on { color: #eee; border-bottom-color: var(--accent); }
+
+  section { display: none; } section.on { display: block; }
+  h2 { font-size: 12px; color: #bbb; margin: 0 0 4px; font-weight: 600; }
+
+  /* ══ As abas de trabalho — desenho portado do Assist anterior ═════════════════
+     ⭐ Blocos NUMERADOS, e a numeração não é enfeite: ela diz a ordem do
+     trabalho ("1 · o que entrou" → "2 · o padrão"), que num painel estreito é a
+     única pista de por onde começar. */
+  .bloco {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--panel-2); padding: var(--s2); margin: 0 0 var(--s2);
+  }
+  .bloco-titulo {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px; margin: 0 0 var(--s1);
+  }
+  .dica { color: var(--faint); font-size: 11px; margin: var(--s1) 0 0; }
+  #btLerSequenciaPr, #btLerSelecaoPr { margin-top: var(--s2); }   /* o respiro entre a dica e o botão (autor, 2026-11-08) */
+  .estado { margin: var(--s1) 0 0; min-height: 1.2em; font-size: 12px; color: var(--muted); }
+  .estado.erro { color: var(--err); }
+
+  /* ⚠️ Quem rola é a LISTA, nunca a página: a janela do painel é curta, e uma
+     diária de 200 itens empurraria o botão de ação para fora da tela. */
+  .rolagem { max-height: 220px; overflow-y: auto; overflow-x: auto; }
+
+  /* ⚠️⚠️ `width:max-content` com `min-width:100%`, e não `width:100%`. Com
+     `width:100%` a tabela se resolve contra o container e só estoura no limite
+     exato do min-content — o pior dos dois mundos, medido no Assist: a última
+     coluna entrava DEBAIXO da barra de rolagem e a rolagem horizontal não
+     aparecia, porque faltavam poucos pixels para o estouro. */
+  .takes { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 11px; }
+  .takes th {
+    text-align: left; padding: 3px 6px; position: sticky; top: 0;
+    background: var(--panel-2); color: var(--muted); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .4px; font-size: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .takes td { text-align: left; padding: 3px 6px; white-space: nowrap; }
+  .takes tbody tr:nth-child(even) { background: rgba(255,255,255,.02); }
+
+  #renTabela td.ren-vira {
+    color: var(--ok);
+    /* ⚠️ `anywhere`, não `nowrap`: o nome NOVO é o que o editor precisa ler
+       inteiro antes de aplicar, e escondê-lo atrás de rolagem horizontal é
+       esconder justamente a informação que a aba existe para dar. */
+    white-space: normal; overflow-wrap: anywhere; min-width: 40%;
+  }
+  /* ⚠️ Amarelo é AVISO, não erro: campo vazio e nome repetido não bloqueiam.
+     Vermelho fica reservado para o que bloqueia, senão a cor perde o
+     significado justamente quando ela precisa parar a mão do editor. */
+  #renTabela tr.ren-aviso td.ren-vira { color: var(--warn); }
+  #renTabela tr.ren-igual td.ren-vira { color: var(--faint); }
+
+  .acoes { display: flex; gap: var(--s1); margin: 0 0 var(--s2); }
+  /* ⚠️ o `display: flex` acima vencia o `hidden`: "Gerar" aparecia antes de qualquer leitura (visto 2026-11-07) */
+  .acoes[hidden] { display: none; }
+  .acoes button { flex: 1 1 auto; width: auto; padding: 9px 14px; margin: 0;
+                  border: 1px solid var(--border); border-radius: var(--radius);
+                  background: var(--panel); color: var(--fg); font-size: 13px;
+                  font-weight: 600; cursor: pointer; }
+  .acoes button.primary { background: var(--accent); border-color: var(--accent-forte);
+                          color: var(--accent-ink); }
+  .acoes button:disabled { opacity: .45; cursor: default; }
+
+  /* ── a caixa do padrão, com o espelho colorido POR BAIXO ──────────────────
+     ⭐⭐ O truque do ESPELHO. Um `<input>` não aceita span colorido dentro, e a
+     palavra inválida precisa sair em vermelho. Então o texto do input fica
+     TRANSPARENTE (só o cursor aparece) e um `<div>` idêntico atrás desenha o
+     mesmo texto em pedaços coloridos.
+     ⚠️⚠️ As duas camadas têm de ter EXATAMENTE a mesma métrica — fonte,
+     tamanho, padding, borda, espaçamento. Um pixel de diferença e a cor sai
+     fora de registro com o cursor, que é pior que não colorir nada. Por isso
+     as propriedades comuns saem de uma regra só. */
+  .ren-campo { position: relative; }
+  .ren-campo .ren-espelho,
+  .ren-campo input {
+    font: 12px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius);
+    letter-spacing: 0; white-space: pre; box-sizing: border-box; width: 100%;
+  }
+  .ren-campo .ren-espelho {
+    position: absolute; inset: 0; background: var(--panel-2); color: var(--fg);
+    overflow: hidden; pointer-events: none; border-color: transparent;
+  }
+  .ren-campo input {
+    position: relative; background: transparent; color: transparent;
+    caret-color: var(--fg);
+  }
+  .ren-campo input:focus { outline: none; border-color: var(--accent-forte); }
+  .ren-espelho .campo { color: var(--accent-forte); }
+  /* ⭐⭐ A CAIXINHA da tag fechada — o formato que o autor pediu, do Resolve.
+     ⚠️⚠️ E a razão de ela não ter padding HORIZONTAL: o espelho tem de casar
+     caractere a caractere com o input que está por baixo. Qualquer padding
+     lateral empurraria o texto e o cursor apareceria fora de registro — que é
+     pior que não desenhar caixa nenhuma. O respiro vem de graça: `%{` e `}` são
+     caracteres REAIS, e ficam dentro da caixa fazendo as bordas.
+     ⚠️ Os delimitadores saem apagados, não invisíveis: eles ocupam lugar no
+     texto, e quem anda com a seta precisa ver onde a mão vai cair. */
+  .ren-espelho .tag {
+    background: color-mix(in srgb, var(--accent) 34%, transparent);
+    border-radius: 3px; padding: 1px 0; color: var(--accent-forte);
+  }
+  .ren-espelho .tag .delim { color: var(--faint); }
+  /* ⚠️ Sublinhado, e não só cor: a cauda que o motor devolveu ao literal (`_T`
+     em `%shoot_T`) é uma DECISÃO dele sobre o que o editor digitou, e decisão
+     calada é o que este projeto não aceita. */
+  .ren-espelho .cauda { color: var(--muted); text-decoration: underline dotted; }
+  .ren-espelho .ruim { color: var(--err); text-decoration: underline wavy var(--err); }
+
+  /* ── o autocomplete ──────────────────────────────────────────────────────── */
+  .ren-sugestoes {
+    position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 2px);
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,.45);
+  }
+  .ren-sugestoes button {
+    display: flex; align-items: baseline; gap: var(--s1);
+    width: 100%; text-align: left; padding: 5px 8px;
+    background: none; border: 0; color: var(--fg); font: inherit; font-size: 12px;
+    cursor: pointer;
+  }
+  .ren-sugestoes button:hover,
+  .ren-sugestoes button.marcada { background: var(--accent); color: var(--accent-ink); }
+  .ren-sugestoes .sug-nome { font-family: ui-monospace, Consolas, monospace; }
+  .ren-sugestoes .sug-rotulo { color: var(--muted); font-size: 11px; }
+  .ren-sugestoes .sug-exemplo {
+    margin-left: auto; color: var(--faint); font-size: 10px; font-style: italic;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%;
+  }
+  /* ⚠️ O campo DERIVADO é marcado: o editor tem de saber se aquilo foi LIDO da
+     bin ou CALCULADO por nós. */
+  .ren-sugestoes .sug-derivado { color: var(--warn); font-size: 10px; }
+
+  /* ── os cards de atalho ──────────────────────────────────────────────────── */
+  .ren-cards { display: flex; flex-wrap: wrap; gap: 4px; margin-top: var(--s1); }
+  .ren-cards button {
+    padding: 3px 7px; background: var(--panel-2); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 999px;
+    font: 11px/1.3 ui-monospace, Consolas, monospace; cursor: pointer;
+  }
+  .ren-cards button:hover { border-color: var(--accent-forte); color: var(--accent-forte); }
+  /* ⭐ O campo que vem do NOSSO histórico, e não do material. Cor própria porque
+     a natureza é outra: se o histórico sumir, o valor some junto — o que nenhum
+     campo medido nem derivado faz. É o mesmo âmbar que já marca "presumido" na
+     tabela, pela mesma razão: procedência é requisito, não enfeite. */
+  .ren-cards button.historico { color: var(--warn); border-color: var(--warn); }
+  .ren-cards button.historico:hover { background: rgba(217,169,90,.12); }
+  .ren-sugestoes .sug-historico { color: var(--warn); font-size: 10px; }
+  .ren-nota { margin: var(--s1) 0 0; font-size: 11px; color: var(--faint); }
+
+  /* ── a lista de tomadas: selecionar, editar a cena, remover ─────────────── */
+  .lista-acoes { display: flex; gap: 6px; align-items: center; margin-bottom: var(--s1); }
+  .lista-acoes input {
+    flex: 0 1 130px; background: var(--panel-2); color: var(--fg);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 5px 8px; font-size: 12px;
+  }
+  .lista-acoes button {
+    padding: 5px 10px; background: var(--panel); color: var(--fg);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 12px; cursor: pointer; flex: none;
+  }
+  .lista-acoes button:disabled { opacity: .45; cursor: default; }
+  .lista-acoes button.discreto { background: none; color: var(--muted); }
+  .lista-acoes button.discreto:hover:not(:disabled) { color: var(--err); border-color: var(--err); }
+  .lista-acoes .cresce { flex: 1 1 auto; }
+
+  .takes th.col-x, .takes td.col-x { width: 20px; padding: 0 4px; text-align: right; }
+  /* ⭐ O cabeçalho ORDENA, e por isso se comporta como botão: cursor de mão e
+     realce no hover. Uma coluna que ordena sem parecer clicável não é
+     descoberta — é adivinhada. */
+  .takes th.ordena { cursor: pointer; user-select: none; white-space: nowrap; }
+  .takes th.ordena:hover { color: var(--fg); }
+  .takes th.ordena.ativa { color: var(--accent-forte); }
+  .takes th .seta { font-size: 9px; margin-left: 3px; }
+  /* ⚠️ A lista inteira vira alvo de clique — a seleção agora é a do Explorer/
+     Finder, e não mais uma caixa por linha. `user-select: none` porque
+     shift+clique numa tabela selecionaria TEXTO, e o editor veria a página
+     inteira pintada de azul em vez das linhas que escolheu. */
+  .takes tbody tr { cursor: default; user-select: none; }
+  /* ⚠️ O X é sempre visível, não só no hover: escondê-lo atrás do ponteiro faz
+     o editor descobrir a função por acidente — ou não descobrir. */
+  .takes td.col-x button {
+    background: none; border: 0; color: var(--faint); cursor: pointer;
+    font-size: 13px; line-height: 1; padding: 2px 3px;
+  }
+  .takes td.col-x button:hover { color: var(--err); }
+  .takes tr.marcada td { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  /* ⭐ A cena posta à MÃO se distingue da lida — mesma razão de "presumida". */
+  .takes td.cena-manual { color: var(--accent-forte); }
+  /* ⚠️ O nome que NÃO veio do padrão — caiu no de origem porque o material não
+     tinha o campo. Mesmo âmbar de "presumida" e do campo do histórico, pela
+     mesma razão: é a cor da procedência incerta. */
+  .takes td.nome-origem { color: var(--warn); }
+
+  label.chk { display: flex; gap: 6px; align-items: center; font-size: 12px;
+              color: var(--muted); margin-bottom: var(--s2); cursor: pointer; }
+  label.chk input { margin: 0; }
+
+  button.act {
+    display: block; width: 100%; text-align: left; margin-bottom: 8px;
+    background: #3a3a3a; color: #eee; border: 1px solid #5a5a5a; border-radius: 6px;
+    padding: 11px 13px; font-size: 13px; cursor: pointer;
+  }
+  button.act:hover:not(:disabled) { background: #454545; }
+  button.act:disabled { opacity: .45; cursor: default; }
+  button.act.primary { background: var(--accent-escuro); border-color: var(--accent); }
+  button.act.primary:hover:not(:disabled) { background: #35558c; }
+  .hint { color: #8d8d8d; font-size: 11px; line-height: 1.4; margin: -4px 0 12px; }
+  .path { color: #7f7f7f; font-size: 11px; word-break: break-all; margin: -2px 0 12px; }
+  #msg { font-size: 12px; min-height: 16px; line-height: 1.4; margin-top: 4px; }
+  #msg.ok { color: #7ec97e; } #msg.er { color: #e08080; }
+
+  .bloco { margin-bottom: 5px; }
+
+  select, input[type=text] {
+    width: 100%; background: #333; color: #eee; border: 1px solid #5a5a5a;
+    border-radius: 5px; padding: 7px 8px; font-size: 12px; margin-bottom: 10px;
+  }
+  /* progresso — a mesma leitura do painel do Premiere: barra, etapa, tempo */
+  /* ⭐⭐ STICKY, e isto é conserto de um defeito de USO, não estética.
+     A barra já morou dentro do `#formSync` (invisível na leitura de seleção, que é
+     quando não há fontes) e depois no topo do documento — de onde ela sai da vista
+     assim que a lista de fontes cresce, porque o botão Sincronizar fica no rodapé e
+     o editor rola até lá para clicar. Nos dois casos o trabalho acontecia e a tela
+     não dizia nada.
+     ⚠️ É a armadilha nº 4 do `arrastar.md`: num painel estreito, "não aconteceu
+     nada" e "a resposta apareceu onde você não olha" são indistinguíveis para quem
+     está usando — e ali ela custou metade do tempo de depuração.
+     Grudada no topo, a barra vale para QUALQUER trabalho e não sai da vista.
+     As margens negativas compensam o `padding` do `body`: sem elas o fundo cobre só
+     a coluna de texto e o conteúdo aparece rolando pelas beiradas. */
+  #prog {
+    position: sticky; top: 0; z-index: 5;
+    background: #2b2b2b;
+    margin: 0 -14px 12px; padding: 10px 14px;
+    box-shadow: 0 4px 8px -4px rgba(0, 0, 0, .55);
+  }
+  #barra { height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
+  #barraFill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  /* ⭐ A BARRA INDETERMINADA — o estado "trabalhando, ainda não sei quanto falta".
+     Reportado pelo autor em 2026-08-22 no MC: durante a espera pelo motor a barra
+     ficava parada em 0% com um rótulo estático, e ele se perguntou se tinha
+     travado. Não tinha — mas 9 s de 0% e nada se mexendo dizem "travou", e é a
+     tela que está errada, não a leitura de quem olha.
+     Mostrar uma porcentagem inventada seria pior (ver a regra da base de conhecimento interna:
+     número medido é dado, número inventado é veredito). Uma faixa que ANDA diz
+     "vivo" sem afirmar progresso nenhum. */
+  #barraFill.indeterminado {
+    width: 100%;
+    background: linear-gradient(90deg,
+      #333 0%, #333 25%, var(--accent) 50%, #333 75%, #333 100%);
+    background-size: 250% 100%;
+    animation: correndo 1.15s linear infinite;
+    transition: none;
+  }
+  @keyframes correndo { from { background-position: 100% 0; } to { background-position: -60% 0; } }
+  /* Quem prefere menos movimento continua vendo que há algo em curso — só sem
+     a animação. */
+  @media (prefers-reduced-motion: reduce) {
+    #barraFill.indeterminado { animation: none; background: #3a4a63; }
+  }
+  #progLinha { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; }
+  #progEtapa { color: #bbb; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #progPct { color: #eee; font-size: 11px; font-variant-numeric: tabular-nums; flex: none; }
+  #progTempo { color: #8d8d8d; font-size: 11px; margin-top: 2px; }
+
+  /* ⭐ O REALCE DO ARRASTO. A janela INTEIRA é o alvo, não uma caixinha: mirar um
+     alvo pequeno com o mouse segurando um clipe é trabalho, e num painel estreito
+     uma zona dedicada roubaria espaço do que já está lá. O realce é o que diz que
+     a janela aceita — sem ele o editor não tem como saber antes de soltar.
+     `pointer-events: none` para o véu não roubar o próprio evento de drop. */
+  body.arrastando::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    border: 2px dashed var(--accent-borda); background: rgba(var(--accent-rgb), .13);
+    border-radius: 4px;
+  }
+  /* ⭐ O RODAPÉ da janela do app (2026-10-21): o Sincronizar e a assinatura (o Studio saiu em 2026-11-07). Só existe com
+     `?casca=app` — dentro do Media Composer o painel não tinha o que abrir. */
+  #rodape {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; gap: 8px;
+    padding: 10px 14px 8px; background: #242424; border-top: 1px solid #3f3f3f;
+  }
+  /* A barra mora em cima do botão (autor, 2026-11-08): `#rodape` à frente para vencer o `.embutido #prog`. */
+  #rodape #prog { position: static; margin: 0; padding: 0; background: none; box-shadow: none; }
+  #rodapeSync .act { width: 100%; margin: 0; padding: 11px 14px; font-size: 14px; }
+  #rodape .barra-assinatura { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+                              font-size: 11px; color: #8d8d8d; }
+  #rodape .assinatura { margin: 0; text-align: center; white-space: nowrap; }
+  #rodape .assinatura button { background: none; border: none; color: #8fb3ea; cursor: pointer;
+                               font-size: 11px; padding: 0; }
+  #rodapeNle { justify-self: end; font-variant-numeric: tabular-nums; }
+  #arrastarDica {
+    border: 1px dashed #555; border-radius: 6px; padding: 10px 12px;
+    color: #8d8d8d; font-size: 11px; line-height: 1.45; margin-bottom: 10px;
+  }
+
+  #assinatura { margin-left: auto; align-self: center; color: #6f6f6f;
+                font-size: 10px; padding-right: 2px; white-space: nowrap; flex: none; }
+  /* ⚠️ Num painel estreito a assinatura some, e as ABAS ficam. Ela é crédito;
+     elas são a única forma de chegar ao trabalho. O crédito continua no ⚙ e no
+     rodapé da janela do app — não se perde, muda de lugar. */
+  @media (max-width: 460px) { #assinatura { display: none; } }
+  /* ⚠️ Regra PRÓPRIA: sem ela o `nav button` acima pega o botão do autor e ele vira
+     uma terceira aba, com padding de aba e sublinhado de seleção. */
+  #assinatura button {
+    color: #6f6f6f; font-size: 10px; font-weight: 600; padding: 0; border: 0;
+    background: none; border-bottom: 0; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  #assinatura button:hover { color: #bbb; }
+
+  /* escolha de bins */
+  #pergunta {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center;
+    padding: 18px; z-index: 40;
+  }
+  #pergunta[hidden] { display: none; }
+  #pergunta .caixa { background: #333; border: 1px solid #555; border-radius: 8px; padding: 16px; max-width: 420px; width: 100%; }
+  #perguntaTexto { font-size: 13px; line-height: 1.45; color: #eee; margin-bottom: 14px; }
+  #perguntaBotoes { display: flex; gap: 8px; }
+  #perguntaBotoes .act { margin: 0; text-align: center; flex: 1; }
+  /* ⭐ EMBUTIDO no guarda-chuva do Ciclo Assist (`?embutido=1`, 2026-10-21): a moldura é dele — o estado da conexão
+     e o pino no topo, a engrenagem à direita das abas Preparar · Assistir · Conformar · Entregar, a assinatura no
+     rodapé. Aqui somem a barra de conexão, a aba ⚙ (a engrenagem de lá chama `cicloEmbutido.configuracoes()`) e a
+     linha da assinatura; ficam as subabas Órbita · Subclipar · Renomear e o Sincronizar.
+     ⭐⭐ As SUBABAS têm a MESMA medida nos três apps do guarda-chuva (autor, 2026-10-21) — a régua é a do De Lá Pra
+     Cá: barra recuada 11 px com a linha de 1 px e 10 px antes do conteúdo; botão de 12 px em negrito com 8 × 12 px;
+     a ativa clara e sublinhada no verde-água do guarda-chuva. As três cópias andam juntas. */
+  /* ⭐ `?ajustes=1`: só os ajustes, na janela de configurações do Ciclo Assist (autor, 2026-11-07). */
+  .so-ajustes nav, .so-ajustes #rodape { display: none !important; }
+  /* ⭐ A janela larga (2026-11-07): o respiro da janela de configurações e uma coluna legível. */
+  /* `html.` à frente: o `.embutido body` (o padding da aba) vem depois no CSS e venceria um seletor igual */
+  html.so-ajustes body { padding: 22px 28px 28px; }
+  .so-ajustes #secSettings { max-width: 680px; }
+  .so-ajustes #secSettings button.act { width: auto; min-width: 220px; }
+  .so-ajustes #secSettings h2:not(:first-child) { margin-top: 24px; padding-top: 16px; border-top: 1px solid #333; }
+  .embutido #status, .embutido #tabSettings, .embutido nav #assinatura,
+  .embutido #rodape .barra-assinatura { display: none !important; }
+  .embutido body { padding: 10px 11px 12px; }
+  /* ⛔ A faixa de progresso compensa o padding lateral do `body` (ver `#prog`): com os 14 px do painel solto, embutida
+     ela estourava 3 px de cada lado e a página ganhava uma barra de rolagem horizontal enquanto havia trabalho. */
+  .embutido #prog { margin: 0 -11px 12px; padding: 10px 11px; }
+  .embutido nav { gap: 2px; margin: 0 0 10px; border-bottom: 1px solid #3f3f3f; }
+  .embutido nav button { padding: 8px 12px; margin-bottom: -1px; font: 600 12px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif;
+                         color: #bcbcbc; border-bottom: 2px solid transparent; }
+  .embutido nav button:hover { color: #e2e2e2; }
+  .embutido nav button.on { color: #e2e2e2; border-bottom-color: #4cc4b8; }
+  /* ⭐ E a cor de AÇÃO é a do guarda-chuva (autor, 2026-10-29): sozinho o Órbita é azul; embutido, verde-água — a
+     mesma troca no De Lá Pra Cá. Só as variáveis mudam: todo azul do painel passa por elas. */
+  .embutido { --accent:#2a7f77; --accent-forte:#4cc4b8; --accent-ink:#fff;
+              --accent-escuro:#1f5f59; --accent-borda:#4cc4b8; --accent-rgb:42, 127, 119; }
+
+  /* ══ As origens (redesenho de 2026-11-08): caixas tracejadas que viram cards ══ */
+  #secSources.on { display: flex; flex-direction: column; min-height: calc(100vh - 150px); }
+  #fontes { margin: auto; width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 8px; padding: 6px 0; }
+  .caixa-origem {
+    display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 40px;
+    border: 1.5px dashed #5f5f5f; border-radius: 8px; color: var(--muted); font-size: 13px; user-select: none;
+  }
+  .card-icone { display: inline-flex; flex: none; }
+  .card-icone svg { width: 18px; height: 18px; }
+  [data-origem].alvo { border-color: var(--accent-forte); background: rgba(var(--accent-rgb), .18); color: var(--fg); }
+  .card-origem { border: 1px solid #4a4a4a; border-radius: 8px; background: #333; min-width: 0; }
+  .card-cab { display: flex; align-items: center; gap: 8px; padding: 9px 10px; min-width: 0; }
+  .card-nome { font-weight: 600; color: #eee; flex: none; }
+  .card-det { color: var(--muted); font-size: 11px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-alerta { color: var(--warn); font-size: 11px; white-space: nowrap; flex: none; }
+  .card-seta, .card-x { background: none; border: 0; color: var(--muted); cursor: pointer; flex: none; font-size: 12px; padding: 2px 4px; }
+  .card-seta:hover { color: var(--fg); }
+  .card-x { margin-left: auto; }
+  .card-x:hover { color: var(--err); }
+  .tabela-origem { border-top: 1px solid #4a4a4a; max-height: 42vh; overflow: auto; background: #2a2a2a; }
+  .tab-origem { border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 11px; }
+  .tab-origem th, .tab-origem td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 4px 7px;
+                                   border-bottom: 1px solid #383838; text-align: left; }
+  .tab-origem th { position: sticky; top: 0; z-index: 1; background: #333; color: var(--muted); font-size: 10px; font-weight: 700;
+                   text-transform: uppercase; letter-spacing: .4px; user-select: none; cursor: default; }
+  .tab-origem .alca { position: absolute; top: 0; right: 0; width: 7px; height: 100%; cursor: col-resize; border-right: 1px solid #4a4a4a; }
+  .tab-origem .alca:hover, body.redimensionando .tab-origem .alca { border-right-color: var(--accent-forte); }
+  body.redimensionando, body.redimensionando * { cursor: col-resize !important; user-select: none; }
+  .tab-origem .col-x { padding: 0; text-align: center; position: sticky; right: 0; background: #2a2a2a; }
+  .tab-origem th.col-x { background: #333; z-index: 2; }
+  .tab-origem .col-x button { background: none; border: 0; color: var(--faint); cursor: pointer; font-size: 11px; padding: 2px 5px; }
+  .tab-origem .col-x button:hover { color: var(--err); }
+  /* Amarelo é aviso, não erro: o conflito de TC só sinaliza, não bloqueia. */
+  .tab-origem tr.conflito td { background: #4a3f26; color: var(--warn); }
+  .tab-origem td.presumida { color: var(--warn); }
+  .selo-mono { margin-left: 6px; color: var(--muted); font-size: 10px; }
+  .explica { padding: 6px 10px; color: var(--warn); font-size: 11px; line-height: 1.4; border-top: 1px solid #4a4a4a; }
+  #formSync { margin: 10px auto 0; width: 100%; max-width: 760px; flex: none; }
+  #formSync[hidden] { display: none; }
+  #confTimeline { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  #confTimeline.inativo h2, #confTimeline.inativo select, #confTimeline.inativo input { color: #7a7a7a; }
+  #confTimeline.inativo select, #confTimeline.inativo input { background: #2b2b2b; border-color: #444; }
+  #tlOutro { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: -4px 0 10px; }
+  #tlOutro[hidden] { display: none; }
+  #tlOutro input { margin: 0; width: 90px; }
+  #tlOutro span { color: var(--muted); }
+  #hintTimeline { grid-column: 1 / -1; }
+  #hintTimeline[hidden] { display: none; }
+  #btLimparFontes { float: right; background: none; border: none; color: #8fb3ea; cursor: pointer; font-size: 11px; padding: 0; }
+</style>
+</head>
+<body>
+
+<div id="status" class="wait"><span class="dot"></span><span id="statusText"></span>
+  <!-- O pino (autor, 2026-10-21; o mesmo do De Lá Pra Cá): só na janela do APP. Fixada, ela fica na frente do NLE
+       enquanto o editor pega coisas na bin. -->
+  <button class="pino" id="pino" type="button" hidden aria-pressed="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4" />
+      <path d="M9 15l-4.5 4.5" />
+      <path d="M14.5 4l5.5 5.5" />
+    </svg>
+  </button>
+</div>
+
+<!-- ⭐ A BARRA MORA NO TOPO, e fora do `#formSync`. Ela nasceu lá dentro, junto do
+     botão Sincronizar, e por isso não aparecia na LEITURA DA SELEÇÃO: sem fontes o
+     `#formSync` está `hidden`, que é exatamente o estado em que a leitura acontece —
+     o passo mais longo do painel ficava sem indicador nenhum. Aqui ela vale para
+     qualquer trabalho do motor e não sai da vista quando a lista de fontes cresce. -->
+<div id="prog" hidden>
+  <div id="barra"><div id="barraFill"></div></div>
+  <div id="progLinha"><span id="progEtapa"></span><span id="progPct"></span></div>
+  <div id="progTempo"></div>
+</div>
+
+<nav>
+  <!-- ⚠️ O id continua `tabSources`/`secSources` embora o rótulo agora seja
+       "Sincronizar": três suítes de teste (`avid-panel-arvore`, `-arrasto`,
+       `-sync`) procuram por esses ids, e renomeá-los não compraria nada além
+       de churn num lugar que existe justamente para não regredir. -->
+  <button id="tabSources" class="on"></button>
+  <button id="tabSubclip"></button>
+  <button id="tabRename"></button>
+  <button id="tabSettings"></button>
+  <!-- Nome PRÓPRIO não é string traduzível — pela mesma razão que "Media Composer"
+       não é. Só o "Idealizado por" e o title vêm do dicionário, como no painel CEP. -->
+  <span id="assinatura"><span id="assinaturaBy"></span>
+    <button id="autor" type="button">Lohan Costa, edt.</button></span>
+</nav>
+
+<section id="secSources" class="on">
+  <!-- ⭐ Cada caixa é uma origem: quem diz o que é câmera é a caixa onde o editor solta. Desenhadas pelo `desenharFontes`. -->
+  <div id="arrastarDica" hidden></div>
+  <div id="fontes"></div>
+
+  <div id="formSync" hidden>
+    <button id="btLimparFontes" type="button"></button>
+    <h2 id="hSeq"></h2>
+    <input id="seqNome" type="text">
+    <div id="confTimeline">
+      <div>
+        <h2 id="hTimeline"></h2>
+        <select id="tlDim"></select>
+      </div>
+      <div>
+        <h2 id="hTaxa"></h2>
+        <select id="tlTaxa"></select>
+      </div>
+      <div id="tlOutro" hidden>
+        <input id="tlW" type="text" inputmode="numeric" aria-label="largura">
+        <span>x</span>
+        <input id="tlH" type="text" inputmode="numeric" aria-label="altura">
+      </div>
+      <div class="hint" id="hintTimeline" hidden></div>
+    </div>
+    <h2 id="hMethod"></h2>
+    <select id="metodo"></select>
+    <button id="btSync" class="act primary"></button>
+  </div>
+</section>
+
+<!-- A pergunta do arrasto misturado (Sim / Não / Cancelar): nunca `confirm()`, que travaria a página. -->
+<div id="pergunta" hidden>
+  <div class="caixa">
+    <div id="perguntaTexto"></div>
+    <div id="perguntaBotoes"></div>
+  </div>
+</div>
+
+<!-- A aba SUBCLIPAR ainda não faz nada: ela declara o que vai fazer e o que
+     exige. Um botão que some é pior que um botão desabilitado que diz por quê. -->
+<section id="secSubclip">
+  <div class="bloco">
+    <p class="bloco-titulo" id="subTitulo1"></p>
+    <p class="dica" id="subclipVazio"></p>
+    <!-- ⭐ No Premiere (2026-11-07): ler a sequência ATIVA da timeline — o arrasto da bin também vale. -->
+    <button id="btLerSequenciaPr" type="button" class="act" style="display:none"></button>
+    <p id="subBinEscolhida" class="escolhido" hidden></p>
+  </div>
+
+  <div class="bloco" id="subBlocoTomadas" hidden>
+    <p class="bloco-titulo" id="subTitulo2"></p>
+    <p class="estado" id="subResumo"></p>
+    <div class="lista-acoes">
+      <input id="subCena" type="text" autocomplete="off">
+      <button id="btCena" type="button"></button>
+      <span class="cresce"></span>
+      <button id="btLimpar" type="button" class="discreto"></button>
+    </div>
+    <div class="rolagem">
+      <table id="subTabela" class="takes">
+        <thead>
+          <tr>
+            <!-- ⭐ Sem caixa de seleção: a seleção é por CLIQUE, como no Explorer
+                 e no Finder (shift para intervalo, ctrl/cmd para avulso, Delete
+                 para tirar). Pedido do autor em 2026-09-06 — marcar 30 linhas
+                 uma a uma não é seleção, é digitação.
+                 ⚠️ E os cabeçalhos ORDENAM, hierarquicamente: a ordenação é
+                 estável, então ordenar por cena depois de ordenar por nome
+                 mantém o nome como critério de desempate. -->
+            <th id="subColTake" class="ordena"></th>
+            <th id="subColCena" class="ordena"></th>
+            <th id="subColDuracao" class="ordena"></th>
+            <th id="subColVA" class="ordena"></th>
+            <th class="col-x"></th>
+          </tr>
+        </thead>
+        <tbody id="subCorpo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bloco" id="subBlocoPadrao" hidden>
+    <p class="bloco-titulo" id="subTitulo3"></p>
+    <div class="ren-campo">
+      <div id="subEspelho" class="ren-espelho" aria-hidden="true"></div>
+      <input id="subPadrao" type="text" spellcheck="false" autocomplete="off"
+             autocapitalize="off">
+      <div id="subSugestoes" class="ren-sugestoes" hidden></div>
+    </div>
+    <p id="subErro" class="estado"></p>
+    <div id="subCards" class="ren-cards"></div>
+    <p class="ren-nota" id="subNota"></p>
+  </div>
+
+  <div class="acoes" id="subAcoes" hidden>
+    <button id="btSubclipes" type="button" class="primary"></button>
+    <button id="btCenas" type="button"></button>
+  </div>
+</section>
+
+<section id="secRename">
+  <div class="bloco">
+    <p class="bloco-titulo" id="renTitulo1"></p>
+    <p class="dica" id="renameDica"></p>
+    <!-- ⭐ No Premiere (2026-11-07): ler a SELEÇÃO da bin — o arrasto também vale. -->
+    <button id="btLerSelecaoPr" type="button" class="act" style="display:none"></button>
+    <div class="rolagem">
+      <table id="renTabela" class="takes">
+        <thead>
+          <!-- ⚠️ "vira", e não "novo nome": o editor precisa ler a coluna como
+               uma PROMESSA do que vai acontecer, não como um estado que já é. -->
+          <tr><th id="renColItem"></th><th id="renColVira"></th></tr>
+        </thead>
+        <!-- ⚠️ O corpo tem ID de propósito. Achá-lo filtrando os filhos da tabela
+             funciona no navegador e NÃO no banco de testes, que monta os elementos
+             por id — e um desenho que só se prova na mão de quem abre o Avid é um
+             desenho que ninguém confere. -->
+        <tbody id="renCorpo"></tbody>
+      </table>
+    </div>
+    <label class="chk"><input type="checkbox" id="renameTodas"><span id="renameTodasLbl"></span></label>
+  </div>
+
+  <div class="bloco" id="renBlocoPadrao" hidden>
+    <p class="bloco-titulo" id="renTitulo2"></p>
+    <!-- ⭐ O espelho vem ANTES do input no DOM e por baixo dele no CSS: ele
+         desenha o texto colorido, e o input por cima fica com a letra
+         transparente e só o cursor visível. -->
+    <div class="ren-campo">
+      <div id="renameEspelho" class="ren-espelho" aria-hidden="true"></div>
+      <input id="renamePadrao" type="text" spellcheck="false" autocomplete="off"
+             autocapitalize="off">
+      <div id="renSugestoes" class="ren-sugestoes" hidden></div>
+    </div>
+    <p id="renameResumo" class="estado"></p>
+    <div id="renCards" class="ren-cards"></div>
+    <p class="ren-nota" id="renNota"></p>
+  </div>
+
+  <div class="acoes" id="renAcoes" hidden>
+    <button id="btRenomear" type="button" class="primary" disabled></button>
+  </div>
+
+  <!-- O último lote, e a volta. Só aparece quando há o que desfazer. -->
+  <div class="bloco" id="renBlocoDesfazer" hidden>
+    <p class="bloco-titulo" id="renTitulo3"></p>
+    <p class="dica" id="renUltimoLote"></p>
+    <!-- ⚠️ "Voltar ao nome original" era um botão aqui, e SAIU: o escopo dele
+         era o LOTE, e a mão de quem usa esperava OS CLIPES DA TELA — renomear
+         150, trazer 5 e pedir a volta devolvia os 150. Virou o campo
+         `%nome_original`, que se aplica ao que está na tela como qualquer
+         outro padrão. O que sobra aqui é o desfazer de LOTE, cujo escopo
+         sempre foi esse mesmo. -->
+    <div class="acoes">
+      <button id="btDesfazer" type="button"></button>
+    </div>
+    <p class="dica" id="renDesfazerLimite"></p>
+  </div>
+
+  <p class="estado" id="renameCampos"></p>
+</section>
+
+<section id="secSettings">
+  <h2 id="hCache"></h2>
+  <div class="hint" id="hintCache"></div>
+  <div class="path" id="cachePath"></div>
+  <button id="btCache" class="act"></button>
+  <div class="hint" id="hintCachePath"></div>
+
+  <h2 id="hLogs"></h2>
+  <div class="hint" id="hintLogs"></div>
+  <button id="btLogs" class="act"></button>
+
+  <div id="blocoInstalar" hidden>
+    <h2 id="hInstalar"></h2>
+    <div class="hint" id="hintInstalar"></div>
+    <button id="btInstalar" class="act"></button>
+  </div>
+</section>
+
+<div id="msg"></div>
+
+<!-- ⭐ O RODAPÉ FIXO da janela do app (pedido do autor, 2026-10-21, "exatamente como o De Lá Pra Cá"):
+     o Sincronizar (que sobe para cá do #formSync) e "Idealizado por" centralizado + a versão à direita. Só existe
+     com `?casca=app`. ⛔ O "Abrir Órbita Studio" saiu em 2026-11-07: o Studio foi aposentado com o Órbita em Rust
+     (a rota dele responde 410). -->
+<div id="rodape" hidden>
+  <div id="rodapeSync"></div>
+  <div class="barra-assinatura"><span></span><p class="assinatura" id="rodapeAssinatura"></p><span id="rodapeNle"></span></div>
+</div>
+
+<!--SINC_I18N-->
+<script>
+(function () {
+  "use strict";
+
+  // ⭐ Caminhos RELATIVOS. A página é servida pelo próprio Órbita, então "" já é a
+  // origem certa — e escrever o host aqui só criaria um jeito de errar a porta.
+  var BATIDA_MS = 4000;
+  // ⭐ Na JANELA DO APP (o Órbita Painel, 2026-10-21) a página é a mesma, com outra
+  // casca: ela fala com o NLE que estiver aberto (Premiere pela ponte, Media Composer
+  // pelo motor) e recebe o arrasto pelo alvo nativo (`window.sincArrasto`).
+  var CASCA_APP = typeof location !== "undefined" && /[?&]casca=app(&|$)/.test(location.search);
+  // dentro do guarda-chuva do Ciclo Assist (ver o CSS `.embutido` e o fim do script)
+  var EMBUTIDO = typeof location !== "undefined" && /[?&]embutido=1(&|$)/.test(location.search);
+  // ⭐ `?ajustes=1`: a seção Preparar da janela de configurações do Ciclo Assist (autor, 2026-11-07) — só os ajustes.
+  // ⛔⛔ E esta cópia NUNCA pede trabalho à fila `/nlejob`: quem tira o trabalho executa, e a montagem é da aba
+  // Preparar da janela principal. Duas páginas pedindo, uma roubaria o trabalho da outra.
+  var AJUSTES = typeof location !== "undefined" && /[?&]ajustes=1(&|$)/.test(location.search);
+
+  var DIC = (window.SINC_I18N || {});
+  // ⭐⭐ O IDIOMA VEM DO APP, e não do navegador.
+  //
+  // ⚠️⚠️ Perguntar ao `navigator.language` aqui parecia certo e não era: dentro do
+  // Media Composer quem responde é o **QtWebEngine**, que reporta o locale DELE —
+  // tipicamente `en-US`, mesmo num Windows em português. O painel abria em inglês
+  // ao lado da janela do app em português, e nada na tela explicava por quê.
+  //
+  // O app injeta `window.SINC_LOCALE` ao servir esta página, lendo o
+  // `settings.json` que ele mesmo grava (ver `nle_install::locale_do_app`). O
+  // `navigator` fica como último recurso — vale só se a página for aberta direto
+  // no navegador durante o desenvolvimento, quando não há app para responder.
+  var doApp = window.SINC_LOCALE;
+  var locale;
+  if (doApp === "en" || doApp === "pt-BR") {
+    locale = doApp;
+  } else {
+    var idioma = (navigator.language || "").toLowerCase();
+    locale = idioma.indexOf("en") === 0 ? "en" : "pt-BR";
+  }
+  var dic = DIC[locale] || DIC["pt-BR"] || {};
+
+  function t(caminho, vars) {
+    var v = caminho.split(".").reduce(function (o, k) { return o == null ? o : o[k]; }, dic);
+    if (typeof v !== "string") return caminho;
+    return v.replace(/\{\{(\w+)\}\}/g, function (_, n) {
+      return vars && vars[n] != null ? vars[n] : "";
+    });
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  var elStatus = $("status"), elStatusText = $("statusText"), elMsg = $("msg");
+
+  // ── textos ───────────────────────────────────────────────────────────────────
+  $("tabSources").textContent = t("panel.tabSources");
+  $("tabSubclip").textContent = t("panel.tabSubclip");
+  $("tabRename").textContent = t("panel.tabRename");
+  $("tabSettings").textContent = t("panel.tabSettings");
+  $("subTitulo1").textContent = t("subclip.step1");
+  $("subclipVazio").textContent = t("subclip.emptyState");
+  $("subTitulo2").textContent = t("subclip.step2");
+  // ⚠️ "nome", e não "take": a coluna mostra como o subclipe vai se CHAMAR — o
+  // padrão do passo 3 escreve nela. Chamá-la de "take" fazia o editor procurar
+  // ali o número da tomada, que é outra coisa e mora na claquete.
+  $("subColTake").textContent = t("subclip.colName");
+  $("subColCena").textContent = t("subclip.colScene");
+  $("subColDuracao").textContent = t("subclip.colDuration");
+  $("subColVA").textContent = t("subclip.colTracks");
+  $("subTitulo3").textContent = t("subclip.step3");
+  $("subPadrao").placeholder = t("subclip.patternPlaceholder");
+  $("subNota").textContent = t("rename.patternNote");
+  $("btSubclipes").textContent = t("subclip.oneBin");
+  $("btCenas").textContent = t("subclip.byScene");
+  $("subCena").placeholder = t("subclip.scenePlaceholder");
+  $("btCena").textContent = t("subclip.setScene");
+  $("btLimpar").textContent = t("subclip.clearList");
+  $("renTitulo1").textContent = t("rename.step1");
+  $("renameDica").textContent = t("rename.dropHere");
+  $("renColItem").textContent = t("rename.colItem");
+  $("renColVira").textContent = t("rename.colBecomes");
+  $("renameTodasLbl").textContent = t("rename.allColumns");
+  $("renTitulo2").textContent = t("rename.step2");
+  $("renamePadrao").placeholder = t("rename.patternPlaceholder");
+  $("renNota").textContent = t("rename.patternNote");
+  $("btRenomear").textContent = t("rename.apply");
+  $("renTitulo3").textContent = t("rename.step3");
+  $("btDesfazer").textContent = t("rename.undo");
+  $("btLerSequenciaPr").textContent = t("subclip.prRead");
+  $("btLerSelecaoPr").textContent = t("rename.prRead");
+  $("renDesfazerLimite").textContent = t("rename.undoLimits");
+  $("btLimparFontes").textContent = t("panel.clear");
+  $("hTimeline").textContent = t("panel.timeline");
+  $("hTaxa").textContent = t("panel.frameRate");
+  $("hintTimeline").textContent = t("panel.timelineFromProject");
+  $("assinaturaBy").textContent = t("panel.by");
+  $("autor").title = t("panel.authorLink");
+  $("hMethod").textContent = t("panel.method");
+  $("hSeq").textContent = t("panel.seqName");
+  $("btSync").textContent = t("panel.sync");
+  $("seqNome").placeholder = t("panel.seqNameDefault");
+
+  // Os MESMOS três métodos do app e do painel do Premiere, nesta ordem.
+  [["hybrid", "methodHybrid"], ["timecode", "methodTimecode"], ["waveform", "methodWaveform"]]
+    .forEach(function (par) {
+      var o = document.createElement("option");
+      o.value = par[0];
+      o.textContent = t("panel." + par[1]);
+      $("metodo").appendChild(o);
+    });
+  // A escolha sobrevive entre sessões, como no painel do Premiere.
+  try {
+    var salvo = localStorage.getItem("sincronizar.avid.metodo");
+    if (salvo) $("metodo").value = salvo;
+  } catch (e) { /* localStorage bloqueado: o padrão serve */ }
+  $("metodo").addEventListener("change", function () {
+    try { localStorage.setItem("sincronizar.avid.metodo", $("metodo").value); } catch (e) { /* idem */ }
+  });
+  $("hCache").textContent = t("panel.cacheTitle");
+  $("hintCache").textContent = t("panel.cacheHint");
+  $("btCache").textContent = t("panel.cacheClear");
+  $("hintCachePath").textContent = t("panel.settingsPathHint");
+  $("hLogs").textContent = t("panel.logsTitle");
+  $("hintLogs").textContent = t("panel.logsHint");
+  $("btLogs").textContent = t("panel.logsOpen");
+  elStatusText.textContent = t("conn.checking");
+
+  // ── abas ─────────────────────────────────────────────────────────────────────
+  //
+  // ⭐ A aba carrega o SEU dado ao ser aberta, nunca no boot: `carregarSettings`
+  // já fazia isso, e a regra passa a valer para as três novas — o editor que só
+  // sincroniza não paga chamada gRPC nenhuma por causa das outras.
+  var ABAS = ["sources", "subclip", "rename", "settings"];
+  var SECAO = { sources: "secSources", subclip: "secSubclip",
+                rename: "secRename", settings: "secSettings" };
+  var BOTAO = { sources: "tabSources", subclip: "tabSubclip",
+                rename: "tabRename", settings: "tabSettings" };
+  var abaAtual = "sources";
+
+  function aba(qual) {
+    // ⚠️ Só a MUDANÇA limpa a mensagem — reclicar a aba onde já se está não pode
+    // apagar a resposta que se acabou de ler. E o `aba()` da partida precisa
+    // pintar as classes de qualquer jeito, então isto é uma bandeira, não um
+    // `return` no topo: a primeira versão saía cedo e deixava o painel sem
+    // nenhuma seção ligada.
+    var mudou = qual !== abaAtual;
+    abaAtual = qual;
+    ABAS.forEach(function (a) {
+      $(BOTAO[a]).className = a === qual ? "on" : "";
+      $(SECAO[a]).className = a === qual ? "on" : "";
+    });
+    // ⚠️⚠️ A MENSAGEM É DA ABA QUE A PRODUZIU, e some ao sair dela.
+    //
+    // Ela vive fora das seções (é uma só, no topo), então uma recusa da aba
+    // Subclipar continuava na tela depois de trocar para Renomear — lida ali
+    // como se fosse resposta ao que se acabou de fazer. Foi assim que o autor
+    // viu "arraste aqui" e "isto não se solta aqui" na mesma tela, e concluiu,
+    // com razão, que o painel estava quebrado. Uma resposta que sobrevive à
+    // pergunta é pior que nenhuma.
+    if (mudou) dizer("", true);
+    if (qual === "settings") carregarSettings();
+  }
+  ABAS.forEach(function (a) {
+    $(BOTAO[a]).addEventListener("click", function () { aba(a); });
+  });
+  // ⚠️ O estado inicial se DECLARA aqui, e não só no `class="on"` do markup.
+  // Enquanto ele morava apenas no HTML, nada garantia que a aba certa abrisse —
+  // e o banco de testes, que monta os elementos do zero, não tinha como cobrar.
+  // O mesmo vale para os dois estados fechados logo abaixo.
+  aba("sources");
+  // ⛔⛔ `renameCorpo` MORREU AQUI, e levou o painel junto por um dia inteiro.
+  //
+  // Ao portar o desenho do Assist anterior, este elemento virou `renBlocoPadrao` no
+  // HTML — e esta linha ficou para trás. No navegador `getElementById` devolve
+  // `null`, `null.hidden = true` lança TypeError, e o erro acontece AQUI, no
+  // boot, ANTES da primeira batida: o script inteiro morre e o painel fica em
+  // "procurando o Órbita…" para sempre. O app estava inteiro o tempo todo.
+  //
+  // ⚠️⚠️ E o banco de testes NÃO PEGOU, por uma razão estrutural: o DOM falso
+  // criava qualquer elemento sob demanda, então `$("qualquer-coisa")` nunca era
+  // `null` ali. Ele agora conhece os ids que o HTML declara de verdade — ver
+  // `avid-panel-dom.cjs`.
+  $("renBlocoPadrao").hidden = true;
+  $("renAcoes").hidden = true;
+  $("btRenomear").disabled = true;
+
+  // ── estado ───────────────────────────────────────────────────────────────────
+  var ligado = null;   // null = ainda não se sabe
+  var ocupado = false; // motor rodando: as ações do ⚙ passam por ele
+  // Leitura da seleção em andamento. Desde que `/avid/selecao` virou job, o motor
+  // JÁ se declara ocupado durante a leitura — mas o `ocupado` só chega aqui na
+  // próxima batida, e ela é de 4 s. Nessa janela a batida anterior reabilitava o
+  // botão enquanto ele ainda dizia "lendo…", e um segundo clique dispara outra
+  // varredura de bin por cima da primeira. Esta bandeira fecha o botão na hora;
+  // o `ocupado` é a confirmação que vem depois. Ver `pintar` e `aoSoltar`.
+  var lendoSelecao = false;
+
+  function dizer(texto, ok) {
+    elMsg.textContent = texto;
+    elMsg.className = texto ? (ok ? "ok" : "er") : "";
+  }
+
+  function pintar(novo, busy) {
+    var estavaOcupado = ocupado, estavaLigado = ligado;
+    ocupado = !!busy;
+    // O ⚙ só consegue ler `/settings` com o app no ar e o motor livre. Quando
+    // qualquer uma das duas coisas acabou de mudar para melhor, e a aba está à
+    // vista, é a hora de buscar os números — senão ela ficaria com o dado velho.
+    if ($("secSettings").className === "on"
+        && (novo && !estavaLigado || estavaOcupado && !ocupado)) {
+      setTimeout(carregarSettings, 0);
+    }
+    if (novo !== ligado) {
+      ligado = novo;
+      if (!CASCA_APP) {
+        elStatus.className = novo ? "up" : "down";
+        elStatusText.textContent = novo ? t("conn.up") : t("conn.down");
+      }
+      if (!novo) dizer(t("conn.downHint"), false);
+      else if (elMsg.textContent === t("conn.downHint")) dizer("", true);
+    }
+    // O ⚙ mexe em cache e pasta — as duas passam pelo motor, que atende um pedido
+    // por vez. Enquanto ele sincroniza, os botões esperam.
+    $("btCache").disabled = !novo || ocupado;
+    $("btLogs").disabled = !novo || ocupado;
+    $("btSync").disabled = !novo || ocupado;
+    if (ocupado && elMsg.textContent === "") dizer(t("panel.busy"), true);
+  }
+
+  //: Prazo da batida. Menor que o intervalo (`BATIDA_MS`), senão duas batidas se
+  //: sobrepõem e a resposta de uma pinta por cima da outra.
+  var PRAZO_DA_BATIDA_MS = 2500;
+
+  function bater() {
+    // ⚠️⚠️ COM PRAZO, e isto não é zelo: uma conexão que o sistema ACEITA e o app
+    // nunca responde deixa o `fetch` pendurado para sempre — nem `then`, nem
+    // `catch`. O painel ficava em "procurando o Órbita…" indefinidamente, que é o
+    // estado de quem NUNCA soube, e o editor lê como app travado.
+    //
+    // Acontece de verdade quando o accept loop do servidor está preso (ele é de
+    // uma thread só) ou quando outra coisa ocupou a porta e aceita sem atender.
+    // Sem prazo, o painel não tem como distinguir "ainda não respondeu" de "não
+    // vai responder" — e essas duas coisas pedem mensagens diferentes.
+    var respondeu = false;
+    var prazo = setTimeout(function () {
+      if (!respondeu) { pintar(false, false); }
+    }, PRAZO_DA_BATIDA_MS);
+
+    function pronto(ligado, busy) {
+      respondeu = true;
+      clearTimeout(prazo);
+      pintar(ligado, busy);
+    }
+
+    fetch("/health?nle=avid")
+      .then(function (r) {
+        if (!r.ok) { pronto(false, false); return; }
+        return r.json().then(function (j) { pronto(true, j && j.busy); });
+      })
+      .catch(function () { pronto(false, false); });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  AS ORIGENS — caixas e cards (redesenho de 2026-11-08, plano `2026-11-08-aba-sincronizar.md`)
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // ⭐ Cada caixa é uma origem, e quem diz o que é câmera é o EDITOR, pela caixa onde solta: o palpite pelo nome falhava
+  // sempre que o material fugia do de teste. A ordem das fontes define CAM A, CAM B…
+  // ⚠️ `mobIds`/`mobLengths` precisam sobreviver até a montagem: sem eles o motor varre e ABRE as bins do projeto atrás
+  // dos mesmos masters.
+  var fontes = [];        // [{kind, label, files, aberta, ordem, analise}]
+  var mobIds = null, mobLengths = null, mobNames = null;
+  var nomeDoProjeto = null;
+  var fichas = {};        // a chave do clipe → a ficha que o servidor leu (`servidor/fichas.py`)
+
+  var ICONES = {
+    camera: '<path d="M3 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 10.5l5-3v9l-5-3"/>',
+    sound: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>'
+  };
+
+  function icone(tipo) {
+    var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 24 24");
+    s.setAttribute("fill", "none");
+    s.setAttribute("stroke", "currentColor");
+    s.setAttribute("stroke-width", "1.8");
+    s.setAttribute("stroke-linecap", "round");
+    s.setAttribute("stroke-linejoin", "round");
+    s.setAttribute("aria-hidden", "true");
+    s.innerHTML = ICONES[tipo];   // constante daqui de cima, nunca texto do projeto
+    return s;
+  }
+
+  // CAM A, CAM B… para vídeo; SOM DIRETO para áudio (e SOM DIRETO 2 para um segundo gravador, a regra do `tools/regua.py`).
+  // O rótulo é o `group` do motor: precisa ser estável e único.
+  function rotulos() {
+    var c = 0, s = 0;
+    return fontes.map(function (f) {
+      if (f.kind === "sound") { s++; return s === 1 ? "SOM DIRETO" : "SOM DIRETO " + s; }
+      return "CAM " + String.fromCharCode(65 + c++);
+    });
+  }
+
+  // A-Z como gente lê: `numeric` põe "C2" antes de "C10", e `sensitivity` ignora a caixa.
+  var AZ = new Intl.Collator(locale, { sensitivity: "base", numeric: true });
+
+  // ── a tabela ─────────────────────────────────────────────────────────────────
+  function texto(v) { return v === null || v === undefined || v === "" ? "—" : String(v); }
+
+  function fpsDeReferencia() {
+    for (var i = 0; i < fontes.length; i++) {
+      if (fontes[i].kind === "sound") continue;
+      var cl = clipesDaFonte(fontes[i]);
+      for (var k = 0; k < cl.length; k++) {
+        var fi = fichas[cl[k].chave];
+        if (fi && fi.fps) return fi.fps;
+      }
+    }
+    return null;
+  }
+
+  // ⭐ O TC do som se escreve na taxa da câmera ao lado: o arquivo só diz os segundos.
+  function tcDoSom(fi) {
+    if (fi.inicio_s === null || fi.inicio_s === undefined) return null;
+    var fps = fi.tc_fps || fpsDeReferencia();
+    var seg = fi.inicio_s;
+    function dois(n) { return (n < 10 ? "0" : "") + n; }
+    if (!fps) {
+      var s0 = Math.floor(seg);
+      return dois(Math.floor(s0 / 3600)) + ":" + dois(Math.floor(s0 / 60) % 60) + ":" + dois(s0 % 60);
+    }
+    var base = Math.round(fps), q = Math.round(seg * fps);
+    var s = Math.floor(q / base);
+    return dois(Math.floor(s / 3600)) + ":" + dois(Math.floor(s / 60) % 60) + ":" + dois(s % 60) + ":" + dois(q % base);
+  }
+
+  function fpsEscrito(v) {
+    if (!v) return null;
+    return (Math.round(v * 1000) / 1000).toString();
+  }
+
+  // `txt` escreve a célula; `val` é o que ordena (número onde a ordem é numérica). ⏳ = ainda lendo.
+  var COLUNAS = {
+    camera: [
+      { id: "nome", rot: "colName", larg: 210, txt: function (l) { return l.rotulo; }, val: function (l) { return l.rotulo; } },
+      { id: "tc", rot: "colTc", larg: 96, txt: function (f) { return f.ficha && f.ficha.tc; }, val: function (l) { return l.ficha && l.ficha.inicio_s; } },
+      { id: "dur", rot: "colDur", larg: 88, txt: function (l) { return l.ficha && l.ficha.duracao; }, val: function (l) { return l.ficha && l.ficha.duracao_ms; } },
+      { id: "fps", rot: "colFps", larg: 62, txt: function (l) { return l.ficha && fpsEscrito(l.ficha.fps); }, val: function (l) { return l.ficha && l.ficha.fps; } },
+      { id: "res", rot: "colRes", larg: 92, txt: function (l) { return l.ficha && l.ficha.resolucao; }, val: function (l) { return l.ficha && l.ficha.largura; } },
+      { id: "codec", rot: "colCodec", larg: 110, txt: function (l) { return l.ficha && l.ficha.codec; }, val: function (l) { return l.ficha && l.ficha.codec; } },
+      { id: "canais", rot: "colCh", larg: 60, txt: function (l) { return l.ficha && l.ficha.canais; }, val: function (l) { return l.ficha && l.ficha.canais; } }
+    ],
+    sound: [
+      { id: "nome", rot: "colName", larg: 210, txt: function (l) { return l.rotulo; }, val: function (l) { return l.rotulo; } },
+      { id: "tc", rot: "colTc", larg: 96, txt: function (l) { return l.ficha && tcDoSom(l.ficha); }, val: function (l) { return l.ficha && l.ficha.inicio_s; } },
+      { id: "dur", rot: "colDur", larg: 88, txt: function (l) { return l.ficha && l.ficha.duracao; }, val: function (l) { return l.ficha && l.ficha.duracao_ms; } },
+      { id: "cena", rot: "colScene", larg: 60, txt: function (l) { return l.ficha && l.ficha.cena; }, val: function (l) { return l.ficha && l.ficha.cena; } },
+      { id: "plano", rot: "colShot", larg: 60, txt: function (l) { return l.ficha && l.ficha.plano; }, val: function (l) { return l.ficha && l.ficha.plano; } },
+      { id: "take", rot: "colTake", larg: 56, txt: function (l) { return l.ficha && l.ficha.take; }, val: function (l) { return l.ficha && l.ficha.take; } },
+      { id: "canais", rot: "colCh", larg: 60, txt: function (l) { return l.ficha && l.ficha.canais; }, val: function (l) { return l.ficha && l.ficha.canais; } }
+    ]
+  };
+  var LARGURA_X = 26, LARGURA_MINIMA = 44, larguras = { camera: {}, sound: {} };
+  try {
+    var guardadas = JSON.parse(localStorage.getItem("sincronizar.colunas") || "null");
+    if (guardadas) larguras = { camera: guardadas.camera || {}, sound: guardadas.sound || {} };
+  } catch (e) { /* preferência */ }
+
+  function larguraDe(tipo, c) { return Math.max(LARGURA_MINIMA, Number(larguras[tipo][c.id]) || c.larg); }
+
+  function guardarLarguras() {
+    try { localStorage.setItem("sincronizar.colunas", JSON.stringify(larguras)); } catch (e) { /* preferência */ }
+  }
+
+  // ⚠️ Com `table-layout:fixed`, a tabela só passa da largura da caixa (e a caixa só rola de lado) se ela mesma tiver a
+  // soma das colunas como largura — a mesma regra da lista de mídias do De Lá Pra Cá.
+  function aplicarLarguras(tipo) {
+    Array.prototype.forEach.call(document.querySelectorAll("table.tab-origem[data-tipo='" + tipo + "']"), function (tb) {
+      var cols = tb.querySelectorAll("col"), total = LARGURA_X;
+      COLUNAS[tipo].forEach(function (c, i) {
+        var w = larguraDe(tipo, c);
+        cols[i].style.width = w + "px";
+        total += w;
+      });
+      cols[COLUNAS[tipo].length].style.width = LARGURA_X + "px";
+      tb.style.width = total + "px";
+    });
+  }
+
+  function nomeComum(nomes) {
+    var p = nomes[0] || "";
+    nomes.forEach(function (n) { while (n.indexOf(p) !== 0) p = p.slice(0, -1); });
+    return p.replace(/[\s_.\-]+$/, "") || nomes[0];
+  }
+
+  // ⭐ Cena-plano sem rótulo (`18-1`) que a diária autoriza separar: âmbar, porque é palpite nosso (`identidade.presumir_da_forma`).
+  function comPresumida(f, fi) {
+    var p = fi && fi.cena && f.analise && f.analise.presumidas && f.analise.presumidas[fi.cena];
+    return p ? Object.assign({}, fi, { cena: p[0], plano: p[1], presumida: true }) : fi;
+  }
+
+  // As linhas do card: um clipe por linha, e o take de som monofônico numa linha só.
+  function linhasDa(f) {
+    var clipes = clipesDaFonte(f), porChave = {}, grupoDe = {};
+    clipes.forEach(function (c) { porChave[c.chave] = c; });
+    ((f.analise && f.analise.grupos) || []).forEach(function (g) {
+      var dentro = g.filter(function (k) { return porChave[k]; });
+      if (dentro.length >= 2) dentro.forEach(function (k) { grupoDe[k] = dentro; });
+    });
+    var vistos = {}, linhas = [], conflitos = (f.analise && f.analise.conflitos) || {};
+    clipes.forEach(function (c, ordem) {
+      if (vistos[c.chave]) return;
+      var g = grupoDe[c.chave];
+      if (!g) {
+        linhas.push({ chave: c.chave, ordem: ordem, rotulo: c.rotulo, arquivos: c.arquivos, ficha: comPresumida(f, fichas[c.chave]),
+                      conflitos: conflitos[c.chave] || [] });
+        return;
+      }
+      g.forEach(function (k) { vistos[k] = true; });
+      var partes = g.map(function (k) { return porChave[k]; });
+      var ficha = Object.assign({}, comPresumida(f, fichas[g[0]]), { canais: g.length });
+      linhas.push({ chave: c.chave, ordem: ordem, grupo: g.length,
+                    rotulo: nomeComum(partes.map(function (p) { return p.rotulo; })),
+                    arquivos: partes.reduce(function (a, p) { return a.concat(p.arquivos); }, []),
+                    ficha: ficha, conflitos: conflitos[c.chave] || [] });
+    });
+    if (f.ordem) {
+      var col = COLUNAS[f.kind].filter(function (c) { return c.id === f.ordem.col; })[0];
+      var sinal = f.ordem.desc ? -1 : 1;
+      if (col) linhas.sort(function (a, b) {
+        var x = col.val(a), y = col.val(b);
+        var xv = x === null || x === undefined, yv = y === null || y === undefined;
+        if (xv || yv) return xv === yv ? a.ordem - b.ordem : (xv ? 1 : -1);  // o que não se leu fica no fim, sempre
+        var c = typeof x === "number" && typeof y === "number" ? x - y : AZ.compare(String(x), String(y));
+        return (c * sinal) || (a.ordem - b.ordem);
+      });
+    }
+    return linhas;
+  }
+
+  function celula(pai, tag, classe, txt) {
+    var c = document.createElement(tag);
+    if (classe) c.className = classe;
+    if (txt !== undefined) { c.textContent = txt; c.title = txt; }
+    pai.appendChild(c);
+    return c;
+  }
+
+  function desenharTabela(f, linhas) {
+    var tipo = f.kind;
+    var tb = document.createElement("table");
+    tb.className = "tab-origem";
+    tb.dataset.tipo = tipo;
+    var cg = document.createElement("colgroup");
+    COLUNAS[tipo].concat([{}]).forEach(function () { cg.appendChild(document.createElement("col")); });
+    tb.appendChild(cg);
+    var th = document.createElement("thead"), tr = document.createElement("tr");
+    COLUNAS[tipo].forEach(function (c) {
+      var h = celula(tr, "th", "", undefined);
+      h.dataset.col = c.id;
+      h.title = t("panel.colSortHint");
+      var ativa = f.ordem && f.ordem.col === c.id;
+      h.textContent = t("panel." + c.rot) + (ativa ? (f.ordem.desc ? " ▾" : " ▴") : "");
+      var alca = document.createElement("span");
+      alca.className = "alca";
+      alca.dataset.alca = c.id;
+      alca.title = t("panel.colResizeHint");
+      h.appendChild(alca);
+    });
+    celula(tr, "th", "col-x", "");
+    th.appendChild(tr);
+    tb.appendChild(th);
+
+    var tc = document.createElement("tbody");
+    linhas.forEach(function (l) {
+      var linha = document.createElement("tr");
+      if (l.conflitos.length) linha.className = "conflito";
+      COLUNAS[tipo].forEach(function (c, i) {
+        var bruto = l.ficha === undefined && i > 0 ? "…" : texto(c.txt(l));
+        var td = celula(linha, "td", "", bruto);
+        // os arquivos ficam no hover, para quem precisar auditar (no MC são ilegíveis de propósito)
+        if (i === 0) td.title = l.arquivos.join("\n");
+        if (l.ficha && l.ficha.presumida && (c.id === "cena" || c.id === "plano")) {
+          td.className = "presumida";
+          td.title = t("panel.scenePresumedHint");
+        }
+        if (i === 0 && l.grupo) {
+          var selo = document.createElement("span");
+          selo.className = "selo-mono";
+          selo.textContent = t("panel.monoGroup", { n: l.grupo });
+          td.appendChild(selo);
+        }
+        if (l.ficha && l.ficha.erro && i === 0) td.title = l.ficha.erro + "\n" + td.title;
+      });
+      var x = celula(linha, "td", "col-x");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "✕";
+      b.title = t("panel.removeFile");
+      b.addEventListener("click", function () { removerLinha(f, l); });
+      x.appendChild(b);
+      tc.appendChild(linha);
+    });
+    tb.appendChild(tc);
+    return tb;
+  }
+
+  // ⭐ Tira o CLIPE INTEIRO, não uma trilha dele: tirar só o `_A02` de um OP-Atom deixaria um clipe sem um canal, um
+  // estado que o editor não pediu e não veria.
+  function removerLinha(f, l) {
+    f.files = (f.files || []).filter(function (q) { return l.arquivos.indexOf(q) < 0; });
+    if (!f.files.length) {
+      fontes.splice(fontes.indexOf(f), 1);
+      dizer(t("panel.emptySource"), true);
+    } else {
+      analisar(f);
+    }
+    desenharFontes();
+  }
+
+  function explicar(pai, linhas) {
+    var tipos = {};
+    linhas.forEach(function (l) { l.conflitos.forEach(function (c) { tipos[c] = true; }); });
+    ["sobreposto", "zerado", "continuo"].forEach(function (c) {
+      if (!tipos[c]) return;
+      var p = document.createElement("div");
+      p.className = "explica";
+      p.textContent = t("panel.conflict." + c);
+      pai.appendChild(p);
+    });
+  }
+
+  function desenharCard(f, rotulo) {
+    var indice = fontes.indexOf(f), linhas = linhasDa(f);
+    var card = document.createElement("div");
+    card.className = "card-origem";
+    card.dataset.origem = f.kind;
+    card.dataset.indice = indice;
+
+    var cab = document.createElement("div");
+    cab.className = "card-cab";
+    var seta = document.createElement("button");
+    seta.type = "button";
+    seta.className = "card-seta";
+    seta.textContent = f.aberta ? "▾" : "▸";
+    seta.title = f.aberta ? t("panel.collapse") : t("panel.expand");
+    function alternar() { f.aberta = !f.aberta; desenharFontes(); }
+    seta.addEventListener("click", alternar);
+    cab.appendChild(seta);
+    var ic = document.createElement("span");
+    ic.className = "card-icone";
+    ic.appendChild(icone(f.kind === "sound" ? "sound" : "camera"));
+    cab.appendChild(ic);
+    var nome = document.createElement("span");
+    nome.className = "card-nome";
+    nome.textContent = rotulo;
+    cab.appendChild(nome);
+    var det = document.createElement("span");
+    det.className = "card-det";
+    var n = linhas.length;
+    det.textContent = (n === 1 ? t("panel.clip") : t("panel.clips", { n: n })) + (f.label ? " · " + f.label : "");
+    cab.appendChild(det);
+    var emConflito = linhas.filter(function (l) { return l.conflitos.length; }).length;
+    if (emConflito) {
+      var alerta = document.createElement("span");
+      alerta.className = "card-alerta";
+      alerta.textContent = t("panel.inConflict", { n: emConflito });
+      cab.appendChild(alerta);
+    }
+    cab.addEventListener("dblclick", alternar);
+    // o ✕ fica na outra ponta, longe da seta, para evitar acidente
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "card-x";
+    x.textContent = "✕";
+    x.title = t("panel.remove");
+    x.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      fontes.splice(fontes.indexOf(f), 1);
+      desenharFontes();
+    });
+    cab.appendChild(x);
+    card.appendChild(cab);
+
+    if (f.aberta) {
+      var rola = document.createElement("div");
+      rola.className = "tabela-origem";
+      rola.dataset.rola = indice;
+      rola.appendChild(desenharTabela(f, linhas));
+      card.appendChild(rola);
+      explicar(card, linhas);
+    }
+    return card;
+  }
+
+  function caixaVazia(tipo) {
+    var c = document.createElement("div");
+    c.className = "caixa-origem";
+    c.dataset.origem = tipo;
+    c.dataset.indice = "";
+    var ic = document.createElement("span");
+    ic.className = "card-icone";
+    ic.appendChild(icone(tipo));
+    c.appendChild(ic);
+    var s = document.createElement("span");
+    s.textContent = t(tipo === "sound" ? "panel.addSound" : "panel.addCamera");
+    c.appendChild(s);
+    return c;
+  }
+
+  function desenharFontes() {
+    var box = $("fontes");
+    // redesenhar a cada lote de fichas não pode levar o editor de volta ao topo da lista
+    Array.prototype.forEach.call(box.querySelectorAll("[data-rola]"), function (r) {
+      var f = fontes[Number(r.dataset.rola)];
+      if (f) f.rolagem = { x: r.scrollLeft, y: r.scrollTop };
+    });
+    box.textContent = "";
+    $("formSync").hidden = fontes.length === 0;
+    var rots = rotulos();
+    var cameras = [], sons = [];
+    fontes.forEach(function (f, i) { (f.kind === "sound" ? sons : cameras).push({ f: f, rot: rots[i] }); });
+    // ⭐ A caixa de câmera nasce ACIMA dos cards, e a de som ABAIXO: as duas sempre à mão, com o material no meio.
+    box.appendChild(caixaVazia("camera"));
+    cameras.slice().reverse().forEach(function (o) { box.appendChild(desenharCard(o.f, o.rot)); });
+    sons.forEach(function (o) { box.appendChild(desenharCard(o.f, o.rot)); });
+    box.appendChild(caixaVazia("sound"));
+    aplicarLarguras("camera");
+    aplicarLarguras("sound");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-rola]"), function (r) {
+      var f = fontes[Number(r.dataset.rola)];
+      if (f && f.rolagem) { r.scrollLeft = f.rolagem.x; r.scrollTop = f.rolagem.y; }
+    });
+    pintarTimeline();
+  }
+
+  // ── colunas: a divisa muda a largura, o duplo clique no título ordena ───────
+  var arrastoCol = null;
+  $("fontes").addEventListener("mousedown", function (ev) {
+    var alca = ev.target.closest && ev.target.closest("[data-alca]");
+    if (!alca) return;
+    ev.preventDefault();
+    var tipo = alca.closest("table").dataset.tipo;
+    var c = COLUNAS[tipo].filter(function (k) { return k.id === alca.dataset.alca; })[0];
+    arrastoCol = { tipo: tipo, c: c, x0: ev.clientX, w0: larguraDe(tipo, c) };
+    document.body.classList.add("redimensionando");
+  });
+  document.addEventListener("mousemove", function (ev) {
+    if (!arrastoCol) return;
+    larguras[arrastoCol.tipo][arrastoCol.c.id] =
+      Math.max(LARGURA_MINIMA, Math.round(arrastoCol.w0 + ev.clientX - arrastoCol.x0));
+    aplicarLarguras(arrastoCol.tipo);
+  });
+  document.addEventListener("mouseup", function () {
+    if (!arrastoCol) return;
+    arrastoCol = null;
+    document.body.classList.remove("redimensionando");
+    guardarLarguras();
+  });
+  $("fontes").addEventListener("dblclick", function (ev) {
+    var alvo = ev.target.closest && ev.target.closest("thead th");
+    if (!alvo) return;
+    var card = alvo.closest(".card-origem"), f = fontes[Number(card.dataset.indice)];
+    var alca = ev.target.closest("[data-alca]");
+    if (alca) {  // duplo clique na divisa: a largura de fábrica
+      delete larguras[f.kind][alca.dataset.alca];
+      aplicarLarguras(f.kind);
+      guardarLarguras();
+      return;
+    }
+    if (!alvo.dataset.col) return;
+    f.ordem = f.ordem && f.ordem.col === alvo.dataset.col
+      ? { col: alvo.dataset.col, desc: !f.ordem.desc } : { col: alvo.dataset.col, desc: false };
+    desenharFontes();
+  });
+
+  // ⭐ OS CLIPES DE UMA FONTE, com o nome que o editor reconhece: em mídia gerenciada um clipe são vários `.mxf`
+  // (`V01.E69C…`, `A01.E69C…`), e a lista por arquivo era ilegível (autor, 2026-08-23). Sem `mobIds` cai no nome do
+  // arquivo: feio, mas honesto.
+  function clipesDaFonte(f) {
+    var arquivos = f.files || [];
+    var porMob = {}, ordem = [];
+    arquivos.forEach(function (caminho) {
+      var chave = (mobIds && mobIds[caminho]) || caminho;
+      if (!porMob[chave]) {
+        porMob[chave] = { chave: chave, arquivos: [], rotulo: null };
+        ordem.push(chave);
+      }
+      porMob[chave].arquivos.push(caminho);
+      if (!porMob[chave].rotulo) {
+        porMob[chave].rotulo = (mobNames && mobNames[caminho]) || nomeDoArquivo(caminho);
+      }
+    });
+    return ordem.map(function (k) { return porMob[k]; });
+  }
+
+  function nomeDoArquivo(caminho) {
+    var partes = String(caminho).split(/[\\/]/);
+    return partes[partes.length - 1] || caminho;
+  }
+
+  // ── as fichas: um lote pequeno por vez, sem travar o arrasto ─────────────────
+  var LOTE_DE_FICHAS = 6, fichasPedidas = {}, bombaLigada = false;
+
+  // O projeto aberto: é por ele que se acha a memória da produção (`media/memoria_da_producao.py`).
+  function projetoAtual() {
+    if (modoNle === "premiere") return nomeDoArquivoDeProjeto((estadoPremiere || "").split("\t")[1] || "");
+    return nomeDoProjeto || "";
+  }
+
+  function bombearFichas() {
+    if (bombaLigada) return;
+    var lote = [];
+    fontes.forEach(function (f) {
+      clipesDaFonte(f).forEach(function (c) {
+        if (lote.length >= LOTE_DE_FICHAS || fichas[c.chave] || fichasPedidas[c.chave]) return;
+        fichasPedidas[c.chave] = true;
+        lote.push({ id: c.chave, arquivos: c.arquivos, tipo: f.kind, nome: c.rotulo });
+      });
+    });
+    if (!lote.length) return;
+    bombaLigada = true;
+    postJson("/midia/fichas", { clipes: lote, projeto: projetoAtual() })
+      .then(function (j) { (j.fichas || []).forEach(function (fi) { fichas[fi.id] = fi; }); })
+      .catch(function (e) { lote.forEach(function (c) { fichas[c.id] = { id: c.id, erro: e.message }; }); })
+      .then(function () {
+        bombaLigada = false;
+        fontes.forEach(analisar);
+        pintarMidiaNaTimeline();
+        desenharFontes();
+        bombearFichas();
+      });
+  }
+
+  // ⭐ Os conflitos e os takes monofônicos, por card. A assinatura evita perguntar de novo o que não mudou.
+  function analisar(f) {
+    var itens = clipesDaFonte(f).filter(function (c) { return fichas[c.chave] && !fichas[c.chave].erro; })
+      .map(function (c) { return Object.assign({}, fichas[c.chave], { id: c.chave, nome: c.rotulo }); });
+    var assinatura = itens.map(function (i) { return i.id; }).join("|");
+    if (f.assinatura === assinatura) return;
+    f.assinatura = assinatura;
+    postJson("/midia/analise", { fichas: itens })
+      .then(function (j) { if (f.assinatura === assinatura) { f.analise = j; desenharFontes(); } })
+      .catch(function () { /* sem análise o card só deixa de avisar; as linhas continuam */ });
+  }
+
+  // ── entregar o que veio do arrasto à caixa certa ─────────────────────────────
+  // ⭐ Áudio solto = só áudio de verdade: `.wav`/`.aiff`/`.mp3`/`.aac` no Premiere e, no MC (tudo `.mxf`), o master só
+  // com trilhas de som. Vídeo com áudio embutido é câmera e não pergunta nada.
+  var EXTENSAO_DE_AUDIO = /\.(wav|aiff?|mp3|aac)$/i;
+  var alvoDoSoltar = null;
+
+  function alvoEm(x, y) {
+    if (typeof x !== "number" || typeof y !== "number") return null;
+    var el = document.elementFromPoint(x, y);
+    var c = el && el.closest ? el.closest("[data-origem]") : null;
+    if (!c) return null;
+    return { tipo: c.dataset.origem, fonte: c.dataset.indice === "" ? null : fontes[Number(c.dataset.indice)] };
+  }
+
+  function marcarAlvo(x, y) {
+    var acesa = document.querySelector("[data-origem].alvo");
+    var alvo = alvoEm(x, y);
+    var el = alvo ? document.elementFromPoint(x, y).closest("[data-origem]") : null;
+    if (acesa && acesa !== el) acesa.classList.remove("alvo");
+    if (el) el.classList.add("alvo");
+  }
+
+  function jaNaLista() {
+    var tem = {};
+    fontes.forEach(function (f) { (f.files || []).forEach(function (c) { tem[c] = true; }); });
+    return tem;
+  }
+
+  // Soltar num card soma a ele; soltar na caixa tracejada abre um card novo. `paths` nunca repete o que já está na lista.
+  function porNoCard(kind, fonte, paths, label) {
+    if (!paths.length) return 0;
+    if (fonte) { fonte.files = (fonte.files || []).concat(paths); return paths.length; }
+    fontes.push({ kind: kind, label: label || null, files: paths });
+    return paths.length;
+  }
+
+  function pergunta(texto, botoes) {
+    var modal = $("pergunta");
+    $("perguntaTexto").textContent = texto;
+    var fila = $("perguntaBotoes");
+    fila.textContent = "";
+    botoes.forEach(function (b) {
+      var bt = document.createElement("button");
+      bt.type = "button";
+      bt.className = "act" + (b.primario ? " primary" : "");
+      bt.textContent = b.texto;
+      bt.addEventListener("click", function () { modal.hidden = true; b.fazer(); });
+      fila.appendChild(bt);
+    });
+    modal.hidden = false;
+  }
+
+  /**
+   * `video` e `audio`: listas de caminhos do que veio, já separadas. O alvo diz o que a caixa aceita, e o que não cabe nela
+   * é recusado com a frase de onde soltar (decisões 2 e 4 do plano).
+   */
+  function entregar(alvo, video, audio, label, avisos) {
+    avisos = avisos || [];
+    var tem = jaNaLista(), repetidos = 0;
+    function novos(lista) {
+      return lista.filter(function (c) {
+        if (tem[c]) { repetidos++; return false; }
+        tem[c] = true;
+        return true;
+      });
+    }
+    var eCamera = alvo.tipo === "camera";
+    var doTipo = eCamera ? video : audio, doOutro = eCamera ? audio : video;
+
+    function concluir(entraram) {
+      if (entraram) avisos.unshift(t("panel.dropAdded", { n: entraram }));
+      if (repetidos) avisos.push(t("panel.duplicates", { n: repetidos }));
+      if (!avisos.length) avisos.push(t("panel.nothingNew"));
+      desenharFontes();
+      bombearFichas();
+      fontes.forEach(analisar);
+      dizer(avisos.join(" "), !!entraram);
+    }
+
+    if (!doTipo.length) {
+      dizer(t(eCamera ? "drop.audioInCamera" : "drop.videoInSound"), false);
+      return;
+    }
+    if (!doOutro.length) {
+      concluir(porNoCard(alvo.tipo, alvo.fonte, novos(doTipo), label));
+      return;
+    }
+    pergunta(t("panel.askSeparate"), [
+      { texto: t("panel.yes"), primario: true, fazer: function () {
+        var n = porNoCard(alvo.tipo, alvo.fonte, novos(doTipo), label);
+        n += porNoCard(eCamera ? "sound" : "camera", null, novos(doOutro), label);
+        concluir(n);
+      } },
+      { texto: t("panel.no"), fazer: function () { concluir(porNoCard(alvo.tipo, alvo.fonte, novos(doTipo), label)); } },
+      { texto: t("panel.cancel"), fazer: function () { dizer("", true); } }
+    ]);
+  }
+
+  // O painel do Avid não tem `openURLInDefaultBrowser` (isso é do CEP), então quem
+  // abre o navegador é o app. A rota aceita APELIDO, não URL — ver `wanted_link`.
+  $("autor").addEventListener("click", function () {
+    fetch("/link/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ which: "author" })
+    }).catch(function () { /* sem link aberto, e sem barulho: é um crédito */ });
+  });
+
+  // ── sincronizar ─────────────────────────────────────────────────────────────
+  var poll = null;
+
+  function clipesDasFontes() {
+    var rots = rotulos(), clips = [];
+    fontes.forEach(function (f, i) {
+      var primeiroDe = {};   // um take mono: só o 1º canal entra no sync; os outros voltam na posição dele (`fichas.py`)
+      ((f.analise && f.analise.grupos) || []).forEach(function (g) {
+        var porChave = {};
+        clipesDaFonte(f).forEach(function (c) { porChave[c.chave] = c; });
+        g.slice(1).forEach(function (k) {
+          if (porChave[k] && porChave[g[0]]) primeiroDe[porChave[k].arquivos[0]] = porChave[g[0]].arquivos[0];
+        });
+      });
+      (f.files || []).forEach(function (caminho, ordem) {
+        var c = { path: caminho, group: rots[i], group_order: ordem };
+        if (f.kind === "sound") c.kind = "sound";
+        if (primeiroDe[caminho]) c.mono_de = primeiroDe[caminho];
+        clips.push(c);
+      });
+    });
+    return clips;
+  }
+
+  // ⭐ A MESMA LEITURA do painel do Premiere: barra, o QUE está acontecendo, e o
+  // TEMPO. O sync de uma diária leva minutos — sem etapa e sem relógio, a barra
+  // sozinha é indistinguível de um travamento.
+  function progresso(st) {
+    if (st == null) { $("prog").hidden = true; return; }
+    $("prog").hidden = false;
+    // ⭐ SEM FRAÇÃO AINDA = barra indeterminada, não barra em 0%.
+    // O job nasce `waiting` e só emite fração quando o motor começa a responder;
+    // até lá, uma barra parada em 0% é indistinguível de um travamento (relatado
+    // no MC em 2026-08-22, com 9 s de espera). A faixa que anda diz "vivo" sem
+    // inventar progresso.
+    var frac = st.fraction || 0;
+    var indeterminado = st.state === "waiting" || frac <= 0;
+    var fill = $("barraFill");
+    fill.classList.toggle("indeterminado", indeterminado);
+    var pct = Math.round(frac * 100);
+    if (indeterminado) {
+      fill.style.width = "";          // a classe manda; largura inline atrapalharia
+      $("progPct").textContent = "";  // "0%" parado é a própria mensagem de travado
+    } else {
+      fill.style.width = pct + "%";
+      $("progPct").textContent = pct + "%";
+    }
+    $("progEtapa").textContent =
+      st.state === "waiting" ? t("panel.waiting") : (st.stage || "");
+    var ms = st.elapsed_ms || 0;
+    var linha = t("panel.elapsed", { t: relogio(ms) });
+    // ETA só quando já há fração suficiente para a conta não ser fantasia — e só
+    // quando quem chamou diz que o relógio cobre a barra inteira (ver `acompanhar`).
+    if (st.eta && (st.fraction || 0) > 0.05 && (st.fraction || 0) < 1) {
+      var falta = (ms / st.fraction) - ms;
+      linha += " " + t("panel.remaining", { t: relogio(falta) });
+    }
+    $("progTempo").textContent = linha;
+  }
+
+  function relogio(ms) {
+    var s = Math.max(0, Math.round(ms / 1000));
+    var m = Math.floor(s / 60);
+    return m + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  // ⭐ O botão faz DUAS coisas em sequência — sincronizar e montar a bin —, e as
+  // duas são jobs separados no servidor. Para quem olha é uma espera só, então as
+  // faixas se encadeiam: o sync ocupa 0-90% da barra e a montagem os 10% finais.
+  var FAIXA_SYNC = [0, 0.9], FAIXA_MONTAGEM = [0.9, 1];
+
+  $("btSync").addEventListener("click", function () {
+    if (fontes.length < 2) { dizer(t("panel.needTwo"), false); return; }
+    if (formatoDaTimeline() === false) { dizer(t("panel.timelineInvalid"), false); return; }
+    var bt = $("btSync"), original = bt.textContent;
+    bt.disabled = true; bt.textContent = t("panel.syncing");
+    dizer("", true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    function falhou(e) {
+      progresso(null); bt.textContent = original; bt.disabled = false;
+      dizer(t("result.failed", { msg: e.message }), false);
+    }
+
+    comJob("/syncmap",
+      { clips: clipesDasFontes(), method: $("metodo").value },
+      FAIXA_SYNC,
+      function (result) {
+        if (CASCA_APP && modoNle === "premiere") { montarNoPremiere(result, bt, original); }
+        else { montar(result, bt, original); }
+      },
+      falhou);
+  });
+
+  // O motor responde por polling, como no painel do Premiere: o job é longo e o
+  // servidor não empurra evento para o plugin.
+  //
+  // ⭐ TODAS as rotas longas do painel são job: `/avid/selecao`, `/syncmap` e
+  // `/avid/montar` devolvem `{job_id}` na hora e o trabalho corre numa thread do
+  // app. Não é preferência de estilo — o accept loop do servidor é de UMA thread
+  // só, e o handler síncrono que a leitura de seleção usava congelava a ponte
+  // inteira (inclusive a batida deste painel e os outros dois NLEs) enquanto o
+  // Media Composer era consultado bin a bin.
+  //
+  // `faixa` = `[lo, hi]`: onde a fração DESTE job cai na barra que o editor vê.
+  // Sincronizar e montar são dois jobs no servidor, mas UM botão e UMA espera para
+  // quem olha — sem a faixa a barra chegava a 100% no fim do sync e voltava a zero
+  // para a montagem, que é justamente a leitura de "travou e recomeçou" que a
+  // faixa de fases do motor existe para evitar.
+  function acompanhar(jobId, faixa, aoConcluir, aoFalhar) {
+    clearTimeout(poll);
+    var lo = faixa[0], hi = faixa[1];
+    fetch("/prproj/status?id=" + encodeURIComponent(jobId))
+      .then(function (r) { return r.json(); })
+      .then(function (st) {
+        if (st.error) throw new Error(st.error);
+        // ⚠️ O status fala `fraction` (0..1) e `stage`, não `done`/`total` — a
+        // primeira versão olhava os campos errados e a barra nunca aparecia.
+        progresso({
+          state: st.state,
+          stage: st.stage,
+          elapsed_ms: st.elapsed_ms,
+          fraction: lo + (st.fraction || 0) * (hi - lo),
+          // ETA só quando o relógio do job cobre a barra INTEIRA. Numa faixa que
+          // começa no meio, `elapsed_ms` conta só o job atual, e a conta diria
+          // "faltam 2 s" com a barra em 90% — pior que não dizer nada.
+          eta: lo === 0
+        });
+        if (st.state === "done") {
+          progresso({ fraction: hi, stage: st.stage, elapsed_ms: st.elapsed_ms });
+          aoConcluir(st.result);
+          return;
+        }
+        poll = setTimeout(function () {
+          acompanhar(jobId, faixa, aoConcluir, aoFalhar);
+        }, 500);
+      })
+      .catch(aoFalhar);
+  }
+
+  // Dispara uma rota de job e acompanha até o fim. O corpo da resposta imediata é
+  // só o `job_id`; o resultado de verdade chega pelo `acompanhar`.
+  function comJob(rota, corpo, faixa, aoConcluir, aoFalhar) {
+    fetch(rota, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo || {})
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        // O motor recusa um segundo trabalho em vez de enfileirá-lo mudo — ver
+        // `reservar_job` no servidor.
+        if (res.j && res.j.busy) throw new Error(t("panel.engineBusy"));
+        if (!res.ok || !res.j.job_id) throw new Error(res.j.error || "HTTP");
+        acompanhar(res.j.job_id, faixa, aoConcluir, aoFalhar);
+      })
+      .catch(aoFalhar);
+  }
+
+  // ── montar a bin no Media Composer ──────────────────────────────────────────
+  // O app autora uma `.avb` e a abre: a timeline sai ONLINE e o `Find in Bin` leva ao
+  // clipe na bin original. É o mesmo caminho do botão da janela, não um segundo.
+  function montar(result, bt, textoOriginal) {
+    bt.textContent = t("panel.building");
+
+    function encerrar() {
+      progresso(null);
+      bt.textContent = textoOriginal;
+      bt.disabled = false;
+    }
+
+    comJob("/avid/montar",
+      {
+        result: result,
+        name: ($("seqNome").value || "").trim() || t("panel.seqNameDefault"),
+        // ⭐ SEMPRE com o áudio das câmeras. A timeline de sync existe para ter tudo
+        // à mão — o editor apaga o que não quiser, e isso é barato. Descartar por
+        // padrão seria decidir por ele, e o que se perde não volta sem re-sincronizar.
+        // A escolha de manter ou descartar vai fazer sentido em subclipes e merged
+        // clips, onde o resultado é um objeto enxuto de propósito; aqui, não.
+        include_camera_audio: true,
+        mob_ids: mobIds,
+        mob_lengths: mobLengths
+      },
+      FAIXA_MONTAGEM,
+      function (res) {
+        encerrar();
+        res = res || {};
+        dizer(t("panel.built", { n: res.count == null ? 1 : res.count }), true);
+      },
+      function (e) {
+        encerrar();
+        dizer(t("result.failed", { msg: e.message }), false);
+      });
+  }
+
+  // ── aba ⚙ ────────────────────────────────────────────────────────────────────
+  // ⭐ Só existe porque a página agora é same-origin: `/settings`, `/cache/clear` e
+  // `/folder/open` exigem o token, e o painel `avpi://` não tinha como mandá-lo.
+  // São as MESMAS rotas do painel do Premiere — não uma cópia do estado, o estado.
+  // ⚠️ `/settings` passa pelo motor e tem `busy_guard`: com o sync rodando ela
+  // responde ocupado, não os dados. Por isso não se marca "carregado" nesse caso —
+  // senão a aba ficaria vazia até o painel ser reaberto.
+  function carregarSettings() {
+    if (ligado === false || ocupado) return;
+    fetch("/settings")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || j.error) return;
+        var partes = [];
+        if (j.cache_dir) partes.push(t("panel.cacheLocation") + ": " + j.cache_dir);
+        if (typeof j.cache_bytes === "number") {
+          partes.push(tamanho(j.cache_bytes) + " · " + (j.cache_files || 0));
+        }
+        $("cachePath").textContent = partes.join("  —  ");
+      })
+      .catch(function () { /* a batida já reporta a queda */ });
+  }
+
+  // `Intl` faz o número; a unidade é escolhida aqui para não depender de locale.
+  function tamanho(bytes) {
+    var un = ["B", "KB", "MB", "GB", "TB"], i = 0, n = bytes;
+    while (n >= 1024 && i < un.length - 1) { n /= 1024; i++; }
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: n < 10 ? 1 : 0 })
+      .format(n) + " " + un[i];
+  }
+
+  function acaoSimples(rota, corpo, botao, textoDeSucesso, relerDepois) {
+    var original = botao.textContent;
+    botao.disabled = true;
+    dizer("", true);
+    fetch(rota, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo || {})
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        dizer(textoDeSucesso, true);
+        // Limpar o cache muda o número que está na tela. Sem reler, a linha continua
+        // dizendo 26 MB depois de o cache virar zero — e o usuário só descobre dando
+        // Reload no painel.
+        if (relerDepois) carregarSettings();
+      })
+      .catch(function (e) {
+        dizer(t("result.failed", { msg: e.message }), false);
+      })
+      .then(function () {
+        botao.textContent = original;
+        botao.disabled = ligado === false || ocupado;
+      });
+  }
+
+  $("btCache").addEventListener("click", function () {
+    acaoSimples("/cache/clear", {}, $("btCache"), t("panel.cacheCleared"), true);
+  });
+  $("btLogs").addEventListener("click", function () {
+    // `which` é o vocabulário que a rota entende — ela NÃO aceita caminho livre.
+    acaoSimples("/folder/open", { which: "logs" }, $("btLogs"), t("panel.folderOpened"));
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  ARRASTAR DA BIN PARA O PAINEL — o gesto principal
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // ⭐⭐ SUBSTITUI a leitura da seleção da bin, e o ganho é de PRECISÃO, não de
+  // conforto: a seleção do Media Composer atravessa bins e permanece ativa, então
+  // clipes esquecidos marcados em outra bin aberta entravam sem querer na lista — e
+  // o editor só descobria pelo resultado do sync, longe da causa. O arrasto é um
+  // gesto deliberado, e o que ele carrega é o que foi arrastado.
+  //
+  // De quebra é mais barato: o MobID vem no payload, sem o piso de ~500 ms por bin
+  // do `GetListOfBinItems` — e sem depender do `GetListOfWindows`, que não existe no
+  // MC 25.6.
+  //
+  // O mecanismo NÃO é declarado no manifesto e não é concedido: o Qt entrega o
+  // arrasto à webview como MIME e quem implementa o resto é o Chromium. Ele
+  // sobrevive à página ser servida por `http://` (medido). Ver `arrastar.md` no
+  // a base de conhecimento interna, que corrige o registro anterior de que isto era impossível.
+  var MIME_ASSETS_MC = "text/x.avid.mc-api-asset-list+json";
+
+  function tiposDo(dt) {
+    try { return Array.prototype.slice.call((dt && dt.types) || []); }
+    catch (e) { return []; }
+  }
+
+  function temNossoMime(dt) {
+    return tiposDo(dt).indexOf(MIME_ASSETS_MC) !== -1;
+  }
+
+  // ⚠️⚠️ NÃO force `dropEffect = "copy"`. **O Media Composer arrasta com
+  // `effectAllowed = "move"`**, e um `dropEffect` fora do que a origem permite
+  // CANCELA o drop — em silêncio. O sintoma é cruel: o realce aparece (o
+  // `dragenter` viu o MIME) e soltar não faz nada. Foi este o defeito da primeira
+  // versão no De Lá Pra Cá.
+  //
+  // O `"move"` do Avid é rótulo do protocolo de arrasto, não promessa de que algo
+  // sai do lugar — nada é removido do projeto do editor.
+  function efeitoCompativel(dt) {
+    var permitido = (dt && dt.effectAllowed) || "all";
+    if (permitido === "none") return null;
+    if (permitido === "all" || permitido === "uninitialized") return "copy";
+    var p = String(permitido).toLowerCase();
+    if (p.indexOf("copy") !== -1) return "copy";
+    if (p.indexOf("move") !== -1) return "move";
+    if (p.indexOf("link") !== -1) return "link";
+    return null;
+  }
+
+  // ⚠️ MobID se valida CONTANDO 64 hexadecimais, nunca casando os hifens: o
+  // agrupamento muda conforme a superfície (`26-6-16-8-8` na API, `26-6-16-12-4` no
+  // payload do arrasto). Um validador que crave a pontuação recusa MobID legítimo, e
+  // o sintoma é "o clipe que arrastei não é reconhecido".
+  function mobIdPlausivel(bruto) {
+    if (typeof bruto !== "string") return false;
+    var hex = bruto.match(/[0-9a-fA-F]/g);
+    return !!hex && hex.length === 64;
+  }
+
+  // `dragenter`/`dragleave` disparam também ao cruzar cada FILHO do elemento, então
+  // um booleano pisca sem parar. O contador é o remédio: só o zero significa que o
+  // ponteiro saiu de verdade.
+  var profundidadeArrasto = 0;
+
+  // ⚠️ `classList`, nunca `className`: a mesma tag leva o `casca-app`, que o `className` apagava a cada arrasto.
+  function realcar(ligar) {
+    document.body.classList.toggle("arrastando", !!ligar);
+  }
+
+  function apagarAlvo() {
+    var acesa = document.querySelector("[data-origem].alvo");
+    if (acesa) acesa.classList.remove("alvo");
+  }
+
+  // ⚠️⚠️ FASE DE CAPTURA (`true` no fim), não a de bolha: `<select>` e
+  // `<input type=text>` têm tratamento PRÓPRIO de drop e podem consumir o evento
+  // antes de ele chegar ao documento. Na captura o alvo é a janela inteira de
+  // verdade — e não "a janela inteira, menos os campos".
+  //
+  // ⚠️⚠️ E o `preventDefault` é INCONDICIONAL, não só quando o MIME é o nosso: sem
+  // ele, soltar um ARQUIVO sobre o painel faz a webview NAVEGAR para o arquivo, a
+  // interface desaparece e o editor fica olhando um `.mxf` cru sem entender o que
+  // fez. O filtro de MIME decide o REALCE, nunca se o navegador assume o controle.
+  document.addEventListener("dragenter", function (ev) {
+    ev.preventDefault();
+    profundidadeArrasto++;
+    if (abaAtual !== "sources") realcar(temNossoMime(ev.dataTransfer));
+  }, true);
+
+  document.addEventListener("dragover", function (ev) {
+    ev.preventDefault();
+    if (!temNossoMime(ev.dataTransfer)) return;
+    var efeito = efeitoCompativel(ev.dataTransfer);
+    if (efeito) ev.dataTransfer.dropEffect = efeito;
+    // `dragover` repete enquanto o arrasto está sobre a página, e é a rede contra um
+    // `dragenter` engolido por um filho.
+    if (abaAtual === "sources") { marcarAlvo(ev.clientX, ev.clientY); return; }
+    realcar(true);
+  }, true);
+
+  document.addEventListener("dragleave", function () {
+    profundidadeArrasto = Math.max(0, profundidadeArrasto - 1);
+    if (profundidadeArrasto === 0) { realcar(false); apagarAlvo(); }
+  }, true);
+
+  // `dragend` cobre o arrasto ABANDONADO (Esc, ou soltar fora da janela), que não
+  // dispara `drop` nenhum e deixaria o realce aceso para sempre.
+  document.addEventListener("dragend", function () {
+    profundidadeArrasto = 0;
+    realcar(false);
+    apagarAlvo();
+  }, true);
+
+  document.addEventListener("drop", function (ev) {
+    ev.preventDefault();
+    profundidadeArrasto = 0;
+    realcar(false);
+    apagarAlvo();
+    alvoDoSoltar = abaAtual === "sources" ? alvoEm(ev.clientX, ev.clientY) : null;
+    aoSoltar(ev.dataTransfer);
+  }, true);
+
+  function aoSoltar(dt) {
+    // ⚠️ Só o evento `drop` entrega DADOS: durante `dragenter`/`dragover` o
+    // navegador está em *protected mode* e `getData` devolve string vazia, mesmo com
+    // o tipo listado em `types`.
+    if (!temNossoMime(dt)) {
+      // Soltar algo que não é da bin tem de produzir MENSAGEM, não silêncio —
+      // "não aconteceu nada" e "a resposta apareceu onde você não olha" são
+      // indistinguíveis para quem está usando.
+      dizer(t("panel.dropUnknown"), false);
+      return;
+    }
+    var itens;
+    try { itens = JSON.parse(dt.getData(MIME_ASSETS_MC) || "[]"); }
+    catch (e) { dizer(t("panel.dropUnreadable"), false); return; }
+    if (!itens || !itens.length) { dizer(t("panel.dropEmpty"), false); return; }
+
+    // ⚠️⚠️ CADA ABA ACEITA ESPÉCIES DIFERENTES, e o drop tem um destino só.
+    //
+    // Sincronizar quer masterclip (é o que tem arquivo de mídia por baixo);
+    // Renomear aceita TUDO, porque `SetMobInfo` renomeia os quatro tipos — foi
+    // medido, e é o que autoriza a aba sem filtro. Uma sequência arrastada na
+    // aba errada não é payload defeituoso: é material bom no lugar errado, e a
+    // recusa tem de dizer ONDE ele serve, senão manda o editor procurar defeito
+    // onde não há.
+    //
+    // ⚠️ Um EFEITO vem com `type` **string vazia**, não com um nome: quem escrever
+    // `if (!tipo)` para "não sei o que é" vai confundi-lo com payload defeituoso.
+    var ACEITA = {
+      sources: ["masterclip"],
+      subclip: ["sequence"],
+      rename: ["masterclip", "subclip", "sequence", "effect"]
+    };
+    var aceitas = ACEITA[abaAtual];
+    if (!aceitas) {
+      // Aba que ainda não recebe arrasto. Ignorar calado é indistinguível de um
+      // painel travado — mas a recusa tem de ser a CERTA: mandar o editor para
+      // outra aba, quando o que ele arrastou é exatamente o que ESTA vai
+      // receber, é conselho errado com cara de ajuda.
+      // Aba que não recebe arrasto (Ajustes). Ignorar calado é indistinguível
+      // de um painel travado.
+      dizer(t("drop.wrongTab", { tab: $(BOTAO.sources).textContent }), false);
+      return;
+    }
+
+    var mobs = [], recusados = {};
+    itens.forEach(function (it) {
+      var tipo = (it && typeof it.type === "string") ? it.type : "?";
+      var especie = tipo === "" ? "effect" : tipo;
+      if (aceitas.indexOf(especie) >= 0 && mobIdPlausivel(it.id)) mobs.push(it.id);
+      else recusados[especie] = (recusados[especie] || 0) + 1;
+    });
+
+    if (!mobs.length) {
+      var especies = Object.keys(recusados).map(function (k) {
+        return t("panel.species." + k) === "panel.species." + k ? k : t("panel.species." + k);
+      });
+      // ⭐ A recusa ENSINA: se o que veio serve NOUTRA aba, ela diz qual.
+      var alhures = Object.keys(recusados).filter(function (k) {
+        return ACEITA.rename.indexOf(k) >= 0;
+      });
+      if (abaAtual === "sources" && alhures.length === Object.keys(recusados).length) {
+        // ⭐ Uma SEQUÊNCIA agora tem duas casas: Subclipar (o gesto principal) e
+        // Renomear. Manda para a primeira — é o que o editor quase sempre quer
+        // fazer com uma timeline sincronizada.
+        // ⚠️ Mensagens DIFERENTES, porque as abas fazem coisas diferentes: dizer
+        // "solte na aba Subclipar para mudar o nome" mandaria o editor para o
+        // lugar certo pela razão errada.
+        var soSequencia = Object.keys(recusados).length === 1 && recusados["sequence"];
+        dizer(soSequencia
+                ? t("drop.trySubclip", { tab: $("tabSubclip").textContent })
+                : t("drop.tryRename", { what: especies.join(", "),
+                                        tab: $("tabRename").textContent }),
+              false);
+      } else {
+        dizer(t("panel.dropNoMasters", { what: especies.join(", ") }), false);
+      }
+      return;
+    }
+
+    if (abaAtual === "rename") { lerParaRenomear(mobs); return; }
+    if (abaAtual === "subclip") { aoSoltarTimeline(mobs); return; }
+
+    // ⭐ Sincronizar: a caixa onde soltou é quem diz o que aquilo é.
+    var alvo = alvoDoSoltar;
+    if (!alvo) { dizer(t("panel.dropOnBox"), false); return; }
+    if (lendoSelecao) { dizer(t("panel.engineBusy"), false); return; }
+    lendoSelecao = true;
+    dizer(t("panel.dropReading", { n: mobs.length }), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    function encerrar() {
+      lendoSelecao = false;
+      progresso(null);
+    }
+
+    comJob("/avid/mobs", { mob_ids: mobs }, [0, 1],
+      function (res) {
+        res = res || {};
+        var arquivos = res.files || [];
+        encerrar();
+        if (!arquivos.length) { dizer(t("panel.dropNoFiles"), false); return; }
+        if (res.mob_ids) mobIds = Object.assign(mobIds || {}, res.mob_ids);
+        if (res.mob_names) mobNames = Object.assign(mobNames || {}, res.mob_names);
+        if (res.mob_lengths) mobLengths = Object.assign(mobLengths || {}, res.mob_lengths);
+        if (res.name && !$("seqNome").value) $("seqNome").value = res.name;
+        nomeDoProjeto = res.name || nomeDoProjeto;
+        // ⭐ Som solto = o clipe em que TODOS os arquivos são som, medido na essência pelo motor (`so_audio`): a mídia
+        // gerenciada é toda `.mxf`, e um master com imagem e som é câmera.
+        var sonoros = {}, porClipe = {}, ordem = [];
+        (res.sound || []).forEach(function (c) { sonoros[c] = true; });
+        arquivos.forEach(function (c) {
+          var k = (mobIds && mobIds[c]) || c;
+          if (!porClipe[k]) { porClipe[k] = []; ordem.push(k); }
+          porClipe[k].push(c);
+        });
+        var video = [], audio = [];
+        ordem.forEach(function (k) {
+          var soSom = porClipe[k].every(function (c) { return sonoros[c]; });
+          (soSom ? audio : video).push.apply(soSom ? audio : video, porClipe[k]);
+        });
+        entregar(alvo, video, audio, null, res.missing ? [t("panel.missing", { n: res.missing })] : []);
+      },
+      function (e) {
+        encerrar();
+        dizer(t("result.failed", { msg: e.message }), false);
+      });
+  }
+
+  // ── a configuração da timeline ───────────────────────────────────────────────
+  // Timeline, Taxa e Método são dropdowns. "Baseado na mídia" é a janela e o fps do PRIMEIRO arquivo de vídeo informado, e a
+  // única opção que muda o valor da Taxa. ⛔ No Media Composer a timeline herda do projeto: fica cinza.
+  var TAXAS = ["23.976", "24", "25", "29.97", "30", "50", "59.94", "60"];
+  var CHAVE_TIMELINE = "sincronizar.timeline";
+
+  function lembrarTimeline() {
+    try {
+      localStorage.setItem(CHAVE_TIMELINE, JSON.stringify({
+        dim: $("tlDim").value, taxa: taxaEscolhida, w: $("tlW").value, h: $("tlH").value }));
+    } catch (e) { /* preferência */ }
+  }
+
+  var taxaEscolhida = "23.976";
+
+  function pintarTimeline() {
+    var mc = modoNle === "mc", dim = $("tlDim").value, baseado = dim === "midia", taxa = $("tlTaxa");
+    $("tlOutro").hidden = dim !== "outro";
+    $("confTimeline").classList.toggle("inativo", mc);
+    $("hintTimeline").hidden = !mc;
+    $("tlDim").disabled = mc;
+    $("tlW").disabled = mc;
+    $("tlH").disabled = mc;
+    taxa.disabled = mc || baseado;
+    $("tlTaxaMidia").hidden = !baseado;
+    if (baseado) { pintarMidiaNaTimeline(); }
+    else { taxa.value = taxaEscolhida; }
+  }
+
+  function pintarMidiaNaTimeline() {
+    if ($("tlDim").value !== "midia") return;
+    var fps = fpsDeReferencia(), op = $("tlTaxaMidia");
+    op.textContent = fps ? fpsEscrito(fps) : "—";
+    $("tlTaxa").value = "midia";
+  }
+
+  // `null` = herdar (a primeira mídia, ou o projeto no MC); `false` = "Outro" com número inválido.
+  function formatoDaTimeline() {
+    var dim = $("tlDim").value;
+    if (modoNle === "mc" || dim === "midia") return null;
+    if (dim === "outro") {
+      var w = parseInt($("tlW").value, 10), h = parseInt($("tlH").value, 10);
+      if (!(w > 0) || !(h > 0)) return false;
+      return { largura: w, altura: h, taxa: taxaEscolhida };
+    }
+    var m = dim.split("x");
+    return { largura: Number(m[0]), altura: Number(m[1]), taxa: taxaEscolhida };
+  }
+
+  (function () {
+    [["1920x1080", "1920×1080"], ["3840x2160", "3840×2160"], ["outro", t("panel.timelineOther")],
+     ["midia", t("panel.timelineMedia")]].forEach(function (par) {
+      var o = document.createElement("option");
+      o.value = par[0];
+      o.textContent = par[1];
+      $("tlDim").appendChild(o);
+    });
+    TAXAS.forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      $("tlTaxa").appendChild(o);
+    });
+    var daMidia = document.createElement("option");
+    daMidia.value = "midia";
+    daMidia.id = "tlTaxaMidia";
+    daMidia.textContent = "—";
+    daMidia.hidden = true;
+    $("tlTaxa").appendChild(daMidia);
+    var dim = "midia";
+    try {
+      var g = JSON.parse(localStorage.getItem(CHAVE_TIMELINE) || "null");
+      if (g) {
+        dim = g.dim || dim;
+        taxaEscolhida = TAXAS.indexOf(g.taxa) >= 0 ? g.taxa : taxaEscolhida;
+        $("tlW").value = g.w || "";
+        $("tlH").value = g.h || "";
+      }
+    } catch (e) { /* preferência */ }
+    $("tlDim").value = dim;
+    $("tlDim").addEventListener("change", function () { pintarTimeline(); lembrarTimeline(); });
+    $("tlTaxa").addEventListener("change", function () {
+      if ($("tlTaxa").value !== "midia") taxaEscolhida = $("tlTaxa").value;
+      lembrarTimeline();
+    });
+    $("tlW").addEventListener("change", lembrarTimeline);
+    $("tlH").addEventListener("change", lembrarTimeline);
+    $("btLimparFontes").addEventListener("click", function () {
+      fontes = [];
+      $("seqNome").value = "";
+      dizer("", true);
+      desenharFontes();
+    });
+  })();
+
+  desenharFontes(); // nasce com a dica de arrastar os clipes da bin
+  // ── a caixa de padrão ────────────────────────────────────────────────────────
+  //
+  // ⭐⭐ Portada do Assist anterior (`ui/preparar/padrao.js`), onde ela já serve DUAS
+  // abas — Renomear e Subclipes. Aqui ela nasce servindo uma; a segunda chega na
+  // etapa do subclipador, e vai usar esta mesma, não uma cópia. Duas caixas
+  // divergiriam, e a que divergisse seria a que o editor usa para CONFERIR contra
+  // a que o app usa para ESCREVER.
+  //
+  // ⚠️ Ela não conhece a gramática dos wildcards. Quem analisa o padrão é
+  // `nomes/template.py`, no servidor; daqui só sai texto, e daqui só entram
+  // `tokens` e `linhas` prontos.
+  //
+  // ⚠️ E a FRONTEIRA DE TEXTO NÃO CONFIÁVEL vale aqui: nome de coluna e valor de
+  // exemplo vêm do projeto do editor. Nada entra por `innerHTML`; tudo por
+  // `textContent`.
+  function limpar(no) { while (no && no.firstChild) { no.removeChild(no.firstChild); } }
+
+  function pedaco(pai, texto, classe) {
+    if (!texto) { return; }
+    var s = document.createElement("span");
+    s.textContent = texto;
+    if (classe) { s.className = classe; }
+    pai.appendChild(s);
+  }
+
+  // ⭐⭐ A caixinha da tag fechada: `%{cena}` sai como uma pílula, com `%{` e `}`
+  // apagados fazendo as bordas por dentro.
+  //
+  // ⚠️⚠️ Os delimitadores CONTINUAM sendo desenhados. É tentador escondê-los para
+  // a caixa ficar limpa, mas o espelho está sobreposto ao input caractere a
+  // caractere: sumir com três caracteres desalinharia o cursor do texto daí em
+  // diante, e o editor digitaria numa posição e veria a letra em outra.
+  function caixinha(pai, bruto) {
+    var tag = document.createElement("span");
+    tag.className = "tag";
+    pedaco(tag, bruto.slice(0, 2), "delim");                 // `%{`
+    pedaco(tag, bruto.slice(2, bruto.length - 1));           // o nome do campo
+    pedaco(tag, bruto.slice(bruto.length - 1), "delim");     // `}`
+    pai.appendChild(tag);
+  }
+
+  function ligarCaixaDePadrao(opcoes) {
+    var inp = $(opcoes.input);
+    if (!inp) { return null; }
+    var estado = { tokens: [], sugestoes: [], marcada: -1, bloqueado: true };
+
+    function espelhar() {
+      var esp = $(opcoes.espelho);
+      if (!esp) { return; }
+      var texto = inp.value;
+      limpar(esp);
+      var i = 0;
+      estado.tokens.forEach(function (t) {
+        pedaco(esp, texto.slice(i, t.inicio));
+        // O `bruto` inclui a cauda; o corpo é o que sobra sem ela.
+        var cauda = t.cauda || "";
+        var corpo = t.bruto.slice(0, t.bruto.length - cauda.length);
+        // ⭐ A tag FECHADA (`%{cena}`) vira caixinha, como no Resolve. Ela se
+        // reconhece pelo `bruto`: quem fechou, fechou no texto.
+        if (t.campo !== null && corpo.charAt(1) === "{") {
+          caixinha(esp, corpo);
+          i = t.fim;
+          return;
+        }
+        pedaco(esp, corpo, t.campo === null ? "ruim" : "campo");
+        // A cauda que o motor devolveu ao literal (`_T` em `%shoot_T`) sai
+        // marcada: é decisão DELE sobre o que o editor escreveu, e decisão
+        // calada não passa.
+        if (cauda) { pedaco(esp, cauda, "cauda"); }
+        i = t.fim;
+      });
+      pedaco(esp, texto.slice(i));
+      esp.scrollLeft = inp.scrollLeft;
+    }
+
+    var senha = 0, folga = null;
+    function prever() {
+      if (folga) { clearTimeout(folga); }
+      folga = setTimeout(function () {
+        var minha = ++senha;
+        opcoes.prever(inp.value).then(function (r) {
+          // ⚠️⚠️ Resposta ATRASADA não pinta por cima da nova: o debounce reduz
+          // as idas, mas não as ordena, e a que voltasse por último venceria —
+          // deixando na tela a prévia de um padrão que o editor já apagou.
+          if (!r || minha !== senha) { return; }
+          estado.tokens = r.tokens || [];
+          estado.bloqueado = !!r.bloqueado;
+          espelhar();
+          if (opcoes.aoPrever) { opcoes.aoPrever(r); }
+        }).catch(function () { /* a prévia é acabamento: falhar nela não fala */ });
+      }, 150);
+    }
+
+    // ⚠️ Prefixo lido ATÉ O CURSOR: quem edita o meio de um padrão já escrito
+    // precisa de sugestão para o token onde a mão está.
+    //
+    // ⭐ As DUAS formas pedem sugestão: `%ce` (aberta, de quem digita) e `%{ce`
+    // (fechada pela metade, de quem começou a tag). Quem confirma sai sempre com
+    // a fechada — ver `aceitar`.
+    function tokenNoCursor() {
+      var ate = inp.value.slice(0, inp.selectionStart);
+      var m = /%(\{)?([A-Za-z_][A-Za-z0-9_]*)?$/.exec(ate);
+      if (!m) { return null; }
+      if (/%%$/.test(ate)) { return null; }   // `%%` é escape, não campo
+      return { inicio: ate.length - m[0].length, prefixo: (m[2] || "").toLowerCase() };
+    }
+
+    function desenharSugestoes() {
+      var caixa = $(opcoes.sugestoes);
+      if (!caixa) { return; }
+      limpar(caixa);
+      // ⚠️ `tk`, e não `t`: neste arquivo `t` é a função de TRADUÇÃO, e uma
+      // variável local com esse nome a sombreia dentro da função inteira. No
+      // Assist anterior, de onde isto veio, o tradutor tem outro nome e a colisão
+      // não existia — ela nasceu no porte, e derrubou a caixa com
+      // "t is not a function" na primeira execução.
+      var tk = tokenNoCursor();
+      if (!tk) { caixa.hidden = true; estado.sugestoes = []; return; }
+      var achados = (opcoes.catalogo() || []).filter(function (c) {
+        return c.nome.indexOf(tk.prefixo) === 0;
+      }).sort(function (a, b) {
+        return a.nome.length - b.nome.length || (a.nome < b.nome ? -1 : 1);
+      }).slice(0, 5);
+      estado.sugestoes = achados;
+      estado.marcada = achados.length ? 0 : -1;
+      if (!achados.length) { caixa.hidden = true; return; }
+      achados.forEach(function (c, i) {
+        var bt = document.createElement("button");
+        bt.type = "button";
+        if (i === 0) { bt.className = "marcada"; }
+        var n = document.createElement("span");
+        n.className = "sug-nome"; n.textContent = "%" + c.nome;
+        bt.appendChild(n);
+        if (c.rotulo && c.rotulo !== c.nome) {
+          var r = document.createElement("span");
+          r.className = "sug-rotulo"; r.textContent = c.rotulo;
+          bt.appendChild(r);
+        }
+        // ⚠️ O campo DERIVADO é marcado: o editor tem de saber se aquilo foi
+        // lido da bin ou calculado por nós.
+        if (c.procedencia === "derivado" || c.procedencia === "historico") {
+          var d = document.createElement("span");
+          d.className = c.procedencia === "historico" ? "sug-historico" : "sug-derivado";
+          d.textContent = t(c.procedencia === "historico"
+                            ? "rename.fromHistory" : "rename.derived");
+          bt.appendChild(d);
+        }
+        if (c.exemplo) {
+          var ex = document.createElement("span");
+          ex.className = "sug-exemplo"; ex.textContent = c.exemplo;
+          bt.appendChild(ex);
+        }
+        bt.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();       // não perder o foco antes de inserir
+          aceitar(i);
+        });
+        caixa.appendChild(bt);
+      });
+      caixa.hidden = false;
+    }
+
+    function marcar(passo) {
+      if (!estado.sugestoes.length) { return; }
+      var n = estado.sugestoes.length;
+      estado.marcada = ((estado.marcada + passo) % n + n) % n;
+      var bts = $(opcoes.sugestoes).children;
+      for (var i = 0; i < bts.length; i++) {
+        bts[i].className = i === estado.marcada ? "marcada" : "";
+      }
+    }
+
+    // ⭐⭐ CONFIRMAR FECHA A TAG — pedido do autor, 2026-09-06, e é o conserto de
+    // `C%cenaP%plano`, que o motor lia como `%cenaP`:
+    //
+    // > *"podemos criar um sistema de fechar a tag quando o usuário confirmar.
+    // > […] Se o usuário clicar nas tags sugeridas que ficam abaixo ela já entra
+    // > como tag fechada de imediato"*
+    //
+    // ⚠️ Ele NÃO obriga ninguém a fechar: `%cena` digitado à mão continua
+    // valendo, com o recuo de sempre. O que a confirmação garante é que o
+    // caminho de MENOS esforço — clicar, ou dar Enter na sugestão — produza a
+    // forma sem ambiguidade.
+    function aceitar(indice) {
+      var c = estado.sugestoes[indice === undefined ? estado.marcada : indice];
+      var tk = tokenNoCursor();          // ⚠️ `tk` — ver o aviso em desenharSugestoes
+      if (!c || !tk) { return; }
+      var depois = inp.value.slice(inp.selectionStart);
+      // ⚠️ Se a tag já estava fechada à frente do cursor (o editor voltou para
+      // trocar o campo dentro de um `%{…}`), o `}` que existe não vira um
+      // segundo `}`.
+      depois = depois.replace(/^\}/, "");
+      var tag = "%{" + c.nome + "}";
+      inp.value = inp.value.slice(0, tk.inicio) + tag + depois;
+      var pos = tk.inicio + tag.length;
+      if (inp.setSelectionRange) { inp.setSelectionRange(pos, pos); }
+      $(opcoes.sugestoes).hidden = true;
+      estado.sugestoes = [];
+      prever();
+    }
+
+    function inserir(texto) {
+      var a = inp.selectionStart, b = inp.selectionEnd;
+      inp.value = inp.value.slice(0, a) + texto + inp.value.slice(b);
+      var pos = a + texto.length;
+      if (inp.focus) { inp.focus(); }
+      if (inp.setSelectionRange) { inp.setSelectionRange(pos, pos); }
+      desenharSugestoes();
+      prever();
+    }
+
+    // ⚠️ Um card só aparece se o campo EXISTIR neste material — um atalho que
+    // insere campo inválido é uma armadilha com cara de ajuda.
+    function desenharCards() {
+      var caixa = $(opcoes.cards);
+      if (!caixa) { return; }
+      limpar(caixa);
+      var tem = {};
+      (opcoes.catalogo() || []).forEach(function (c) { tem[c.nome] = c; });
+      (opcoes.cards_lista || []).forEach(function (nome) {
+        if (!tem[nome]) { return; }
+        var bt = document.createElement("button");
+        bt.type = "button";
+        // ⚠️ O card mostra o que ele INSERE, com as chaves. Mostrar `%cena` e
+        // escrever `%{cena}` seria o botão dizendo uma coisa e fazendo outra —
+        // e o editor aprenderia a sintaxe errada com a nossa ajuda.
+        bt.textContent = "%{" + nome + "}";
+        // ⭐ O campo que veio do NOSSO histórico se pinta diferente: o editor
+        // tem de saber que aquele valor não está no material — se o histórico
+        // sumir, ele some junto, o que nenhum campo medido faz.
+        if (tem[nome].procedencia === "historico") { bt.className = "historico"; }
+        bt.title = (tem[nome].rotulo || nome)
+          + (tem[nome].exemplo ? " — " + tem[nome].exemplo : "");
+        // ⭐ O card insere a tag FECHADA: clicar é confirmar, e é o gesto que
+        // permite `C%{cena}P%{plano}` sem o editor saber que existe uma regra.
+        bt.addEventListener("click", function () { inserir("%{" + nome + "}"); });
+        caixa.appendChild(bt);
+      });
+    }
+
+    inp.addEventListener("input", function () { desenharSugestoes(); prever(); });
+    inp.addEventListener("click", desenharSugestoes);
+    inp.addEventListener("scroll", function () {
+      var esp = $(opcoes.espelho);
+      if (esp) { esp.scrollLeft = inp.scrollLeft; }
+    });
+    inp.addEventListener("blur", function () {
+      setTimeout(function () {
+        var caixa = $(opcoes.sugestoes);
+        if (caixa) { caixa.hidden = true; }
+      }, 120);
+    });
+    inp.addEventListener("keydown", function (ev) {
+      var caixa = $(opcoes.sugestoes);
+      if (!caixa || caixa.hidden || !estado.sugestoes.length) { return; }
+      if (ev.key === "ArrowDown") { ev.preventDefault(); marcar(1); }
+      else if (ev.key === "ArrowUp") { ev.preventDefault(); marcar(-1); }
+      else if (ev.key === "Enter" || ev.key === "Tab") { ev.preventDefault(); aceitar(); }
+      else if (ev.key === "Escape") { caixa.hidden = true; }
+    });
+
+    return {
+      valor: function () { return inp.value; },
+      bloqueado: function () { return estado.bloqueado; },
+      recarregar: function () { desenharCards(); prever(); },
+      prever: prever
+    };
+  }
+
+  // ── a aba RENOMEAR ───────────────────────────────────────────────────────────
+  //
+  // ⭐⭐ O preview NÃO é calculado aqui. Um parser de wildcard em JavaScript seria
+  // uma segunda implementação da mesma gramática, e a que divergisse seria a do
+  // PREVIEW contra a do APLICAR — o editor conferiria uma coisa e o motor
+  // escreveria outra. O que este arquivo faz é PINTAR o que o servidor devolveu.
+  var renameItens = [], renameCatalogo = [], renameId = null, caixaRenomear = null;
+
+  //: Os atalhos que viram card, quando existem NESTE material.
+  //:
+  //: ⭐ `nome_original` vem PRIMEIRO e fica sempre à mão: é o caminho de volta,
+  //: e ele precisa estar visível justamente quando algo saiu errado — não
+  //: escondido atrás de digitar `%` e lembrar o nome do campo.
+  var CARDS_RENOMEAR = ["nome_original", "name", "cena", "plano", "take", "take2",
+                        "scene", "tapeid", "shoot_date"];
+
+  function lerParaRenomear(mobs) {
+    dizer(t("rename.reading", { n: mobs.length }), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    comJob("/avid/renomear/ler",
+      { mob_ids: mobs, todas_as_colunas: $("renameTodas").checked }, [0, 1],
+      function (res) { nleDasLeituras = "mc"; receberRenomear(res); },
+      function (e) {
+        progresso(null);
+        dizer(t("result.failed", { msg: e.message }), false);
+      });
+  }
+
+  function receberRenomear(res) {
+        progresso(null);
+        res = res || {};
+        renameItens = res.itens || [];
+        renameCatalogo = res.catalogo || [];
+        renameId = res.levantamento_id || null;
+        if (!renameItens.length) { dizer(t("rename.nothing"), false); return; }
+
+        $("renBlocoPadrao").hidden = false;
+        $("renAcoes").hidden = false;
+        // ⚠️ `ignorados` é o que veio de OUTRA bin — visível, nunca descartado
+        // calado: o editor pode arrastar de duas bins sem perceber.
+        var ign = (res.ignorados || []).length;
+        dizer(ign ? t("rename.readWithIgnored", { n: renameItens.length, ign: ign })
+                  : t("rename.read", { n: renameItens.length }), true);
+        $("renameCampos").textContent =
+          t("rename.fields", { n: renameItens.length, campos: renameCatalogo.length });
+
+        if (!caixaRenomear) {
+          caixaRenomear = ligarCaixaDePadrao({
+            input: "renamePadrao", espelho: "renameEspelho",
+            sugestoes: "renSugestoes", cards: "renCards",
+            cards_lista: CARDS_RENOMEAR,
+            catalogo: function () { return renameCatalogo; },
+            prever: preverNoServidor,
+            aoPrever: desenharLinhas
+          });
+        }
+        // A lista aparece já com os nomes de AGORA, antes de qualquer padrão:
+        // ver o material que entrou é o passo 1, e ele não depende do passo 2.
+        desenharLinhas(null);
+        if (caixaRenomear) { caixaRenomear.recarregar(); }
+  }
+
+  function preverNoServidor(padrao) {
+    // ⚠️ Com o motor ocupado a rota responde 409 na hora (ela não entra na fila
+    // do sidecar, que é serial). Devolver `null` é dizer "não sei agora", que é
+    // diferente de "não muda nada".
+    if (ocupado) { return Promise.resolve(null); }
+    return fetch("/avid/nome/prever", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        padrao: padrao,
+        fichas: renameItens.map(function (i) { return i.campos || {}; })
+      })
+    }).then(function (r) { return r.status === 409 ? null : r.json(); });
+  }
+
+  function desenharLinhas(previsto) {
+    var corpo = $("renCorpo");
+    if (!corpo) { return; }
+    limpar(corpo);
+
+    var linhas = previsto && !previsto.bloqueado ? previsto.linhas : null;
+    var mudam = 0, vazios = 0, repetidos = 0, mantidos = 0;
+
+    renameItens.forEach(function (item, i) {
+      var l = linhas ? linhas[i] : null;
+      var novo = l ? l.nome : item.nome;
+      var muda = novo !== item.nome;
+      if (muda) { mudam++; }
+      if (l && l.vazios && l.vazios.length) { vazios++; }
+      if (l && l.repetido) { repetidos++; }
+      if (l && l.de_origem) { mantidos++; }
+
+      var tr = document.createElement("tr");
+      if (l && ((l.vazios && l.vazios.length) || l.repetido)) { tr.className = "ren-aviso"; }
+      else if (!muda) { tr.className = "ren-igual"; }
+
+      var tdItem = document.createElement("td");
+      tdItem.textContent = item.nome || "";
+      var tdVira = document.createElement("td");
+      tdVira.className = "ren-vira";
+      tdVira.textContent = novo;
+      // O padrão sairia vazio: o item fica com o nome que tem (decisão do autor,
+      // 2026-09-17), e a dica diz por que ele não mudou.
+      if (l && l.de_origem) { tdVira.title = t("rename.keepsName"); }
+      tr.appendChild(tdItem);
+      tr.appendChild(tdVira);
+      corpo.appendChild(tr);
+    });
+
+    var bt = $("btRenomear");
+    if (previsto && previsto.bloqueado) {
+      // ⚠️ Vermelho SÓ para o que bloqueia — senão a cor perde o significado
+      // justamente quando ela precisa parar a mão do editor.
+      $("renameResumo").className = "estado erro";
+      $("renameResumo").textContent = (previsto.invalidos || []).length
+        ? t("rename.unknownField", {
+            what: previsto.invalidos.map(function (i) { return i.bruto; }).join(", ") })
+        : t("rename.wouldBeEmpty");
+      bt.disabled = true;
+      return;
+    }
+
+    // ⭐ Contar o que MUDA, e não o que foi lido: aplicar sobre 50 clipes em que
+    // 3 mudam é uma operação de 3 escritas, e é esse número que o editor precisa
+    // reconhecer antes de clicar.
+    var avisos = [];
+    if (vazios) { avisos.push(t("rename.warnEmpty", { n: vazios })); }
+    if (repetidos) { avisos.push(t("rename.warnRepeated", { n: repetidos })); }
+    if (mantidos) { avisos.push(t("rename.warnKept", { n: mantidos })); }
+    $("renameResumo").className = "estado";
+    $("renameResumo").textContent = linhas
+      ? t("rename.summary", { changed: mudam, total: renameItens.length })
+        + (avisos.length ? " · " + avisos.join(" · ") : "")
+      : "";
+    // ⭐ O botão só abre com um padrão que passou E com algo a mudar. Um botão
+    // vivo que não faria nada é uma promessa que a tela não cumpre.
+    bt.disabled = ocupado || !linhas || mudam === 0;
+  }
+
+  // ── aplicar, e a volta ───────────────────────────────────────────────────────
+
+  function aplicarRenomeacao() {
+    if (!renameId || !caixaRenomear) { return; }
+    var bt = $("btRenomear");
+    bt.disabled = true;
+    dizer(t("rename.applying"), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    comJob("/avid/renomear/aplicar",
+      // ⭐⭐ SÓ O PADRÃO viaja. O sidecar recompõe o plano com o mesmo `prever`
+      // que desenhou esta tela — o conferido e o aplicado não podem divergir.
+      { levantamento_id: renameId, padrao: caixaRenomear.valor() }, [0, 1],
+      function (res) {
+        progresso(null);
+        mostrarResultado(res || {});
+        carregarUltimoLote();
+        // ⚠️ O levantamento agora está VELHO: os nomes na bin não são mais os
+        // que a tabela mostra, e aplicar de novo por cima renomearia a partir de
+        // um retrato desatualizado. Ler de novo é gesto do editor.
+        renameId = null;
+        bt.disabled = true;
+      },
+      function (e) {
+        progresso(null);
+        bt.disabled = false;
+        dizer(t("result.failed", { msg: e.message }), false);
+      });
+  }
+
+  function mostrarResultado(res) {
+    var partes = [t("rename.applied", { n: res.aplicados || 0 })];
+    if (res.inalterados) { partes.push(t("rename.unchanged", { n: res.inalterados })); }
+    var falhas = res.falhas || [];
+    if (falhas.length) { partes.push(t("rename.failed", { n: falhas.length })); }
+
+    // ⚠️⚠️ `confirmado: false` NÃO é erro: o rename ACONTECEU na sessão do Media
+    // Composer; o que não se conseguiu foi provar que chegou ao arquivo. A tela
+    // tem de dizer isso **e o que fazer** — senão o editor fecha o projeto
+    // achando que está gravado.
+    var confirmado = res.confirmado !== false;
+    if (!confirmado) { partes.push(t("rename.notConfirmed")); }
+    dizer(partes.join(" · "), confirmado && !falhas.length);
+
+    // As falhas POR ITEM entram na tabela no lugar do que se prometeu: sumir do
+    // relatório seria pior que falhar, porque a bin fica em dois estados e essa
+    // lista é o único jeito de o editor saber onde parou.
+    if (falhas.length) {
+      var corpo = $("renCorpo");
+      limpar(corpo);
+      falhas.forEach(function (f) {
+        var tr = document.createElement("tr");
+        tr.className = "ren-aviso";
+        var de = document.createElement("td");
+        de.textContent = f.nome_atual || f.mob_id || "";
+        var erro = document.createElement("td");
+        erro.className = "ren-vira";
+        erro.textContent = f.erro || "";
+        tr.appendChild(de);
+        tr.appendChild(erro);
+        corpo.appendChild(tr);
+      });
+    }
+  }
+
+  function carregarUltimoLote() {
+    fetch("/avid/renomear/historico")
+      .then(function (r) { return r.status === 409 ? null : r.json(); })
+      .then(function (d) {
+        if (!d) { return; }
+        var lotes = (d.lotes || []).filter(function (l) { return !l.revertido; });
+        var ultimo = lotes[0];
+        $("renBlocoDesfazer").hidden = !ultimo;
+        if (!ultimo) { return; }
+        $("renUltimoLote").textContent = t("rename.lastBatch", {
+          n: ultimo.aplicados, padrao: ultimo.padrao || "", quando: ultimo.quando || ""
+        });
+      })
+      .catch(function () { /* o histórico é acabamento: falhar nele não fala */ });
+  }
+
+  function desfazer() {
+    $("btDesfazer").disabled = true;
+    dizer(t("rename.undoing"), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    comJob("/avid/renomear/desfazer", {}, [0, 1],
+      function (res) {
+        progresso(null);
+        res = res || {};
+        $("btDesfazer").disabled = false;
+        var partes = [t("rename.undone", { n: res.revertidos || 0 })];
+        // ⛔ Os DIVERGENTES são o ponto: alguém renomeou à mão depois do lote, e
+        // esses NÃO foram tocados. Desfazer por cima apagaria o trabalho de uma
+        // pessoa para restaurar o de uma máquina — e a tela precisa dizer
+        // quantos ficaram como estavam.
+        var div = res.divergentes || [];
+        if (div.length) { partes.push(t("rename.diverged", { n: div.length })); }
+        if (res.confirmado === false) { partes.push(t("rename.notConfirmed")); }
+        dizer(partes.join(" · "), !div.length && res.confirmado !== false);
+        carregarUltimoLote();
+      },
+      function (e) {
+        progresso(null);
+        $("btDesfazer").disabled = false;
+        dizer(t("result.failed", { msg: e.message }), false);
+      });
+  }
+
+  $("btRenomear").addEventListener("click", function () {
+    if (nleDasLeituras === "premiere") { aplicarRenomeacaoPremiere(); } else { aplicarRenomeacao(); }
+  });
+  $("btDesfazer").addEventListener("click", function () {
+    if (modoNle === "premiere") { desfazerPremiere(); } else { desfazer(); }
+  });
+
+  // ── a aba SUBCLIPAR ──────────────────────────────────────────────────────────
+  //
+  // ⭐ O gesto é o mesmo do Assist anterior: arrastar a TIMELINE sincronizada. Daí
+  // sai a `.avb` que a contém (uma chamada gRPC), e dela saem as tomadas.
+  //
+  // ⭐⭐ E a caixa de padrão é a MESMA da aba Renomear — `ligarCaixaDePadrao`,
+  // instanciada duas vezes. Duas caixas divergiriam, e a que divergisse seria a
+  // que o editor usa para conferir contra a que o app usa para escrever.
+  var subTomadas = [], subCatalogo = [], subLeituraId = null;
+  var subBin = null, caixaSubclipar = null;
+
+  //: Os atalhos da aba, quando existem NESTE material.
+  var CARDS_SUBCLIPAR = ["nome", "cena", "plano", "take", "take2", "scene",
+                         "nomedoaudio", "nomedevideo", "tapeid"];
+
+  function aoSoltarTimeline(mobs) {
+    // ⚠️ UMA timeline por arrasto. Duas seriam ambíguas — qual bin, qual nome? —
+    // e escolher a primeira em silêncio é a forma calada de errar.
+    if (mobs.length > 1) { dizer(t("subclip.onePerDrop"), false); return; }
+
+    dizer(t("subclip.finding"), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    comJob("/avid/timeline", { mob_id: mobs[0] }, [0, 0.2],
+      function (res) {
+        res = res || {};
+        subBin = res.bin || null;
+        if (!subBin) { progresso(null); dizer(t("subclip.noBin"), false); return; }
+        $("subBinEscolhida").hidden = false;
+        $("subBinEscolhida").textContent = res.nome || "";
+        lerTomadas(subBin);
+      },
+      function (e) {
+        progresso(null);
+        dizer(t("result.failed", { msg: e.message }), false);
+      });
+  }
+
+  function lerTomadas(caminho) {
+    dizer(t("subclip.reading"), true);
+    comJob("/avid/subclipes/ler", { bin: caminho }, [0.2, 1],
+      function (res) { nleDasLeituras = "mc"; receberTomadas(res); },
+      function (e) {
+        progresso(null);
+        // ⚠️ A bin não salva e a forma desconhecida chegam como mensagem PRONTA
+        // do sidecar — com o Ctrl+S dentro. Reescrevê-las aqui perderia o
+        // conselho e deixaria "falhou".
+        dizer(e.message || t("subclip.nothing"), false);
+      });
+  }
+
+  function receberTomadas(res) {
+        progresso(null);
+        res = res || {};
+        subTomadas = res.tomadas || [];
+        subCatalogo = res.catalogo || [];
+        subLeituraId = res.leitura_id || null;
+        // ⚠️ Lista nova, estado de lista zerado: seleção, âncora, ordem e prévia
+        // são todos POR ÍNDICE, e índice de outra lista aponta para outra tomada.
+        subMarcados = {};
+        subAncora = null;
+        subPrevisto = null;
+        subOrdem = { chave: null, desc: false };
+        subVisivel = [];
+        desenharCabecalhosDaLista();
+        if (!subTomadas.length) { dizer(t("subclip.nothing"), false); return; }
+
+        $("subBlocoTomadas").hidden = false;
+        $("subBlocoPadrao").hidden = false;
+        $("subAcoes").hidden = false;
+        dizer(t("subclip.read", { n: subTomadas.length }), true);
+        desenharTomadas();
+
+        if (!caixaSubclipar) {
+          caixaSubclipar = ligarCaixaDePadrao({
+            input: "subPadrao", espelho: "subEspelho",
+            sugestoes: "subSugestoes", cards: "subCards",
+            cards_lista: CARDS_SUBCLIPAR,
+            catalogo: function () { return subCatalogo; },
+            prever: preverNomeDoSubclipe,
+            aoPrever: aoPreverSubclipe
+          });
+        }
+        caixaSubclipar.recarregar();
+  }
+
+  // ⭐⭐ O preview do Subclipar tem rota PRÓPRIA, e manda só o padrão.
+  //
+  // ⛔ Antes ele mandava `subFichas` — as fichas que vieram na leitura — e elas
+  // ENVELHECIAM: marcar a cena à mão devolvia tomadas novas e fichas velhas, então
+  // a tela desenhava `C25-1_T01` enquanto a bin recebia `C25_T02`. Só remover um
+  // item corrigia, por acidente: aquela rota devolvia fichas.
+  //
+  // ⭐ Agora as tomadas ficam no sidecar e a resposta sai do MESMO `nomear.prever`
+  // que a escrita usa. Não há o que envelhecer, e a lista inteira deixou de subir
+  // a cada tecla digitada.
+  function preverNomeDoSubclipe(padrao) {
+    if (ocupado || !subLeituraId) { return Promise.resolve(null); }
+    return fetch("/avid/subclipes/prever", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ padrao: padrao, leitura_id: subLeituraId })
+    }).then(function (r) { return r.status === 409 ? null : r.json(); });
+  }
+
+  // ⭐⭐ AQUI O SUBCLIPAR DIVERGE DO RENOMEAR, e a divergência é do MOTOR, não da
+  // tela: `avid/nomear.aplicar` faz o subclipe que não casa o padrão cair no nome
+  // de origem (decisão do autor, 2026-09-05), e um padrão vazio cai no `%nome`.
+  // Nenhum subclipe sai sem nome — logo, nada aqui "ficaria SEM NOME".
+  //
+  // ⚠️ A tela dizia o contrário: `prever` é compartilhado com o Renomear, onde
+  // nome vazio bloqueia o lote inteiro com razão (lá se escreve por cima de
+  // nomes que já existem). Herdar aquele bloqueio aqui punha um aviso vermelho
+  // na tela do editor com o campo AINDA VAZIO — antes de ele digitar qualquer
+  // coisa —, e desligava os dois botões por um problema que este caminho não
+  // tem. Achado pelo autor usando, 2026-09-06:
+  //
+  // > *"A mensagem […] não precisa aparecer quando não houver nenhuma indicação
+  // > no item 3 - o nome dos subclipes."*
+  //
+  // ⛔ Só o campo DESCONHECIDO bloqueia aqui — esse sim é engano de quem digitou,
+  // e o motor recusa de qualquer jeito (`PadraoInvalido`).
+  function aoPreverSubclipe(previsto) {
+    var erro = $("subErro");
+    var invalidos = (previsto && previsto.invalidos) || [];
+    if (invalidos.length) {
+      erro.className = "estado erro";
+      erro.textContent = t("rename.unknownField", {
+        what: invalidos.map(function (i) { return i.bruto; }).join(", ") });
+    } else {
+      erro.className = "estado";
+      erro.textContent = "";
+    }
+    var bloqueado = invalidos.length > 0;
+    $("btSubclipes").disabled = ocupado || bloqueado;
+    $("btCenas").disabled = ocupado || bloqueado;
+    desenharTomadas(previsto);
+  }
+
+  //: Os índices marcados na lista. ⚠️ Índice, e não o objeto: a lista é
+  //: redesenhada a cada prévia, e guardar referência daria seleção fantasma.
+  var subMarcados = {};
+
+  //: ⭐ A ORDEM EM QUE A LISTA APARECE, como índices da `subTomadas`.
+  //:
+  //: ⚠️⚠️ `subTomadas` NUNCA é reordenada. O servidor conhece a lista pela posição
+  //: — `/avid/subclipes/cena` e `/remover` recebem índices —, então embaralhar o
+  //: array mandaria a cena para a tomada errada. Quem ordena é a TELA; a lista
+  //: real fica onde está, e este vetor diz só em que ordem desenhá-la.
+  var subVisivel = [];
+  var subOrdem = { chave: null, desc: false };
+  //: A âncora do shift: a última linha que o editor clicou sem shift.
+  var subAncora = null;
+  //: A última prévia recebida, para a ordenação por NOME ordenar pelo que está na
+  //: tela — e não pelo nome cru, que a coluna não mostra.
+  var subPrevisto = null;
+
+  function marcadosAgora() {
+    return Object.keys(subMarcados)
+      .filter(function (k) { return subMarcados[k]; })
+      .map(Number)
+      .sort(function (a, b) { return a - b; });
+  }
+
+  function atualizarAcoesDaLista() {
+    var n = marcadosAgora().length;
+    $("btCena").disabled = ocupado || n === 0;
+    $("subCena").disabled = ocupado || n === 0;
+    $("btLimpar").disabled = ocupado || subTomadas.length === 0;
+    $("btCena").textContent = n
+      ? t("subclip.setSceneN", { n: n })
+      : t("subclip.setScene");
+  }
+
+  //: O nome COMO ESTÁ NA TELA: o previsto pelo padrão, ou o de origem enquanto
+  //: nenhuma prévia voltou.
+  function nomeExibido(i) {
+    var linhas = subPrevisto && subPrevisto.linhas;
+    return linhas && linhas[i] ? linhas[i].nome : (subTomadas[i] || {}).nome || "";
+  }
+
+  //: As quatro colunas ordenáveis, na ordem do cabeçalho.
+  var SUB_COLUNAS = [
+    { id: "subColTake", i18n: "subclip.colName", chave: "nome" },
+    { id: "subColCena", i18n: "subclip.colScene", chave: "cena" },
+    { id: "subColDuracao", i18n: "subclip.colDuration", chave: "duracao" },
+    { id: "subColVA", i18n: "subclip.colTracks", chave: "trilhas" }
+  ];
+
+  // ⚠️ `numeric: true` porque a régua aqui é humana: `25-10` vem DEPOIS de `25-9`
+  // para quem monta, e a ordem alfabética crua diria o contrário. É a mesma
+  // ordenação que o Explorer e o Finder fazem, que é a referência que o autor deu.
+  function compararTomadas(chave, a, b) {
+    var ta = subTomadas[a] || {}, tb = subTomadas[b] || {};
+    if (chave === "duracao") { return (ta.duracao || 0) - (tb.duracao || 0); }
+    if (chave === "trilhas") {
+      var pa = ta.trilhas || {}, pb = tb.trilhas || {};
+      return (pa.picture || 0) - (pb.picture || 0)
+          || (pa.sound || 0) - (pb.sound || 0);
+    }
+    var va = String((chave === "cena" ? ta.cena : nomeExibido(a)) || "");
+    var vb = String((chave === "cena" ? tb.cena : nomeExibido(b)) || "");
+    return va.localeCompare(vb, undefined, { numeric: true, sensitivity: "base" });
+  }
+
+  // ⭐⭐ A ordenação é HIERÁRQUICA porque é ESTÁVEL, e o desempate é a posição
+  // atual na tela. Ordenar por nome e depois por cena deixa as cenas em ordem
+  // com os nomes ordenados dentro de cada uma — que é o que o editor espera de
+  // uma lista de sistema operacional, e o que ele pediu por esse nome.
+  function recalcularOrdem() {
+    var natural = subTomadas.map(function (_t, i) { return i; });
+    if (!subOrdem.chave) { subVisivel = natural; return; }
+    var antes = subVisivel.length === subTomadas.length ? subVisivel : natural;
+    var posicao = {};
+    antes.forEach(function (idx, p) { posicao[idx] = p; });
+    subVisivel = antes.slice().sort(function (a, b) {
+      var c = compararTomadas(subOrdem.chave, a, b);
+      if (subOrdem.desc) { c = -c; }
+      return c || (posicao[a] - posicao[b]);
+    });
+  }
+
+  function desenharCabecalhosDaLista() {
+    SUB_COLUNAS.forEach(function (col) {
+      var th = $(col.id);
+      if (!th) { return; }
+      th.textContent = t(col.i18n);
+      var ativa = subOrdem.chave === col.chave;
+      th.className = "ordena" + (ativa ? " ativa" : "");
+      if (ativa) {
+        // ⚠️ A seta é a única coisa que diz POR ONDE a lista está ordenada.
+        // Sem ela, uma lista reordenada parece uma lista que mudou sozinha.
+        pedaco(th, subOrdem.desc ? " ▼" : " ▲", "seta");
+      }
+    });
+  }
+
+  function ordenarPor(chave) {
+    if (!subTomadas.length) { return; }
+    // Clicar de novo na mesma coluna inverte — como no Explorer e no Finder.
+    subOrdem = subOrdem.chave === chave
+      ? { chave: chave, desc: !subOrdem.desc }
+      : { chave: chave, desc: false };
+    recalcularOrdem();
+    desenharCabecalhosDaLista();
+    desenharTomadas();
+  }
+
+  // ── a seleção, como no Explorer e no Finder ────────────────────────────────
+  //
+  // ⭐⭐ Pedido do autor, 2026-09-06:
+  //
+  // > *"o ideal é ter a possibilidade de seleção de itens como é no
+  // > explorer/finder que podemos combinar teclas cmd/ctrl e/ou shift"*
+  //
+  // ⚠️ O INTERVALO do shift é sobre a ordem VISÍVEL, não sobre a lista real:
+  // quem clica na primeira linha e faz shift na quinta quer as cinco que ele
+  // está vendo. Com a lista ordenada por cena, os índices reais entre elas são
+  // outros — e pegá-los daria uma seleção que a tela não explica.
+  function clicarNaLinha(idx, ev) {
+    var ctrl = !!(ev && (ev.ctrlKey || ev.metaKey));
+    var shift = !!(ev && ev.shiftKey);
+    if (shift && subAncora !== null) {
+      var a = subVisivel.indexOf(subAncora), b = subVisivel.indexOf(idx);
+      if (a < 0) { a = b; }
+      // ⚠️ Sem ctrl, o intervalo SUBSTITUI a seleção — é o que o Explorer faz, e
+      // somar sempre deixaria o editor sem jeito de recomeçar sem recarregar.
+      if (!ctrl) { subMarcados = {}; }
+      for (var p = Math.min(a, b); p <= Math.max(a, b); p++) {
+        subMarcados[subVisivel[p]] = true;
+      }
+    } else if (ctrl) {
+      subMarcados[idx] = !subMarcados[idx];
+      subAncora = idx;
+    } else {
+      subMarcados = {};
+      subMarcados[idx] = true;
+      subAncora = idx;
+    }
+    desenharTomadas();
+  }
+
+  function selecionarTudoNaLista() {
+    subMarcados = {};
+    subTomadas.forEach(function (_t, i) { subMarcados[i] = true; });
+    desenharTomadas();
+  }
+
+  function desenharTomadas(previsto) {
+    var corpo = $("subCorpo");
+    if (!corpo) { return; }
+    limpar(corpo);
+    if (previsto !== undefined) { subPrevisto = previsto; }
+    if (subVisivel.length !== subTomadas.length) { recalcularOrdem(); }
+
+    var linhas = subPrevisto && !subPrevisto.bloqueado ? subPrevisto.linhas : null;
+    var aparadas = 0, semCena = 0, deOrigem = 0;
+
+    subVisivel.forEach(function (i) {
+      var tk = subTomadas[i];
+      if (!tk) { return; }
+      var tr = document.createElement("tr");
+      // ⚠️ Duas marcas DIFERENTES, e a distinção é do material: sem claquete
+      // legível o editor lê o nome e aponta a cena; um órfão teve a cena
+      // PRESUMIDA pela posição na timeline e precisa de revisão humana.
+      var classes = [];
+      if (!tk.resolvido) { classes.push("nao-resolvido"); }
+      else if (tk.orfao) { classes.push("orfao"); }
+      if (subMarcados[i]) { classes.push("marcada"); }
+      tr.className = classes.join(" ");
+
+      var cel = function (texto, classe) {
+        var td = document.createElement("td");
+        td.textContent = texto;
+        if (classe) { td.className = classe; }
+        tr.appendChild(td);
+        return td;
+      };
+
+      // ⭐ A LINHA INTEIRA é o alvo do clique. Ver `clicarNaLinha`.
+      tr.addEventListener("click", function (ev) { clicarNaLinha(i, ev); });
+
+      // ⭐ O nome que a bin VAI receber — e a marca de quem não casou o padrão.
+      //
+      // ⚠️ Sem a marca, esse take aparece com um nome de outra forma no meio da
+      // lista e vira mistério: o editor não tem como saber que ali o padrão não
+      // se aplicou e o Órbita usou o nome de origem. É a mesma regra de sempre —
+      // decisão nossa que não se declara passa por dado do material.
+      var linha = linhas && linhas[i] ? linhas[i] : null;
+      var tdNome = cel(linha ? linha.nome : tk.nome);
+      if (linha && linha.de_origem) {
+        tdNome.className = "nome-origem";
+        tdNome.title = t("subclip.fromSource");
+        deOrigem++;
+      }
+
+      // ⭐ A procedência da cena aparece: "presumida" veio da POSIÇÃO do órfão na
+      // timeline — inferência que não se declara passa por medição.
+      //
+      // ⚠️ A posta À MÃO se declara só pela COR, sem sufixo. Decisão do autor,
+      // 2026-09-06: *"não precisamos desse sufixo 'à mão', basta a cor azul como
+      // indicador de alteração"*. A diferença para a presumida é de natureza: a
+      // presumida é um palpite NOSSO, que ele precisa revisar; a posta à mão é
+      // dele, e repetir "à mão" para quem acabou de digitar rouba a largura de
+      // uma tela estreita para dizer o que ele já sabe.
+      var tdCena = cel(
+        tk.cena
+          ? (tk.convencao === "posicao" || tk.convencao === "forma_da_diaria"
+               ? t("subclip.scenePresumed", { cena: (tk.episodio ? tk.episodio + " " : "") + tk.cena })
+               : (tk.episodio ? tk.episodio + " " : "") + tk.cena)
+          : t("subclip.noScene"));
+      if (tk.convencao === "manual") { tdCena.className = "cena-manual"; }
+      if (!tk.cena) { semCena++; }
+
+      // ⚠️ O APARO aparece com o número: um take que perdeu 88 s de cauda
+      // porque a câmera parou cedo continua legítimo, mas o editor precisa ver
+      // isso ANTES de abrir a bin — senão descobre o corte olhando o material.
+      // ⛔ A taxa vem do MATERIAL (`edit_rate`, que o sidecar manda em cada tomada),
+      //    e não fixa em 24: a 29,97 a conta fixa mostrava 25% a MAIS — um take de
+      //    60 s aparecia como 75 s, e esta coluna existe justamente para o editor
+      //    decidir SEM abrir a bin. (Achado e consertado no Assist anterior em
+      //    2026-09-19; volta para casa em 2026-09-21.)
+      // ⚠️ Sem taxa não se inventa segundo: mostra QUADROS, que é o dado que se tem.
+      var seg = function (frames) {
+        return tk.edit_rate ? (frames / tk.edit_rate).toFixed(1) + "s"
+                            : frames + "q";
+      };
+      cel(tk.aparado
+            ? seg(tk.duracao) + " (−" + seg(tk.aparado) + ")"
+            : seg(tk.duracao));
+      if (tk.aparado) { aparadas++; }
+
+      cel("V" + tk.trilhas.picture + " A" + tk.trilhas.sound);
+
+      // ── o X, à direita ──
+      var tdX = document.createElement("td");
+      tdX.className = "col-x";
+      var x = document.createElement("button");
+      x.type = "button";
+      x.textContent = "✕";
+      x.title = t("subclip.removeOne");
+      x.addEventListener("click", function (ev) {
+        // ⚠️ O X está DENTRO da linha, que agora seleciona ao clique. Sem parar
+        // a propagação, tirar um item da lista também mudaria a seleção — e o
+        // editor veria a lista encolher e a seleção pular, sem ter pedido.
+        if (ev && ev.stopPropagation) { ev.stopPropagation(); }
+        remover([i]);
+      });
+      tdX.appendChild(x);
+      tr.appendChild(tdX);
+
+      corpo.appendChild(tr);
+    });
+
+    var partes = [t("subclip.summary", { n: subTomadas.length })];
+    if (aparadas) { partes.push(t("subclip.trimmed", { n: aparadas })); }
+    if (semCena) { partes.push(t("subclip.withoutScene", { n: semCena })); }
+    // ⚠️ Contado no RESUMO, e não só marcado na linha: numa diária de 50 a marca
+    // some na rolagem, e o editor precisa saber ANTES de gerar que o padrão dele
+    // não pegou em N tomadas.
+    if (deOrigem) { partes.push(t("subclip.fromSourceN", { n: deOrigem })); }
+    $("subResumo").textContent = partes.join(" · ");
+    atualizarAcoesDaLista();
+  }
+
+  // ── as três ações da lista ───────────────────────────────────────────────────
+
+  function aplicarNaLista(rota, corpo, aoVoltar) {
+    return fetch(rota, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo)
+    }).then(function (r) {
+      if (r.status === 409) { dizer(t("panel.busy"), false); return null; }
+      return r.json();
+    }).then(function (d) {
+      if (!d) { return; }
+      if (d.error) { dizer(d.error, false); return; }
+      aoVoltar(d);
+    }).catch(function (e) {
+      dizer(t("result.failed", { msg: e.message }), false);
+    });
+  }
+
+  function marcarCena() {
+    var alvos = marcadosAgora();
+    if (!alvos.length || !subLeituraId) { return; }
+    var cena = $("subCena").value.trim();
+
+    aplicarNaLista("/avid/subclipes/cena",
+      { leitura_id: subLeituraId, indices: alvos, cena: cena },
+      function (d) {
+        subTomadas = d.tomadas || subTomadas;
+        // ⚠️ A seleção SOBREVIVE: o editor costuma corrigir a cena e conferir o
+        // que marcou. Limpar aqui o obrigaria a remarcar para ver o resultado.
+        dizer(t("subclip.sceneSet", { n: d.alteradas || 0 }), true);
+        // ⚠️ Desenha NA HORA e pede a prévia depois: o `prever` tem debounce, e
+        // esperar por ele deixaria a tabela um passo atrás do que o editor
+        // acabou de fazer — clicou, e nada mudou.
+        //
+        // ⚠️ Sem argumento, e não `null`: a lista tem o MESMO tamanho, então a
+        // prévia anterior ainda casa linha a linha. Jogá-la fora faria a coluna
+        // do nome piscar para o nome cru e voltar 150 ms depois.
+        desenharTomadas();
+        if (caixaSubclipar) { caixaSubclipar.prever(); }
+      });
+  }
+
+  function remover(indices, tudo) {
+    if (!subLeituraId) { return; }
+    var corpo = { leitura_id: subLeituraId };
+    if (tudo) { corpo.tudo = true; } else { corpo.indices = indices; }
+
+    aplicarNaLista("/avid/subclipes/remover", corpo, function (d) {
+      subTomadas = d.tomadas || [];
+      // ⚠️ A seleção é POR ÍNDICE, e os índices mudaram: mantê-la marcaria
+      // linhas que ninguém escolheu. Some junto com o que foi removido.
+      //
+      // ⚠️⚠️ E a PRÉVIA cai junto, pela mesma razão e com consequência pior: as
+      // linhas dela também são por posição, e reaproveitá-las depois de a lista
+      // encolher mostraria o nome de um subclipe em cima de outro.
+      subMarcados = {};
+      subAncora = null;
+      subPrevisto = null;
+      subVisivel = [];
+      recalcularOrdem();
+      if (!subTomadas.length) {
+        // Lista vazia = a aba volta ao começo, e o arrasto é o caminho de volta.
+        $("subBlocoTomadas").hidden = true;
+        $("subBlocoPadrao").hidden = true;
+        $("subAcoes").hidden = true;
+        $("subBinEscolhida").hidden = true;
+        subLeituraId = null;
+        dizer(t("subclip.cleared"), true);
+        return;
+      }
+      desenharTomadas();
+      if (caixaSubclipar) { caixaSubclipar.prever(); }
+    });
+  }
+
+  SUB_COLUNAS.forEach(function (col) {
+    var th = $(col.id);
+    if (th) { th.addEventListener("click", function () { ordenarPor(col.chave); }); }
+  });
+
+  // ⭐⭐ O TECLADO da lista — Delete tira, Ctrl/Cmd+A pega tudo. Pedido do autor:
+  // *"selecionou um clipe e apertou delete no teclado: remove o clipe ou os
+  // clipes da lista"*.
+  //
+  // ⚠️⚠️ O ouvinte é do DOCUMENTO, e por isso precisa se recusar TRÊS vezes:
+  //
+  //  1. num campo de texto (a cena, o padrão), Delete apaga LETRA e Ctrl+A
+  //     seleciona o TEXTO — roubar essas teclas ali quebraria a digitação para
+  //     servir a lista;
+  //  2. fora da aba Subclipar a lista não está na tela. ⛔ E `subBlocoTomadas`
+  //     NÃO responde isso: quem esconde a aba é a classe da `<section>`, não o
+  //     `hidden` do bloco — que continua ligado enquanto houver tomadas lidas.
+  //     Sem esta linha, apertar Delete na aba Renomear apagaria clipes de uma
+  //     lista que o editor nem está vendo;
+  //  3. e sem lista não há o que apagar.
+  document.addEventListener("keydown", function (ev) {
+    if (!ev || ocupado) { return; }
+    var alvo = ev.target || {};
+    if (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA") { return; }
+    if (abaAtual !== "subclip") { return; }
+    if ($("subBlocoTomadas").hidden || !subTomadas.length) { return; }
+    if (ev.key === "Delete" || ev.key === "Backspace") {
+      var alvos = marcadosAgora();
+      if (!alvos.length) { return; }
+      if (ev.preventDefault) { ev.preventDefault(); }
+      remover(alvos);
+    } else if ((ev.ctrlKey || ev.metaKey) && (ev.key === "a" || ev.key === "A")) {
+      if (ev.preventDefault) { ev.preventDefault(); }
+      selecionarTudoNaLista();
+    }
+  });
+
+  $("btCena").addEventListener("click", marcarCena);
+  $("subCena").addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter") { marcarCena(); }
+  });
+  $("btLimpar").addEventListener("click", function () { remover([], true); });
+
+  function gerar(porCena) {
+    if (!subLeituraId || !caixaSubclipar) { return; }
+    $("btSubclipes").disabled = true;
+    $("btCenas").disabled = true;
+    dizer(t("subclip.writing"), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+
+    comJob("/avid/subclipes/gerar",
+      { leitura_id: subLeituraId, padrao: caixaSubclipar.valor(), por_cena: !!porCena },
+      [0, 1],
+      function (res) {
+        progresso(null);
+        res = res || {};
+        $("btSubclipes").disabled = false;
+        $("btCenas").disabled = false;
+        var partes = [];
+        if (porCena) {
+          partes.push(t("subclip.doneScenes", { n: (res.bins || []).length,
+                                                total: res.total || 0 }));
+        } else {
+          partes.push(t("subclip.done", { n: res.subclipes || 0 }));
+          if (res.com_filler) {
+            partes.push(t("subclip.withFiller", { n: res.com_filler }));
+          }
+        }
+        // ⚠️ Escrever e ABRIR são coisas diferentes: as bins estão no disco de
+        // qualquer jeito, e dizer o contrário mandaria o editor procurar o que
+        // não se perdeu.
+        if (res.aberta === false) { partes.push(t("subclip.notOpened")); }
+        dizer(partes.join(" · "), true);
+      },
+      function (e) {
+        progresso(null);
+        $("btSubclipes").disabled = false;
+        $("btCenas").disabled = false;
+        dizer(e.message || t("result.failed", { msg: "" }), false);
+      });
+  }
+
+  $("btSubclipes").addEventListener("click", function () {
+    if (nleDasLeituras === "premiere") { gerarMergedPremiere(); } else { gerar(false); }
+  });
+  $("btCenas").addEventListener("click", function () { gerar(true); });
+
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  A JANELA DO APP — o Órbita Painel (organograma de 2026-10-21)
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // A MESMA página do painel do Avid, aberta pelo app em `?casca=app`. Ela segue o
+  // NLE conectado (`/conexao`): o Premiere pela ponte invisível, o Media Composer pelo
+  // motor (o caminho de sempre deste painel). Nesta etapa só Sincronizar e ⚙.
+  var modoNle = null;          // "premiere" | "mc" | null
+  var estadoPremiere = "";     // "versao\tcaminho do projeto"
+  var montando = false;        // a ponte está ocupada montando: a batida não pergunta nada
+  var versaoDoApp = "";
+
+  // Uma função do `host.jsx` no Premiere. O servidor só ENFILEIRA (ele atende uma
+  // requisição por vez e não pode esperar o Premiere); o resultado vem por pergunta.
+  function premiere(funcao, args, prazoMs) {
+    return fetch("/premiere/chamar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ funcao: funcao, args: args || [] })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.j.id) throw new Error(res.j.error || "HTTP");
+        var limite = Date.now() + (prazoMs || 30000);
+        return new Promise(function (ok, falha) {
+          function perguntar() {
+            fetch("/premiere/resultado?id=" + res.j.id, { cache: "no-store" })
+              .then(function (r) { return r.json(); })
+              .then(function (st) {
+                if (st.pronto) {
+                  var r = String(st.r == null ? "" : st.r);
+                  if (r.indexOf("EvalScript error") === 0) {
+                    falha(new Error(funcao + " falhou dentro do Premiere (" + r + ")"));
+                  } else { ok(r); }
+                  return;
+                }
+                if (st.error) { falha(new Error(st.error)); return; }
+                if (Date.now() > limite) {
+                  falha(new Error("o Premiere não respondeu a tempo (diálogo aberto?)"));
+                  return;
+                }
+                setTimeout(perguntar, 80);
+              })
+              .catch(falha);
+          }
+          perguntar();
+        });
+      });
+  }
+
+  function nomeDoArquivoDeProjeto(caminho) {
+    var n = String(caminho || "").split(/[\\/]/).pop();
+    return n.replace(/\.prproj$/i, "");
+  }
+
+  function pintarConexao() {
+    var texto, classe;
+    if (modoNle === "premiere") {
+      var partes = estadoPremiere.split("\t");
+      var v = (partes[0] || "").split(".").slice(0, 2).join(".");
+      texto = t("app.premiere", { v: v }) + (partes[1] ? " · " + nomeDoArquivoDeProjeto(partes[1]) : "");
+      classe = "up";
+    } else if (modoNle === "mc") {
+      texto = t("app.mc");
+      classe = "up";
+    } else {
+      texto = t("app.noProgram");
+      classe = "wait";
+    }
+    elStatus.className = classe;
+    elStatusText.textContent = texto;
+    $("rodapeNle").textContent = "Sincronizar " + versaoDoApp;
+  }
+
+  // ══ SUBCLIPAR e RENOMEAR no PREMIERE (2026-11-07, plano um app só — a Preparar no Premiere) ═════════════════
+  // As telas são as do Media Composer; o que muda são as pontas que falam com o editor. A leitura do Premiere sai do
+  // host.jsx (`sincGetSequenceForMerged`, `sincRenameScan`) e vai às rotas `/premiere/merged/ler` e
+  // `/premiere/renomear/ler`; a prévia, a cena e o remover são as MESMAS rotas do MC (operam na leitura guardada).
+  // Porte das abas do painel CEP do Órbita (`premiere-cep/js/merged.js`, `rename.js`, histórico do repo).
+  var nleDasLeituras = null;   // o NLE de onde veio a leitura na tela — trocou, a tela zera
+
+  function textosDoNle() {
+    var pr = modoNle === "premiere";
+    $("tabSubclip").textContent = pr ? t("subclip.prTab") : t("panel.tabSubclip");
+    $("subclipVazio").textContent = pr ? t("subclip.prEmpty") : t("subclip.emptyState");
+    $("btSubclipes").textContent = pr ? t("subclip.prGenerate") : t("subclip.oneBin");
+    $("btCenas").style.display = pr ? "none" : "";
+    $("btLerSequenciaPr").hidden = false;
+    $("btLerSequenciaPr").style.display = pr ? "" : "none";  // `hidden` perde para o `button.act` do CSS
+    $("renameDica").textContent = pr ? t("rename.prHint") : t("rename.dropHere");
+    $("btLerSelecaoPr").hidden = false;
+    $("btLerSelecaoPr").style.display = pr ? "" : "none";
+    var todas = $("renameTodas");
+    if (todas && todas.parentNode) { todas.parentNode.style.display = pr ? "none" : ""; }
+    if (nleDasLeituras && nleDasLeituras !== modoNle) { zerarLeituras(); }
+  }
+
+  function zerarLeituras() {
+    nleDasLeituras = null;
+    subLeituraId = null; subTomadas = []; renameId = null; renameItens = [];
+    ["subBlocoTomadas", "subBlocoPadrao", "subAcoes", "subBinEscolhida", "renBlocoPadrao", "renAcoes"]
+      .forEach(function (id) { $(id).hidden = true; });
+    limpar($("renCorpo"));
+  }
+
+  function postJson(rota, corpo) {
+    return fetch(rota, { method: "POST", headers: { "Content-Type": "application/json" },
+                         body: JSON.stringify(corpo || {}) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.j && res.j.busy) throw new Error(t("panel.engineBusy"));
+        if (!res.ok || (res.j && res.j.error)) throw new Error((res.j && res.j.error) || "HTTP");
+        return res.j;
+      });
+  }
+
+  function linhasComAbas(raw) {
+    return String(raw || "").split("\n").filter(Boolean).map(function (l) { return l.split("\t"); });
+  }
+
+  /** O formato do .prproj pela versão do Premiere aberto: < 25 → o do 2023. */
+  function alvoDaVersao(v) {
+    var maior = parseInt(String(v || "").split(".")[0], 10);
+    return !isNaN(maior) && maior < 25 ? "2023" : "25";
+  }
+
+  var subNomeDaSequencia = "";
+
+  // `nodeId` vazio = a sequência ATIVA; com nodeId = a sequência arrastada da bin.
+  function lerMergedPremiere(nodeId) {
+    if (modoNle !== "premiere") { dizer(t("app.premiereOffline"), false); return; }
+    dizer(t("subclip.reading"), true);
+    premiere("sincGetSequenceForMerged", [nodeId || ""], 60000).then(function (raw) {
+      raw = String(raw || "");
+      if (raw.indexOf("err|") === 0) {
+        throw new Error(raw.slice(4) === "nosequence" ? t("subclip.prNoSequence") : raw.slice(4));
+      }
+      var fps = 0, nome = "";
+      linhasComAbas(raw).forEach(function (c) {
+        if (c[0] === "fps") fps = Number(c[1]);
+        if (c[0] === "nome") nome = c.slice(1).join(" ");
+      });
+      return postJson("/premiere/merged/ler", { registros: raw, fps: fps, so_selecionados: false, projeto: projetoAtual() })
+        .then(function (j) { return { nome: nome, j: j }; });
+    }).then(function (x) {
+      subNomeDaSequencia = x.nome || "";
+      $("subBinEscolhida").hidden = !subNomeDaSequencia;
+      $("subBinEscolhida").textContent = subNomeDaSequencia;
+      nleDasLeituras = "premiere";
+      receberTomadas(x.j);
+    }).catch(function (e) { dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false); });
+  }
+
+  function gerarMergedPremiere() {
+    if (!subLeituraId || !caixaSubclipar) { return; }
+    $("btSubclipes").disabled = true;
+    var nomeBin = (subNomeDaSequencia || "SEQUENCIA") + " MERGED";
+    var alvo = "25";
+    dizer(t("subclip.writing"), true);
+    progresso({ fraction: 0, state: "waiting", elapsed_ms: 0, eta: true });
+    premiere("sincAppVersion", [], 15000).then(function (v) {
+      alvo = alvoDaVersao(v);
+      return new Promise(function (ok, falha) {
+        comJob("/premiere/merged/gerar", { leitura_id: subLeituraId, padrao: caixaSubclipar.valor(), bin: nomeBin,
+                                           premiere_alvo: alvo }, [0, 0.8], ok, falha);
+      });
+    }).then(function (res) {
+      res = res || {};
+      dizer(t("subclip.prImporting"), true);
+      var aparos = (res.aparos || []).map(function (a) {
+        return a.chega_como + "\t" + a.nome + "\t" + a.in + "\t" + a.out;
+      }).join("\n");
+      // ⭐ Sem merged nenhum (todos soltos) não há `.prproj` a importar.
+      var importar = res.arquivo ? premiere("sincImportMerged", [res.arquivo, aparos], 180000) : Promise.resolve("");
+      return importar.then(function (txt) {
+        // Os clipes sem som direto saem como subclipe, na mesma bin (o órfão do Avid também é subclipe).
+        var soltos = (res.soltos || []).map(function (a) {
+          return a.caminho + "\t" + a.nome + "\t" + a.in + "\t" + a.out;
+        }).join("\n");
+        if (!soltos) return { res: res, txt: txt, soltos: "" };
+        return premiere("sincCriarSoltos", [nomeBin, soltos], 180000).then(function (s) {
+          return { res: res, txt: txt, soltos: s };
+        });
+      });
+    }).then(function (x) {
+      progresso(null);
+      var r = {};
+      linhasComAbas(x.txt).forEach(function (c) { r[c[0]] = c.slice(1).join("\t"); });
+      if (r.erro) throw new Error(r.erro);
+      var merged = Number(r.merged || 0);
+      var s = {};
+      linhasComAbas(x.soltos).forEach(function (c) { s[c[0]] = c.slice(1).join("\t"); });
+      if (s.erro) throw new Error(s.erro);
+      var soltos = Number(s.criados || 0);
+      var partes = [merged || soltos ? t("subclip.prDone", { n: merged, bin: nomeBin }) : t("subclip.prNothing")];
+      if (soltos) partes.push(t("subclip.prLoose", { n: soltos }));
+      if (s.falhas) partes.push(t("subclip.prLooseFailed", { nomes: s.falhas }));
+      var ign = x.res.ignoradas || [];
+      if (ign.length) partes.push(t("subclip.prSkipped", { n: ign.length, nomes: ign.join(", ") }));
+      if (r.falhas) partes.push(t("subclip.prTrimFailed", { nomes: r.falhas }));
+      dizer(partes.join(" · "), (merged > 0 || soltos > 0) && !r.falhas && !s.falhas);
+    }).catch(function (e) {
+      progresso(null);
+      dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false);
+    }).then(function () { $("btSubclipes").disabled = false; });
+  }
+
+  function lerParaRenomearPremiere() {
+    if (modoNle !== "premiere") { dizer(t("app.premiereOffline"), false); return; }
+    dizer(t("app.readingSelection"), true);
+    premiere("sincRenameScan", [], 60000).then(function (raw) {
+      raw = String(raw || "");
+      if (raw.indexOf("err|") === 0) throw new Error(raw.slice(4));
+      var projeto = "", enviados = [];
+      linhasComAbas(raw).forEach(function (c) {
+        if (c[0] === "projeto") { projeto = c.slice(1).join("\t"); return; }
+        if (c.length < 7) return;
+        enviados.push({ node_id: c[0], tipo: c[1], nome: c[2], colunas_json: c[3],
+                        xmp: { scene: c[4], take: c[5], bext: c[6] } });
+      });
+      if (!enviados.length) throw new Error(t("rename.nothing"));
+      return postJson("/premiere/renomear/ler", { projeto: projeto, itens: enviados });
+    }).then(function (j) {
+      nleDasLeituras = "premiere";
+      receberRenomear({ itens: j.itens, catalogo: j.catalogo, levantamento_id: j.levantamento_id });
+      $("renBlocoDesfazer").hidden = false;
+      $("renUltimoLote").textContent = t("rename.prUndoInfo");
+    }).catch(function (e) { dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false); });
+  }
+
+  // O host escreve cada nome SÓ se o de agora for o esperado — quem renomeou por cima não perde o trabalho.
+  function escreverNomesNoPremiere(plano) {
+    var texto = (plano || []).map(function (p) {
+      return p.node_id + "\t" + p.nome_atual + "\t" + p.nome_novo;
+    }).join("\n");
+    return premiere("sincRenameApply", [texto], 120000).then(function (raw) {
+      raw = String(raw || "");
+      if (raw.indexOf("erro\t") === 0) throw new Error(raw.slice(5));
+      var r = { ok: 0, igual: 0, diverge: [], ausente: 0, falhas: [] };
+      linhasComAbas(raw).forEach(function (c) {
+        if (c[0] === "ok") r.ok++;
+        else if (c[0] === "igual") r.igual++;
+        else if (c[0] === "diverge") r.diverge.push(c[2] || c[1]);
+        else if (c[0] === "ausente") r.ausente++;
+        else if (c[0] === "falha") r.falhas.push({ node_id: c[1], erro: c[2] || "" });
+      });
+      return r;
+    });
+  }
+
+  function aplicarRenomeacaoPremiere() {
+    if (!renameId || !caixaRenomear) { return; }
+    var bt = $("btRenomear"), undo = "";
+    bt.disabled = true;
+    dizer(t("rename.applying"), true);
+    premiere("sincAppVersion", [], 15000).then(function (versao) {
+      return postJson("/premiere/renomear/plano", {
+        levantamento_id: renameId, padrao: caixaRenomear.valor(),
+        indices: renameItens.map(function (_, i) { return i; }), versao: versao });
+    }).then(function (j) {
+      undo = j.undo_id;
+      return escreverNomesNoPremiere(j.plano);
+    }).then(function (r) {
+      postJson("/premiere/renomear/fim", { undo_id: undo, aplicados: r.ok, falhas: r.falhas }).catch(function () {});
+      mostrarResultado({ aplicados: r.ok, inalterados: r.igual,
+                         falhas: r.falhas.map(function (f) { return { nome_atual: f.node_id, erro: f.erro }; }) });
+      var extra = [];
+      if (r.diverge.length) extra.push(t("rename.prDiverged", { n: r.diverge.length }));
+      if (r.ok) extra.push(t("rename.prSaveHint"));
+      if (extra.length) dizer($("msg").textContent + " · " + extra.join(" · "), !r.diverge.length && !r.falhas.length);
+      renameId = null;
+    }).catch(function (e) {
+      bt.disabled = false;
+      dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false);
+    });
+  }
+
+  function desfazerPremiere() {
+    $("btDesfazer").disabled = true;
+    dizer(t("rename.undoing"), true);
+    var undo = "";
+    premiere("sincProjectPath", [], 15000).then(function (proj) {
+      return postJson("/premiere/renomear/desfazer", { projeto: String(proj || "") });
+    }).then(function (j) {
+      undo = j.undo_id;
+      return escreverNomesNoPremiere(j.plano);
+    }).then(function (r) {
+      postJson("/premiere/renomear/fim", { undo_id: undo, aplicados: r.ok, falhas: r.falhas, desfeito: true })
+        .catch(function () {});
+      var partes = [t("rename.undone", { n: r.ok })];
+      if (r.diverge.length) partes.push(t("rename.prDiverged", { n: r.diverge.length }));
+      if (r.ok) partes.push(t("rename.prSaveHint"));
+      dizer(partes.join(" · "), !r.diverge.length && !r.falhas.length);
+    }).catch(function (e) { dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false); })
+      .then(function () { $("btDesfazer").disabled = false; });
+  }
+
+  $("btLerSequenciaPr").addEventListener("click", function () { lerMergedPremiere(""); });
+  $("btLerSelecaoPr").addEventListener("click", lerParaRenomearPremiere);
+
+  function aplicarModo(novo) {
+    if (novo === modoNle) return;
+    modoNle = novo;
+    // ⭐ Sem programa conectado não há de onde arrastar: é a única hora em que a dica aparece.
+    $("arrastarDica").hidden = !!novo;
+    $("arrastarDica").textContent = novo ? "" : t("app.noProgramHint");
+    // ⭐ O Subclipar é do Media Composer (subclipe = mob do Avid; no Premiere o equivalente é o merged clip, que o
+    // Sincronizar já entrega). Na janela do app a subaba aparece com o MC conectado (demo de 2026-10-23, MC 24.6);
+    // no guarda-chuva quem decide as subabas é o modo embutido.
+    // O Renomear daqui também é do MC (`SetMobInfo`); o do Premiere vive no painel dele.
+    // ⭐ (2026-11-07) No Premiere as duas também existem: "Criar subclipe" faz MERGED clips (câmera + som direto num
+    // clipe só — o subclipe do Premiere) e o Renomear escreve pelo host.jsx. As mesmas telas; mudam as pontas
+    // (`textosDoNle`, `lerMergedPremiere`, `lerParaRenomearPremiere`…).
+    if (!EMBUTIDO) {
+      $("tabSubclip").hidden = !novo;
+      $("tabRename").hidden = !novo;
+      if (!novo && (abaAtual === "subclip" || abaAtual === "rename")) $("tabSources").click();
+    }
+    textosDoNle();
+    desenharFontes();
+    estadoPremiere = "";
+    pintarConexao();
+  }
+
+  function baterConexao() {
+    fetch("/conexao", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        aplicarModo(c.programa || null);
+        if (modoNle === "premiere" && !montando && !AJUSTES) {
+          pedirTrabalho();
+          premiere("sincEstado", [], 5000)
+            .then(function (r) { estadoPremiere = r; pintarConexao(); })
+            .catch(function () { /* a próxima batida tenta de novo */ });
+        }
+      })
+      .catch(function () { aplicarModo(null); });
+    fetch("/health", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { versaoDoApp = j.version || ""; pintarConexao(); })
+      .catch(function () {});
+  }
+
+  // ── Premiere: a seleção da bin vira a origem da caixa onde foi solta ─────────
+  // ⭐ No Premiere o arrasto de um CLIPE não diz qual clipe é (banco, premiere-cep/arrastar-e-selecao.md §6): o GESTO vem
+  // do arrasto e o DADO vem da seleção. Quem separa câmera de som é a caixa; a extensão só avisa quando vieram os dois.
+  function lerSelecaoPremiere(alvo) {
+    if (modoNle !== "premiere") { dizer(t("app.premiereOffline"), false); return; }
+    if (!alvo) { dizer(t("panel.dropOnBox"), false); return; }
+    dizer(t("app.readingSelection"), true);
+    premiere("sincGetSelectionPorBin", [], 30000)
+      .then(function (raw) {
+        var video = [], audio = [], bins = {};
+        String(raw || "").split("\n").forEach(function (ln) {
+          if (!ln) return;
+          var i = ln.indexOf("\t");
+          var bin = i >= 0 ? ln.slice(0, i) : "", caminho = i >= 0 ? ln.slice(i + 1) : ln;
+          bins[bin] = true;
+          (EXTENSAO_DE_AUDIO.test(caminho) ? audio : video).push(caminho);
+        });
+        if (!video.length && !audio.length) { dizer(t("app.noSelection"), false); return; }
+        var nomes = Object.keys(bins);
+        entregar(alvo, video, audio, nomes.length === 1 ? nomes[0] : null);
+      })
+      .catch(function (e) { dizer(t("result.failed", { msg: e.message }), false); });
+  }
+
+  // ── Premiere: o mapa do sync vira a sequência ────────────────────────────────
+  // ⚠️ PORTADO do painel CEP (`plugins/premiere-cep/js/main.js`: `flattenMap`,
+  // `packWithin`, `packByCamera`, `planLayout`), que é o caminho medido no 23.2. Lá
+  // ele continua para o painel antigo; aqui é o mesmo plano, com a ponte no lugar do
+  // `evalScript` direto. REGRA DO PREMIERE: `overwriteClip` põe vídeo E áudio no MESMO
+  // índice de track — a track de vídeo de cada câmera é a 1ª do bloco de áudio dela.
+  function planoDoPremiere(map, pathCamera) {
+    var video = [], audio = [], vistoSom = {}, revisar = [];
+    ((map && map.groups) || []).forEach(function (daily) {
+      var fps = daily.fps || 24;
+      (daily.camera_groups || []).forEach(function (cg) {
+        (cg.cameras || []).forEach(function (cam) {
+          video.push({ path: cam.path, start: (cam.timeline_start_frames || 0) / fps,
+                       dur: (cam.duration_frames || 0) / fps, ch: cam.audio_channels || 0 });
+          // a tomada seguinte da mesma câmera ficou no TC dela, por cima do fim desta
+          // (decisão do autor, 2026-10-21): um marcador para o editor revisar o corte
+          if (cam.flagged && cam.flag_reason === "overlap_cut") {
+            revisar.push({ start: (cam.timeline_start_frames || 0) / fps,
+                           nome: String(cam.path).split(/[\\/]/).pop() });
+          }
+        });
+      });
+      function som(s) {
+        if (!s || !s.path || vistoSom[s.path]) return;
+        vistoSom[s.path] = true;
+        audio.push({ path: s.path, start: (s.timeline_start_frames || 0) / fps,
+                     dur: (s.duration_ms || 0) / 1000, ch: s.channels || 2 });
+      }
+      (daily.takes || []).forEach(function (tk) { som(tk.sound); });
+      (daily.orphan_sounds || []).forEach(som);
+    });
+    if (!video.length && !audio.length) return null;
+    function camDe(p) { return pathCamera[p] || "CÂMERA"; }
+
+    function empilhar(itens) {
+      itens.sort(function (a, b) { return a.start - b.start; });
+      var fins = [];
+      itens.forEach(function (it) {
+        for (var k = 0; k < fins.length; k++) {
+          if (it.start >= fins[k] - 1e-6) { it.local = k; fins[k] = it.start + it.dur; return; }
+        }
+        it.local = fins.length; fins.push(it.start + it.dur);
+      });
+      return Math.max(1, fins.length);
+    }
+
+    // o som direto empilhado por fonte, como o `packByCamera` do painel CEP
+    var porFonte = {}, ordem = [];
+    audio.forEach(function (it) {
+      var c = pathCamera[it.path] || "SOM DIRETO";
+      if (!porFonte[c]) { porFonte[c] = []; ordem.push(c); }
+      porFonte[c].push(it);
+    });
+    var base = 0;
+    ordem.forEach(function (c) {
+      var n = empilhar(porFonte[c]);
+      porFonte[c].forEach(function (it) { it.track = base + it.local; });
+      base += n;
+    });
+    // ⭐ As trilhas de som direto são os canais do arquivo mais largo OU a pilha (um take mono é um canal por trilha).
+    var somCh = Math.max(1, base);
+    audio.forEach(function (a) { somCh = Math.max(somCh, a.ch || 2); });
+    var cams = [], camCh = {};
+    video.forEach(function (v) {
+      var c = camDe(v.path);
+      if (cams.indexOf(c) < 0) cams.push(c);
+      camCh[c] = Math.max(camCh[c] || 1, v.ch || 2);
+    });
+    var nomesA = [], trackDaCam = {}, nomeDaV = {}, cursor = somCh, ultima = -1;
+    for (var s = 0; s < somCh; s++) nomesA.push("SOM DIRETO");
+    cams.forEach(function (c) {
+      trackDaCam[c] = cursor; nomeDaV[cursor] = c; ultima = cursor;
+      var n = camCh[c] || 2;
+      for (var k = 0; k < n; k++) nomesA.push(c);
+      cursor += n;
+    });
+    var numV = ultima + 1, nomesV = [];
+    for (var tr = 0; tr < numV; tr++) nomesV.push(nomeDaV[tr] || "");
+
+    var regV = video.map(function (it) {
+      return "V\t" + it.path + "\t" + it.start.toFixed(4) + "\t" + trackDaCam[camDe(it.path)];
+    });
+    var regA = audio.map(function (it) {
+      return "A\t" + it.path + "\t" + it.start.toFixed(4) + "\t" + it.track;
+    });
+    return { numV: numV, totalAudio: nomesA.length, nomesV: nomesV, nomesA: nomesA,
+             registros: regV.concat(regA).join("\n"), revisar: revisar };
+  }
+
+  function camposDoResultado(res) {
+    var f = {};
+    String(res).replace(/^ok\|/, "").split("|").forEach(function (kv) {
+      var p = kv.split("=");
+      f[p[0]] = parseInt(p[1], 10) || 0;
+    });
+    return f;
+  }
+
+  // Importa o que falta, monta a sequência e marca o que revisar — o caminho do botão Sincronizar E o do pedido que
+  // vem do Ciclo Assist (`executarTrabalho`). Devolve o texto do `sincBuildSequence` (`ok|…` ou `err|…`).
+  function montarPeloPlano(plano, pathCamera, nome, formato) {
+    progresso({ fraction: 0.9, stage: t("app.importing"), elapsed_ms: 0 });
+    var caminhos = [], visto = {};
+    plano.registros.split("\n").forEach(function (l) {
+      var c = l.split("\t")[1];
+      if (c && !visto[c]) { visto[c] = true; caminhos.push(c); }
+    });
+    var rotulosDosCaminhos = caminhos.map(function (c) { return c + "\t" + (pathCamera[c] || ""); });
+    // O material pode nem estar no projeto (veio do Explorer): sem ProjectItem não há
+    // o que posicionar, e a montagem falharia inteira. Importa o que falta primeiro.
+    return premiere("sincImportMissing", [caminhos.join("\n"), nome, rotulosDosCaminhos.join("\n")], 300000)
+      .then(function (res) {
+        if (String(res).indexOf("err|") === 0) throw new Error(String(res).slice(4));
+        progresso({ fraction: 0.95, stage: t("app.building"), elapsed_ms: 0 });
+        return premiere("sincBuildSequence",
+          [plano.registros, nome, plano.numV, plano.totalAudio,
+           plano.nomesV.join("\t"), plano.nomesA.join("\t"),
+           formato ? formato.largura : "", formato ? formato.altura : "", formato ? formato.taxa : ""], 300000);
+      })
+      .then(function (res) {
+        res = String(res || "");
+        if (res.indexOf("err|") === 0 || !plano.revisar.length) return res;
+        var linhas = plano.revisar.map(function (r) {
+          return r.start.toFixed(4) + "\t" + t("app.reviewMarker") + "\t" + t("app.reviewComment", { name: r.nome });
+        });
+        return premiere("sincMarcadores", [linhas.join("\n")], 60000).then(function () { return res; });
+      });
+  }
+
+  function montarNoPremiere(result, bt, textoOriginal) {
+    var nome = ($("seqNome").value || "").trim() || t("panel.seqNameDefault");
+    var rots = rotulos(), pathCamera = {};
+    fontes.forEach(function (f, i) { (f.files || []).forEach(function (c) { pathCamera[c] = rots[i]; }); });
+    function encerrar() { montando = false; progresso(null); bt.textContent = textoOriginal; bt.disabled = false; }
+
+    var plano = planoDoPremiere(result, pathCamera);
+    if (!plano) {
+      encerrar();
+      // ⚠️ Mapa vazio quase nunca é "não achei nada": é o MOTOR que recusou a diária e
+      // explicou por quê. Mostrar a explicação, não um genérico.
+      var erros = ((result && result.groups) || []).filter(function (g) { return g && g.error; });
+      dizer(erros.length ? erros.map(function (g) { return g.error; }).join(" · ") : t("app.emptyMap"), false);
+      return;
+    }
+    montando = true;
+    bt.textContent = t("app.building");
+    var formato = formatoDaTimeline();
+    montarPeloPlano(plano, pathCamera, nome, formato)
+      .then(function (res) {
+        encerrar();
+        res = String(res || "");
+        if (res.indexOf("err|") === 0) throw new Error(res.slice(4));
+        var f = camposDoResultado(res), avisos = [];
+        if (formato && f.placed && (f.escala || 0) < f.placed) avisos.push(t("app.buildNoScale", { n: f.placed - (f.escala || 0) }));
+        if (plano.revisar.length) avisos.push(t("app.reviewCount", { n: plano.revisar.length }));
+        if (f.missing) avisos.push(t("app.buildMissing", { n: f.missing }));
+        if (f.failed) avisos.push(t("app.buildFailed", { n: f.failed }));
+        dizer([t("app.built", { name: nome, placed: f.placed || 0, audio: f.audio || 0 })]
+              .concat(avisos).join(" "), !avisos.length);
+      })
+      .catch(function (e) { encerrar(); dizer(t("result.failed", { msg: e.message }), false); });
+  }
+
+  // ── O PEDIDO DO CICLO ASSIST (a fila `/nlejob`) ──────────────────────────────
+  // ⭐ Dentro do guarda-chuva é ESTA página que monta no Premiere, pela ponte invisível — o painel CEP do Órbita não
+  // existe mais nesta máquina (a ponte o substitui ao ser instalada). O chat do Assist pede pela `/api/v1` (`nlejob`:
+  // montar o sync; `merge`: importar os merged em CENAS/<cena>); o trabalho fica na fila e quem vem buscar é a batida
+  // daqui. Perguntar com `?nle=premiere` também MARCA PRESENÇA: é o que faz a `/api/v1` aceitar (sem ninguém
+  // buscando, ela recusa com 412 em vez de deixar o trabalho numa fila sem dono).
+  // ⛔ Só com a ponte viva e nada sendo montado: quem tira da fila tem de conseguir executar.
+  // ⛔ Um pedido à fila por vez: quem TIRA o trabalho executa; dois em voo tirariam dois e montariam juntos.
+  var pedindo = false;
+  function pedirTrabalho() {
+    if (AJUSTES || modoNle !== "premiere" || montando || pedindo) return;
+    pedindo = true;
+    fetch("/nlejob?nle=premiere", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { pedindo = false; if (j && j.job) executarTrabalho(j.job); })
+      .catch(function () { pedindo = false; /* a próxima batida pergunta de novo */ });
+  }
+
+  function devolverTrabalho(id, nome, ok, resumo) {
+    fetch("/nlejob/done", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: id, name: nome, ok: !!ok, summary: resumo })
+    }).catch(function () { /* o resultado já foi dito na tela */ });
+  }
+
+  function executarTrabalho(job) {
+    montando = true;
+    var merged = job.tipo === "merged";
+    var nome = (job.name || "").trim() || (merged ? "MERGED" : t("panel.seqNameDefault"));
+    function fim(ok, resumo, texto) {
+      montando = false; progresso(null); dizer(texto, ok); devolverTrabalho(job.id, nome, ok, resumo);
+    }
+    function falhou(e) {
+      var msg = (e && e.message) || String(e);
+      fim(false, "err|" + msg, t("app.jobFailed", { msg: msg }));
+    }
+    if (merged) {
+      dizer(t("app.mergedImporting", { name: nome }), true);
+      progresso({ fraction: 0.5, stage: t("app.mergedImporting", { name: nome }), elapsed_ms: 0 });
+      premiere("sincImportMerged", [job.arquivo || "", ""], 300000)
+        .then(function (txt) {
+          var r = {};
+          String(txt || "").split("\n").forEach(function (l) {
+            var c = l.split("\t"); r[c[0]] = c.slice(1).join("\t");
+          });
+          if (r.erro) { fim(false, "erro|" + r.erro, t("app.jobFailed", { msg: r.erro })); return; }
+          var n = Number(r.merged || 0);
+          fim(true, "ok|merged=" + n + "|novos=" + (r.novos || 0) + "|bins=" + (r.bins || ""),
+              n ? t("app.mergedDone", { n: n, bins: r.bins || "—" }) : t("app.mergedNothing"));
+        })
+        .catch(falhou);
+      return;
+    }
+    var pathCamera = job.labels || {};
+    var plano = planoDoPremiere(job.map, pathCamera);
+    if (!plano) { fim(false, "err|" + t("app.emptyMap"), t("app.emptyMap")); return; }
+    dizer(t("app.jobReceived", { name: nome }), true);
+    montarPeloPlano(plano, pathCamera, nome)
+      .then(function (res) {
+        res = String(res || "");
+        if (res.indexOf("err|") === 0) { fim(false, res, t("app.jobFailed", { msg: res.slice(4) })); return; }
+        var f = camposDoResultado(res);
+        fim(true, res, t("app.built", { name: nome, placed: f.placed || 0, audio: f.audio || 0 }));
+      })
+      .catch(falhou);
+  }
+
+  // ── O ARRASTO pelo alvo NATIVO (`src-tauri/src/arrasto_win.rs`) ──────────────
+  // Na janela do app o drop da webview fica desligado (para o Avid, ele fazia o MC
+  // EXPORTAR um AAF com modal). Quem recebe é o alvo nativo, que avisa por aqui:
+  // `{fase: "sobre"|"saiu"|"soltou", tipo, dados?, caminhos?}`.
+  // o MESMO `aoSoltar` do drop dentro do MC: um `dataTransfer` de mentira com o payload que o alvo nativo leu
+  function soltarDoAvid(dados) {
+    aoSoltar({ types: [MIME_ASSETS_MC],
+               getData: function (k) { return k === MIME_ASSETS_MC ? dados : ""; } });
+  }
+
+  window.sincArrasto = function (ev) {
+    if (!ev) return;
+    if (ev.fase === "sobre") {
+      if (abaAtual === "sources" && ev.tipo !== "nada") { marcarAlvo(ev.x, ev.y); return; }
+      realcar(ev.tipo !== "nada");
+      return;
+    }
+    realcar(false);
+    apagarAlvo();
+    if (ev.fase !== "soltou") return;
+    // ⚠️ Só os Ajustes não recebem arrasto: o Subclipar e o Renomear têm o seu, e voltar sempre ao Sincronizar
+    // mandava a timeline solta no Subclipar para a aba errada (pilotado no MC 24.6, 2026-10-21).
+    if (abaAtual === "settings") aba("sources");
+    alvoDoSoltar = abaAtual === "sources" ? alvoEm(ev.x, ev.y) : null;
+    switch (ev.tipo) {
+      case "avid":
+        // ⭐ No MAC (`arrasto_mac.rs` do Ciclo Assist, 2026-11-07) o MC só entrega os MobIDs, sem a espécie: o
+        // servidor a pergunta à API (`/arrasto/mc`) e devolve os itens na forma do Windows.
+        if (!ev.dados && ev.mob_ids && ev.mob_ids.length) {
+          dizer(t("panel.dropReading", { n: ev.mob_ids.length }), true);
+          fetch("/arrasto/mc", { method: "POST", headers: { "Content-Type": "application/json" },
+                                 body: JSON.stringify({ mob_ids: ev.mob_ids }) })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+              if (!res || !res.ok) { dizer((res && res.erro) || t("panel.dropUnreadable"), false); return; }
+              soltarDoAvid(JSON.stringify(res.itens || []));
+            })
+            .catch(function (e) { dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false); });
+          return;
+        }
+        soltarDoAvid(ev.dados || "");
+        return;
+      case "premiere":
+      case "premiere_item":
+        // ⭐ (2026-11-07) No Subclipar, a SEQUÊNCIA arrastada vira merged clips; no Renomear, a seleção da bin
+        // vira a lista. O Premiere seleciona o que começa a ser arrastado: o dado vem da seleção.
+        if (abaAtual === "subclip") {
+          premiere("sincSelectedSequenceNode", [], 15000).then(function (r) {
+            r = String(r || "");
+            if (r === "err|notsequence") dizer(t("subclip.prOnlySequence"), false);
+            else if (r === "err|manysequences") dizer(t("subclip.prManySequences"), false);
+            else if (r.indexOf("err|") === 0) dizer(t("result.failed", { msg: r.slice(4) }), false);
+            else lerMergedPremiere(r);
+          }).catch(function (e) { dizer(t("result.failed", { msg: (e && e.message) || String(e) }), false); });
+          return;
+        }
+        if (abaAtual === "rename") { lerParaRenomearPremiere(); return; }
+        lerSelecaoPremiere(alvoDoSoltar);
+        return;
+      case "bin":
+        dizer(t("app.dropBin"), false);
+        return;
+      default:
+        dizer(t("panel.dropUnknown"), false);
+    }
+  };
+
+  function ligarCascaApp() {
+    document.body.classList.add("casca-app");
+    // Sincronizar e ⚙ (decisão 1 do organograma de 2026-10-21); Subclipar e Renomear aparecem com o MC (`aplicarModo`)
+    $("tabSubclip").hidden = true;
+    $("tabRename").hidden = true;
+    // o Sincronizar do rodapé é da subaba de fontes: no Subclipar e no Renomear ele seria um botão de outra tela
+    ["tabSources", "tabSubclip", "tabRename", "tabSettings"].forEach(function (id) {
+      $(id).addEventListener("click", function () {
+        $("rodapeSync").style.display = id === "tabSources" ? "" : "none";
+      });
+    });
+    $("rodape").hidden = false;
+    $("rodape").insertBefore($("prog"), $("rodapeSync"));
+    // o Sincronizar e a assinatura SOBEM para a barra fixa: o botão do passo sempre à vista,
+    // sem rolar a lista de fontes (cinco câmeras empurravam-no para fora da tela)
+    $("rodapeSync").appendChild($("btSync"));
+    $("rodapeAssinatura").appendChild($("assinaturaBy"));
+    $("rodapeAssinatura").appendChild(document.createTextNode(" "));
+    $("rodapeAssinatura").appendChild($("autor"));
+    $("assinatura").style.display = "none";
+    // a página ganha embaixo a altura da barra, para ela nunca cobrir nada
+    function ajustarBarra() { document.body.style.paddingBottom = ($("rodape").offsetHeight + 16) + "px"; }
+    ajustarBarra();
+    if (typeof ResizeObserver === "function") { new ResizeObserver(ajustarBarra).observe($("rodape")); }
+    // ⭐ Fase 4: o bloco "instalar a ponte do Premiere" fica escondido — a ponte é a única, do Ciclo Assist
+    $("hInstalar").textContent = t("app.installTitle");
+    $("hintInstalar").textContent = t("app.installPremiereHint");
+    $("btInstalar").textContent = t("app.installPremiere");
+    $("btInstalar").addEventListener("click", function () {
+      acaoSimples("/app/instalar-premiere", {}, $("btInstalar"), t("app.installed"));
+    });
+    // O pino: quem mexe na janela é o executável (`/app/fixar`); lembrado entre aberturas.
+    // No guarda-chuva a janela é dele — lá o `#status` inteiro some (CSS `.embutido`).
+    var CHAVE_PINO = "sincronizar.painel.pino";
+    function aplicarPino(fixar) {
+      var b = $("pino");
+      b.setAttribute("aria-pressed", fixar ? "true" : "false");
+      b.title = fixar ? t("app.pinOn") : t("app.pinOff");
+      try { localStorage.setItem(CHAVE_PINO, fixar ? "1" : ""); } catch (e) { /* só conveniência */ }
+      fetch("/app/fixar", { method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ fixar: fixar }) }).catch(function () {});
+    }
+    if (!EMBUTIDO) {
+      $("pino").hidden = false;
+      $("pino").addEventListener("click", function () {
+        aplicarPino($("pino").getAttribute("aria-pressed") !== "true");
+      });
+      var lembrado = false;
+      try { lembrado = localStorage.getItem(CHAVE_PINO) === "1"; } catch (e) { /* idem */ }
+      aplicarPino(lembrado);
+    }
+    modoNle = undefined;
+    aplicarModo(null);
+    baterConexao();
+    setInterval(baterConexao, BATIDA_MS);
+    // ⭐ Escondida no guarda-chuva, o WebKit do Mac para os temporizadores desta página: quem bate é o app
+    // (`bater_nas_escondidas` do Ciclo Assist, a cada pulso do supervisor).
+    window.sincBater = baterConexao;
+  }
+  if (CASCA_APP) ligarCascaApp();
+
+  // ⭐ Embutido no guarda-chuva do Ciclo Assist (ver o CSS `.embutido`): o mesmo contrato nos três apps.
+  if (EMBUTIDO) {
+    document.documentElement.classList.add("embutido");
+    // as subabas do Preparar: Sincronizar · Subclipar · Renomear — o modo app as escondia. ⭐ Era "Órbita" (2026-10-21);
+    // com o Órbita aposentado vira o nome da FUNÇÃO (plano um app só, 2026-11-07), o do dicionário.
+    $("tabSources").textContent = t("panel.tabSources");
+    $("tabSubclip").hidden = false;
+    $("tabRename").hidden = false;
+  }
+  // `configuracoes()` alterna; `configuracoes(false)` FECHA e volta à subaba de onde o editor veio — o guarda-chuva
+  // chama assim quando esta aba sai de vista (senão ela voltava nos ajustes, visto pelo autor em 2026-10-21).
+  var abaAntesDosAjustes = "tabSources";
+  window.cicloEmbutido = {
+    configuracoes: function (abrir) {
+      var aberta = $("tabSettings").classList.contains("on");
+      var querer = abrir === undefined ? !aberta : !!abrir;
+      if (querer === aberta) return;
+      if (querer) {
+        ["tabSources", "tabSubclip", "tabRename"].forEach(function (id) {
+          if ($(id).classList.contains("on")) abaAntesDosAjustes = id;
+        });
+        $("tabSettings").click();
+      } else {
+        $(abaAntesDosAjustes).click();
+      }
+    }
+  };
+
+  if (AJUSTES) {
+    document.documentElement.classList.add("so-ajustes");
+    aba("settings");
+  }
+
+  bater();
+  setInterval(bater, BATIDA_MS);
+})();
+</script>
+</body>
+</html>

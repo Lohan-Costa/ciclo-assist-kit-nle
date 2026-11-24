@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo Assist · ponte</title>
+<!--
+  A PONTE do Premiere (2026-10-21, o desenho do app único: a interface mora na JANELA do app).
+  Aberta pela extensão INVISÍVEL (`ponte_cep/`), ela só segura o long-poll em /premiere/pedido, roda o
+  pedido com evalScript e devolve em /premiere/resposta (`cicloassist/nle/premiere/ponte.py`). Antes quem
+  fazia isso era o painel inteiro dentro do Premiere; agora o painel mora na janela, que não tem
+  `__adobe_cep__`.
+
+  Script em arquivo próprio, não embutido: o De Lá Pra Cá mediu que a CSP do serviço dele recusa inline
+  (23.6, 2026-10-19), e uma ponte que carrega sem rodar não diz nada a ninguém.
+  Fora do Premiere (um navegador comum) não há `__adobe_cep__`: a página não pega pedido nenhum.
+-->
+</head>
+<body>
+<script src="/static/ponte.js"></script>
+</body>
+</html>

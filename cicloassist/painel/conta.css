@@ -1,0 +1,10 @@
+/* A seção Conta (`/conta`): por cima do desenho de Integrações (`integracoes.css`). */
+.acoes { display: flex; gap: 10px; margin-top: 4px; }
+.botao.perigo { border-color: #6b5426; color: var(--ambar); }
+.janela { margin: 10px 0 14px; }
+.janela .titulo { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 5px; }
+.janela .titulo b { font-weight: 600; }
+.janela .titulo span { color: var(--tinta-2); }
+.barra { height: 8px; border-radius: 4px; background: #2a2a2a; overflow: hidden; }
+.barra i { display: block; height: 100%; background: var(--realce); border-radius: 4px; }
+.barra.alto i { background: var(--ambar); }

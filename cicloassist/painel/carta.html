@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Carta Aberta — Ciclo Assist</title>
+<!-- A janela da Carta Aberta (fase C2 do plano docs/plano/2026-11-11-carta-aberta.md). Referência de visual e de
+     comportamento: docs/plano/prototipos/janela-carta-aberta.html (v3.4, aprovado pelo autor em 12/11). -->
+<link rel="stylesheet" href="/static/carta.css">
+</head>
+<body>
+<div class="janela" id="janela">
+  <div class="cabeca">
+    <div class="projeto">
+      <button type="button" class="botao projeto-nome" id="botaoProjeto" aria-haspopup="menu">Projeto ▾</button>
+      <div class="menu" id="menuProjeto" hidden style="top:32px;left:0"></div>
+    </div>
+    <span class="caminho" id="caminhoProjeto" title="A raiz do projeto, escolhida por você"></span>
+    <button type="button" class="botao decidir" id="botaoDecidir" hidden title="Empates e homônimos que o programa não decide sozinho">A decidir <b id="nDecidir">0</b></button>
+  </div>
+
+  <div class="corpo" id="corpo" hidden>
+    <aside class="arvore">
+      <div class="arvore-rot">Pastas</div>
+      <div class="arvore-lista" id="arvore" role="tree" aria-multiselectable="true"></div>
+      <div class="arvore-pe">
+        <button type="button" class="tracejado" id="novaPasta">+ Nova pasta</button>
+        <div class="quarentena" id="quarentena" hidden></div>
+      </div>
+    </aside>
+
+    <section class="direita">
+      <div class="direita-cabeca">
+        <h2 id="tituloPasta"></h2>
+        <span class="chave" aria-label="legenda do status">
+          <span><i class="ponto ok"></i>encontrada</span>
+          <span><i class="ponto warn"></i>a decidir</span>
+          <span><i class="ponto err"></i>sem mídia nesta máquina</span>
+          <span><i class="ponto item"></i>item</span>
+        </span>
+      </div>
+
+      <div class="faixa" id="faixa" hidden>
+        <span class="origem"></span>
+        <span class="conta"></span>
+        <button type="button" class="x" id="fecharFaixa" aria-label="fechar">×</button>
+      </div>
+
+      <!-- ⭐ A linha de ferramentas da lista (autor, 2026-11-13): busca e filtro entram aqui depois -->
+      <div class="ferramentas" id="ferramentas">
+        <label class="interruptor" title="Como o Show Reference Clips do Avid: cada subclipe, multicam ou nest da pasta mostra o que o compõe, mesmo o que mora em outra pasta ou foi removido da vista">
+          <input type="checkbox" id="mostrarReferenciados"><span class="trilho"></span>Mostrar clipes referenciados
+        </label>
+        <!-- ⭐ "Importar para X" (autor, 2026-11-14): X = o NLE aberto e conectado, nunca "Importar" sozinho; leva a
+             SELEÇÃO ao projeto aberto nele, para a bin selecionada (ou a aberta por último); só o ERRO aparece -->
+        <button type="button" class="botao importar" id="botaoImportar" hidden disabled></button>
+      </div>
+
+      <div class="tabela-caixa" id="caixa">
+        <table>
+          <colgroup><col style="width:58px"><col style="width:76px"><col style="width:48px"><col style="width:260px"><col style="width:120px"><col style="width:100px"><col style="width:64px"><col style="width:150px"></colgroup>
+          <thead><tr id="titulos"><th class="st" data-col="status">Status</th><th class="mini">&nbsp;</th><th class="ti" data-col="tipo">Tipo</th><th data-col="nome">Nome</th><th data-col="tc">TC início</th><th data-col="duracao_s">Duração</th><th data-col="fps">FPS</th><th data-col="codec">Codec</th></tr></thead>
+          <tbody id="linhas"></tbody>
+        </table>
+        <div class="solte" id="solte" hidden></div>
+      </div>
+
+      <!-- ⭐ O detalhe é recolhível (autor, 2026-11-14): a aba no meio e no topo do painel, e o estado fica lembrado -->
+      <div class="aba-detalhe-linha"><button type="button" class="aba-detalhe" id="abaDetalhe" aria-expanded="true" aria-controls="detalhe">Ocultar detalhes</button></div>
+      <div class="detalhe" id="detalhe"></div>
+    </section>
+  </div>
+
+  <div class="vazio-projeto" id="semProjeto" hidden>
+    <h2>Nenhum projeto aberto</h2>
+    <p>Um projeto da Carta Aberta é uma pasta (em rede) que você escolhe. A mídia nunca é copiada nem movida: só registrada.</p>
+    <div class="acoes"><button type="button" class="botao principal" id="vazioNovo">Novo projeto…</button><button type="button" class="botao" id="vazioAbrir">Abrir projeto…</button></div>
+    <p class="erro" id="vazioErro" hidden></p>
+  </div>
+
+  <footer class="rodape">
+    <span></span>
+    <p>Idealizado por Lohan Costa, edt.</p>
+    <span class="versao" id="versao"></span>
+  </footer>
+
+  <div class="menu" id="menuContexto" hidden></div>
+
+  <aside class="gaveta" id="gaveta" hidden aria-label="A decidir">
+    <div class="gaveta-cabeca"><h2>A decidir</h2><button type="button" class="botao" id="fecharGaveta">Fechar</button></div>
+    <div class="gaveta-corpo" id="casos"></div>
+  </aside>
+
+  <div class="dialogo-fundo" id="dialogoFundo" hidden>
+    <form class="dialogo" role="dialog" aria-modal="true" id="dialogo">
+      <h3 id="dTitulo"></h3>
+      <p id="dTexto"></p>
+      <div id="dCampos"></div>
+      <p class="erro" id="dErro" hidden></p>
+      <div class="acoes"><button type="button" class="botao" id="dCancelar">Cancelar</button><button type="submit" class="botao principal" id="dOk"></button></div>
+    </form>
+  </div>
+</div>
+<script src="/static/carta.js"></script>
+</body>
+</html>

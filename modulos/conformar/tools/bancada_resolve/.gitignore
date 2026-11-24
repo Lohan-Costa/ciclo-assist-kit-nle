@@ -1,0 +1,5 @@
+# fotos do vigia, logs e saídas das rodadas (descartáveis)
+*.png
+*.log
+*_out.json
+bancada_out/

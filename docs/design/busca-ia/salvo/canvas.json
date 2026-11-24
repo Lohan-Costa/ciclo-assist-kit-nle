@@ -1,0 +1,78 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 440,
+      "h": 620,
+      "title": "1 · Frase: imagem + decupagem"
+    },
+    {
+      "file": "Fala.dc.html",
+      "x": 520,
+      "y": 0,
+      "w": 440,
+      "h": 620,
+      "title": "2 · Fala: palavra ou frase"
+    },
+    {
+      "file": "Parecidos.dc.html",
+      "x": 1040,
+      "y": 0,
+      "w": 440,
+      "h": 620,
+      "title": "3 · Quadro arrastado do Avid"
+    },
+    {
+      "file": "Cobertura.dc.html",
+      "x": 0,
+      "y": 760,
+      "w": 440,
+      "h": 620,
+      "title": "4 · Nada achado, índice incompleto"
+    },
+    {
+      "file": "Grade.dc.html",
+      "x": 520,
+      "y": 760,
+      "w": 440,
+      "h": 620,
+      "title": "Alternativa · grade de miniaturas"
+    },
+    {
+      "file": "Estreito.dc.html",
+      "x": 1040,
+      "y": 760,
+      "w": 340,
+      "h": 620,
+      "title": "1 em 340 px (a menor janela)"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "regras",
+      "x": 1560,
+      "y": 0,
+      "w": 300,
+      "text": "Regras que a tela tem de mostrar, não só obedecer:\n\n• Só mídia de alguma bin do projeto ABERTO (Trash fora). Disco puro não entra.\n• Todo resultado diz POR QUE apareceu: imagem, fala ou decupagem.\n• O número em cada fonte é quanto já foi indexado — 'não achei' nunca vira 'não existe'.\n• Nome de personagem vem de roteiro/claquete/decupagem, nunca do rosto."
+    },
+    {
+      "id": "perguntas",
+      "x": 1560,
+      "y": 380,
+      "w": 300,
+      "text": "Para decidir com o editor:\n\n1. Lista (1) ou grade (alternativa)? - AMBOS, devemos ter botões para escolher a forma preferida e na grade ter um slide de zoom da miniatura, podendo aumentar ou diminuir sempre de forma responsiva.\n2. Clique no resultado: carrega na Source já no TC? Ou só seleciona? - clique simples, seleciona, clique duplo carrega no source\n3. Uma linha por MÍDIA com '+2 momentos', ou uma linha por momento? - '+2 momentos´ mas faltam botões \"próximo\" / \"anterior\" para mostrar quais outros momentos dentro do mesmo local só atualizando a miniatura ao lado. \n4. Filtros de campo (close, noite…) como botões, ou só a frase? - só a frase\n\n5. Miniaturas aqui são desenhos: no produto, o quadro real sai do cache local.\n\n\nobs geral: nenhum texto da interface deve ser mais escuro que #a3a3a3. "
+    },
+    {
+      "id": "note-1",
+      "x": 404,
+      "y": 131,
+      "w": 120,
+      "text": "adicionar visualização de lista ou miniatura aqui"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O Baselight no Ciclo Assist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<style>
+.fluxo { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.etapa { background: var(--surface-card); border: 2px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 8px; align-content: start; }
+.etapa .n { font: 500 13px var(--mono); color: var(--teal-strong); letter-spacing: 1px; }
+.etapa h3 { font-size: 18px; }
+.etapa p { font-size: 15px; color: var(--ink-muted); }
+.pergunta-app { background: var(--surface-dark); color: var(--on-dark); border-radius: 12px; padding: 22px; display: grid; gap: 14px; max-width: 560px; border: 2px solid #2E413D; }
+.pergunta-app h3 { color: #F3F7F5; font-size: 18px; }
+.pergunta-app p { color: #C9D6D2; font-size: 15px; }
+.pergunta-app .botoes { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { font: 600 14px var(--text); padding: 9px 14px; border-radius: 8px; border: 2px solid #5EE0CF; }
+.btn.cheio { background: #5EE0CF; color: #10302D; }
+.btn.vazio { background: transparent; color: #5EE0CF; }
+.estado-sim { color: var(--teal-strong); font-weight: 600; }
+.estado-nao { color: var(--amber-strong); font-weight: 600; }
+</style>
+</head><body>
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Ciclo Assist · Conformar · proposta</p>
+  <h1>O Baselight entra no app como mais um programa: o editor envia, o colorista recebe</h1>
+  <div class="barra"></div>
+  <p class="lead">A entrega, a conferência e a janela de conflito já fecham o laboratório BL08: <strong>19 de 19 planos</strong> certos no papel e <strong>18 de 18</strong> com mídia no render. Esta proposta leva esse caminho para dentro do app, nos três lugares em que ele aparece: a aba <strong>Daqui Pra Lá</strong>, o painel <strong>De Lá Pra Cá</strong> e a <strong>Carta Aberta</strong>.</p>
+</div></header>
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">Como foi decidido</p><h2>Quem faz o quê, e onde</h2></div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">Editor</span><h3>Envia pela aba Daqui Pra Lá</h3><p>O botão de mandar a timeline para o Baselight fica na aba de quem envia.</p></div>
+    <div class="card"><span class="selo">Colorista</span><h3>Recebe no De Lá Pra Cá</h3><p>O app reconhece que o programa aberto é o Baselight, como já reconhece Premiere, Resolve e Media Composer, e segue o fluxo normal de conform adaptado: casar com os originais, conferir pela imagem e registrar tudo.</p></div>
+    <div class="card"><span class="selo">Colorista</span><h3>Ou recebe pela Carta Aberta</h3><p>O botão Importar se adapta ao Baselight. A Carta não é conform: as mídias apontadas nela são as da timeline que chega.</p></div>
+  </div>
+  <div class="grade">
+    <div class="card"><span class="selo">Job</span><h3>Um por produção</h3><p>No Baselight, o <strong>job é o projeto</strong> e a <strong>scene é a timeline</strong>. Cada produção tem um job só; cada timeline enviada (e cada atualização dela) é uma scene dentro desse mesmo job.</p></div>
+    <div class="card"><span class="selo">Markers</span><h3>Toggle em opções avançadas</h3><p>Os planos com problema podem virar marker na scene, se o colorista quiser. A trilha de notas fica para depois.</p></div>
+    <div class="card"><span class="selo">Piloto</span><h3>Abre e controla o Baselight</h3><p>Quando a operação é pilotada, o piloto abre o Baselight e faz o que a API não alcança.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">A pergunta do Importar</p><h2>O Baselight só recebe, então o Importar pergunta o que fazer</h2>
+    <p class="muted">Na Carta Aberta, com o Baselight reconhecido como programa aberto:</p></div>
+  <div class="pergunta-app">
+    <h3>Levar a timeline C07 v2 para o Baselight</h3>
+    <p>Importar usa as mídias que a Carta aponta. Conformar casa cada plano com o original de câmera, confere pela imagem e abre a timeline no De Lá Pra Cá, onde faltam a pasta de mídias e o vid ref.</p>
+    <div class="botoes"><span class="btn vazio">Importar timeline</span><span class="btn cheio">Conformar com De Lá Pra Cá</span></div>
+  </div>
+  <p class="muted">Maquete estática do diálogo.</p>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O conform pelo De Lá Pra Cá</p><h2>Seis passos, todos já medidos no laboratório</h2></div>
+  <div class="fluxo">
+    <div class="etapa"><span class="n">1 · entrada</span><h3>Timeline, mídias e vid ref</h3><p>AAF do Media Composer, xmeml do Premiere ou a Carta; a pasta dos originais; o vídeo de referência.</p></div>
+    <div class="etapa"><span class="n">2 · casar</span><h3>Cada plano com o seu original</h3><p>Nome, reel, duração, TC; empate só se resolve pela imagem do daily. Se sobrar empate, a janela de conflito abre sozinha.</p></div>
+    <div class="etapa"><span class="n">3 · entrega</span><h3>O xmeml com o original certo</h3><p>Taxa, TC e posição na fonte corrigidos antes de o Baselight ler (a ponte pelo original). Sequência DPX na sintaxe da FilmLight.</p></div>
+    <div class="etapa"><span class="n">4 · conform</span><h3>Uma scene no job da produção</h3><p><code>bl-conform</code> com os originais e o espaço de cor da montagem.</p></div>
+    <div class="etapa"><span class="n">5 · conferência</span><h3>Arquivo, 1º e último quadro</h3><p>O que o Baselight trocou por conta própria é corrigido plano a plano; o que não se corrige vira marker (com o toggle ligado).</p></div>
+    <div class="etapa"><span class="n">6 · resumo</span><h3>Nada calado</h3><p>Certos, corrigidos e offline com motivo, na lista do app.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O ponto de partida</p><h2>O que já existe e o que falta</h2></div>
+  <div class="tabela"><table class="stack">
+    <thead><tr><th>Peça</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>Reconhecer o programa aberto</td><td><span class="estado-nao">falta o Baselight</span> · Premiere, Media Composer e Resolve já são reconhecidos</td></tr>
+      <tr><td>Importar da Carta Aberta</td><td><span class="estado-nao">falta o Baselight</span> · hoje só para o Premiere</td></tr>
+      <tr><td>Entrega com o original certo</td><td><span class="estado-sim">pronta</span> · medida no BL08</td></tr>
+      <tr><td>Timeline do Media Composer para o Baselight</td><td><span class="estado-sim">pronta</span> · P3 e P7 no ponto, que pelo AAF religado o Baselight errava</td></tr>
+      <tr><td>Conferência e correção plano a plano</td><td><span class="estado-sim">pronta</span> · medida no BL08</td></tr>
+      <tr><td>Markers pela API</td><td><span class="estado-nao">só no laboratório</span> · provado, falta levar ao app</td></tr>
+      <tr><td>Janela de conflito</td><td><span class="estado-sim">pronta</span> · no religar do app, abre sozinha no empate</td></tr>
+      <tr><td>Sequência de imagens</td><td><span class="estado-nao">quase</span> · casa e conforma, mas o Baselight a põe 7 quadros adiante (vira marker; causa pendente)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Atualizar corte</p><h2>Mudar só o que a montagem mudou, sem perder a cor</h2>
+    <p class="muted">Função do Ciclo Assist inteiro quando conforma, não só do Baselight.</p></div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">Pronto</span><h3>O motor que compara</h3><p>Compara a Carta de partida com a nova, nunca com a timeline do colorista; casa os planos pelo conteúdo, não pela posição; take trocado conta como plano novo. Funciona no Resolve; no Media Composer está como "em breve".</p></div>
+    <div class="card aviso"><span class="selo ambar">Falta</span><h3>A execução no Baselight</h3><p>Aplicar só a diferença na scene que já tem cor: inserir o plano novo, tirar o retirado, aparar. Antes de desenhar, medir o que a API e o <code>bl-shots</code> permitem fazer numa scene existente sem reconformar.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Ordem</p><h2>Cinco etapas</h2></div>
+  <ol class="passos">
+    <li>Reconhecer o Baselight aberto (versão, job e scene no topo do app).</li>
+    <li>De Lá Pra Cá com o Baselight: entrega e conferência ligadas ao painel, o job da produção, o toggle de markers.</li>
+    <li>Carta Aberta: o Importar com a pergunta.</li>
+    <li>Daqui Pra Lá: "Enviar para o Baselight".</li>
+    <li>Atualizar corte: medir no Baselight o que dá para mudar numa scene com cor; depois a proposta da execução.</li>
+  </ol>
+  <p class="muted">Cada etapa fecha com o laboratório BL08 (papel e render) e, a partir da segunda, com o PRODUCAO-C.</p>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Como foi decidido</p><h2>As quatro respostas</h2></div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">1</span><h3>O editor envia pela Carta Aberta</h3><p>Por enquanto, só por ela. Um "collect media" no Daqui Pra Lá pode vir depois.</p></div>
+    <div class="card acao"><span class="selo">2</span><h3>A produção decide o job</h3><p>No Daqui Pra Lá, um campo opcional com o nome da produção, herdado do projeto aberto ou indicado por quem envia. Ao importar com o Baselight aberto: mesma produção do job aberto, importa direto; outra, pergunta "importar no job aberto ou criar um novo?", com a opção pequena "não perguntar novamente". Criar pede um nome ou um job que já existe. Num fluxo com a IA operando, o nome do job vai no prompt.</p></div>
+    <div class="card acao"><span class="selo">3</span><h3>"import 02", não "V02"</h3><p>Uma scene nova a cada importação, nunca sobrescrever. O nome diz que é uma nova importação, não uma versão da montagem: <code>C07 v2 · import 02</code>.</p></div>
+    <div class="card acao"><span class="selo">4</span><h3>Atualizar corte pelo Baselight</h3><p>Primeiro um projeto sintético no laboratório, para simular os cenários com controle, inclusive a timeline bagunçada que o colorista arruma antes de a atualização chegar.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Laboratório do atualizar corte</p><h2>Uma mudança de cada tipo, isolada e depois combinada</h2>
+    <p class="muted">Montagem v1 sintética, conform no Baselight, "cor" simulada por plano e marcada no quadro; depois a v2.</p></div>
+  <ol class="passos">
+    <li>Plano novo no meio; plano retirado; plano aparado na cabeça e na cauda; plano trocado por outro take; plano movido de lugar.</li>
+    <li>Planos que só andaram porque algo entrou antes: não mudaram, e a cor tem de ficar.</li>
+    <li>A timeline bagunçada: trilhas sobrepostas, planos invisíveis e cortes desnecessários no mesmo take. O colorista achata e junta; a v2 mexe num plano que ele juntou.</li>
+    <li>O render que a cor devolveu à montagem voltando dentro da v2: sai da conta pelo reel e pelo TC.</li>
+  </ol>
+  <p class="muted">A medida: o que a cor da v1 preservou, plano a plano, no render da scene atualizada. A comparação é sempre contra a Carta de partida, nunca contra a scene do colorista.</p>
+</section>
+
+<footer class="rodape"><span>Ciclo Assist · o Baselight no app</span><span>Proposta · 22/11/2026</span></footer>
+</main>
+</body></html>

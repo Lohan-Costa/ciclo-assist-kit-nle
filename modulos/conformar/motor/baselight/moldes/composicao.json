@@ -1,0 +1,440 @@
+{
+"origem": "estudo BL07_box.blscene (a caixa feita \u00e0 m\u00e3o, Baselight 7.0.3, 2026-11-21): os descendentes da camada 97, do fundo 104 e da shape 109, na vis\u00e3o de BYTES do BLG (latin1)",
+"raizes": {
+"camada": 97,
+"fundo": 104,
+"shape": 109
+},
+"seq": 106,
+"cd": 107,
+"raio": 119,
+"objetos": {
+"97": [
+"GR_InsideOutsideRop",
+"gr_insideoutside",
+7,
+[
+0,
+98,
+101
+],
+"2 d i4 f 0000000000000000 17:Layer:1 Comp:Over 42c9999a 3e4ccccd 3f800000 2 0 0 0 0 Z 5 6 1 308281440 f 1 0: -1 -1 30 0: 17:GR_PerspectiveRop f f f 15:GR_TransformRop f f f 15:GR_TransformRop f f f 16:GR_CurveGradeRop f f f 16:GR_CurveGradeRop f f f 16:GR_VideoGradeRop f f f 16:GR_VideoGradeRop f f f 15:GR_FilmGradeRop f f f 15:GR_FilmGradeRop f f f 15:GR_BaseGradeRop t 2 f f 15:GR_BaseGradeRop f f f "
+],
+"98": [
+"GM_Integer",
+"gr_insideoutside",
+1,
+[],
+"5 "
+],
+"101": [
+"GR_BaseGradeRop",
+"gr_BaseGrade",
+14,
+[
+0
+],
+"40 f 0000000000000000 f 0000000000000000 f 0000000000000000 f 0000000000000000 f 3ff0000000000000 f 0000000000000000 f 3ff0000000000000 f 0000000000000000 f bff0000000000000 f 3fe8000000000000 f 0000000000000000 f 0000000000000000 f 3ff0000000000000 f 0000000000000000 f 4000000000000000 f 3fe0000000000000 f 0000000000000000 f 0000000000000000 f 3ff0000000000000 f 0000000000000000 f 3ff0000000000000 f 3fe8000000000000 f 0000000000000000 f 0000000000000000 f 3ff0000000000000 f 0000000000000000 f bff0000000000000 f 3fe0000000000000 f 0000000000000000 f 0000000000000000 f 3ff0000000000000 f 0000000000000000 d i0 d f0x1p+0 d f0x1p+0 d f0x1p+0 d i0 d i2 d s11:BradfordLMS d s7:BaseLMS 9:BaseGrade 42c80000 3f800000 00000000 2 0 0 0 0 Z 4 0 "
+],
+"104": [
+"GR_InsideOutsideRop",
+"gr_insideoutside",
+7,
+[
+0,
+105,
+106
+],
+"2 d Z f 0000000000000000 7:Layer:0 42ca0000 3f800000 3f800000 2 0 0 0 0 Z 5 4 0 304087110 f 1 5:Input -1 -1 0 0: 0: 0: 0: 26:GR_ImageTransformParamsRop f f f 0: 14:GR_SequenceRop t 2 f f 0: "
+],
+"105": [
+"GM_Integer",
+"gr_insideoutside",
+1,
+[],
+"3 "
+],
+"106": [
+"GR_SequenceRop",
+"gr_sequence",
+5,
+[
+107
+],
+"9 d s12:HD 1920x1080 d s99:/Volumes/SSD/PROGRAMAS COM CLAUDE/laboratorio-de-midia/saida/base/B14_MASCARA/B14_FUNDO.mov d f0x0p+0 d f0x1p+0 d i1 d Z z d Z d Z 102:BG /Volumes/SSD/PROGRAMAS COM CLAUDE/laboratorio-de-midia/saida/base/B14_MASCARA/B14_FUNDO.mov 42ca0000 3f800000 3f800000 2 0 0 0 0 Z 7 7:AT_NONE z i0 i0 i0 1 14:FM_PROGRESSIVE 10:Video_Full \nt1 \n s13:from_metadata i1 4037f9db22d0e560 4:None 4:Auto s4:Auto 7:unscale 131073 1 0 0 "
+],
+"107": [
+"GM_ConformData",
+"gm",
+4,
+[],
+"t 0 t 0 t 0 t 288 t 0 t 288 f t 17:tc:0,0,0,0,0,0,24 f f f f f f f f f f f f f f f f f f f f f f t 0 1920 0 1080 f f t 2 1 10 s12:gmcd_History a1 \nt3 \n s6:Action s7:Created \n s7:Message s17:Sequence Inserted \n s9:Timestamp f0x1.94a61048p+29 s13:gmcd_ClipName s9:B14_FUNDO s14:gmcd_MediaType s15:QuickTime Movie s14:gmcd_NativeFPS f0x1.7f9dccp+4 s16:gmcd_SizeInBytes f0x1.de7abap+23 s17:gmcd_DecodeParams s111:codec=\"ProRes\";plugin=\"YCCtoRGB\";YCCtoRGB.mode=\"HD\";YCCtoRGB.filter422=1;proresv210=1;vpp=3;legal=1;lqtvers=18; s20:gmcd_ConformClipName s9:B14_FUNDO s21:gmcd_AudioNumChannels i0 s23:gmcd_SequenceDescriptor q25976 4:.mov 29472 0 25888 287 28786 9:B14_FUNDO 28769 85:/Volumes/SSD/PROGRAMAS COM CLAUDE/laboratorio-de-midia/saida/base/B14_MASCARA 29292 85 30496 1920 26656 1080 24946 3ff0000000000000 19814 4037f9dcc0000000 28004 \nt4 \n s4:Clip s9:B14_FUNDO \n s6:Source s16:Apple ProRes 422 \n s8:Software s13:Lavf62.12.102 \n s9:MediaType s15:QuickTime Movie 29805 1791648724 29816 1791648724 29562 15678813 20577 111:codec=\"ProRes\";plugin=\"YCCtoRGB\";YCCtoRGB.mode=\"HD\";YCCtoRGB.filter422=1;proresv210=1;vpp=3;legal=1;lqtvers=18; 29300 15:QuickTime Movie 23901 s24:gmcd_DefaultDecodeParams s111:codec=\"ProRes\";plugin=\"YCCtoRGB\";YCCtoRGB.mode=\"HD\";YCCtoRGB.filter422=1;proresv210=1;vpp=3;legal=1;lqtvers=18; "
+],
+"109": [
+"GR_ShapeRop",
+"gr_shape",
+3,
+[
+121,
+0
+],
+"1 o 0 5:Shape 42c80000 3f800000 3f800000 2 0 0 0 1 Z 3 f f t 13:ClassicSCurve 5:Union "
+],
+"121": [
+"BEZ_FilledShapeInterp",
+"bez",
+1,
+[
+118,
+119,
+120,
+154
+],
+"0 f 1 0 f f 3 o 1 o 2 o 3 "
+],
+"118": [
+"BEZ_Transform2dInterp",
+"bez",
+2,
+[
+111,
+112,
+113,
+114,
+115,
+116,
+117
+],
+"8 z o 0 o 1 o 2 o 3 o 4 o 5 o 6 "
+],
+"111": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+],
+"112": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+],
+"113": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"114": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"115": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"116": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fe0000000000000 23:6 0 0 0 0 -1 0.001 0.5  "
+],
+"117": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fd2000000000000 27:6 0 0 0 0 -1 0.001 0.28125  "
+],
+"119": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fd0000000000000 24:6 0 0 0 0 -1 0.001 0.25  "
+],
+"120": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+],
+"154": [
+"BEZ_Bezier2dInterp",
+"bez",
+1,
+[
+129,
+135,
+134,
+133,
+132,
+131,
+130,
+141,
+140,
+139,
+138,
+137,
+136,
+147,
+146,
+145,
+144,
+143,
+142,
+153,
+152,
+151,
+150,
+149,
+148
+],
+"4 26 o 0 z o 1 o 2 o 3 o 4 o 5 o 6 o 7 o 8 o 9 o 10 o 11 o 12 o 13 o 14 o 15 o 16 o 17 o 18 o 19 o 20 o 21 o 22 o 23 o 24 "
+],
+"129": [
+"BEZ_Transform2dInterp",
+"bez",
+2,
+[
+118,
+122,
+123,
+124,
+125,
+126,
+127,
+128
+],
+"8 o 0 o 1 o 2 o 3 o 4 o 5 o 6 o 7 "
+],
+"122": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+],
+"123": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff0000000000000 21:6 0 0 0 0 -1 0.001 1  "
+],
+"124": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"125": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"126": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"127": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fe0000000000000 23:6 0 0 0 0 -1 0.001 0.5  "
+],
+"128": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fd2000000000000 27:6 0 0 0 0 -1 0.001 0.28125  "
+],
+"135": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fd0000000000000 24:6 0 0 0 0 -1 0.001 0.25  "
+],
+"134": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fc2000000000000 28:6 0 0 0 0 -1 0.001 0.140625  "
+],
+"133": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"132": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"131": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff921fb54442d18 40:6 0 0 0 0 -1 0.001 1.570796326794896558  "
+],
+"130": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"141": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fd0000000000000 24:6 0 0 0 0 -1 0.001 0.25  "
+],
+"140": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fdb000000000000 28:6 0 0 0 0 -1 0.001 0.421875  "
+],
+"139": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f bff921fb54442d18 41:6 0 0 0 0 -1 0.001 -1.570796326794896558  "
+],
+"138": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"137": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"136": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"147": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fe8000000000000 24:6 0 0 0 0 -1 0.001 0.75  "
+],
+"146": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fdb000000000000 28:6 0 0 0 0 -1 0.001 0.421875  "
+],
+"145": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 400921fb54442d18 40:6 0 0 0 0 -1 0.001 3.141592653589793116  "
+],
+"144": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"143": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f bff921fb54442d18 41:6 0 0 0 0 -1 0.001 -1.570796326794896558  "
+],
+"142": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"153": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fe8000000000000 24:6 0 0 0 0 -1 0.001 0.75  "
+],
+"152": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3fc2000000000000 28:6 0 0 0 0 -1 0.001 0.140625  "
+],
+"151": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 3ff921fb54442d18 40:6 0 0 0 0 -1 0.001 1.570796326794896558  "
+],
+"150": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+],
+"149": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 400921fb54442d18 40:6 0 0 0 0 -1 0.001 3.141592653589793116  "
+],
+"148": [
+"GM_Bezier1dInterp",
+"gm",
+1,
+[],
+"0 f 0000000000000000 21:6 0 0 0 0 -1 0.001 0  "
+]
+}
+}

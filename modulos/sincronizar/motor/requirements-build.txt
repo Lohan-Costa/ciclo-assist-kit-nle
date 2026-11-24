@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+# (a linha acima é obrigatória: ver o cabeçalho do `requirements.txt`)
+# Dependências de BUILD (empacotar o sidecar). Ver o cabeçalho do
+# `requirements.txt` para o porquê das versões fixas.
+-r requirements.txt
+
+# ⚠️ O PyInstaller é ferramenta de GERAÇÃO DE CÓDIGO dentro do caminho do build —
+# um release adulterado dele produziria um instalador adulterado sem que nada no
+# nosso código mudasse. É o pacote onde a versão fixa mais importa.
+# 6.22.2: e a versao que o `>=6.0.0` resolveu no build da v0.3.0 (o que esta
+# instalado hoje na base), publicada ha 5 dias — passa a quarentena de 3 dias.
+pyinstaller==6.22.2
+grpcio-tools==1.83.0
+
+# ⛔ `setuptools` FIXADO E ATUALIZADO — a auditoria de 2026-08-23 achou o venv em
+# 65.5.0, de 2022, com CVE-2024-6345 (RCE, 8.8) e CVE-2025-47273 (path traversal,
+# 8.7) no `package_index`, além do CVE-2026-59890.
+#
+# ⭐ O 59890 é o que encosta na ameaça REAL deste projeto e por isso vale a nota:
+# num sistema de arquivos do macOS (APFS/HFS+), uma colisão de normalização Unicode
+# NFC/NFD faz um arquivo que o `MANIFEST.in` manda EXCLUIR entrar no pacote assim
+# mesmo. Metade do desenvolvimento acontece no macOS, e o modelo de publicação
+# inteiro do Órbita é "a allowlist decide o que sai" — é a mesma classe de falha
+# que o `publish.py` existe para prevenir.
+setuptools==84.0.0

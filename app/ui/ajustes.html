@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo Assist — Configurações</title>
+<!-- A JANELA DE CONFIGURAÇÕES (autor, 2026-11-07): a coluna à esquerda e o conteúdo à direita. Geral e Entregar são
+     desenhados AQUI; a seção de um módulo é a tela de ajustes dele, e Integrações é a página `/integracoes` do serviço
+     do Assist, numa webview que o app põe por cima da
+     área de conteúdo (`src/ajustes.rs`). ⚠️ A largura da coluna (`--coluna`) é a `COLUNA` de lá: as duas andam juntas. -->
+<link rel="stylesheet" href="ajustes.css">
+</head>
+<body>
+<nav class="coluna" aria-label="Seções">
+  <p class="grupo">Aplicativo</p>
+  <button type="button" data-secao="geral">Geral</button>
+  <button type="button" data-secao="integracoes">Integrações</button>
+  <button type="button" data-secao="conta">Conta</button>
+  <p class="grupo">Módulos</p>
+  <button type="button" data-secao="preparar">Preparar</button>
+  <button type="button" data-secao="assistir">Assistir</button>
+  <button type="button" data-secao="conformar">Conformar</button>
+  <button type="button" data-secao="entregar">Entregar</button>
+</nav>
+
+<main>
+  <section data-conteudo="geral" hidden>
+    <h1>Geral</h1>
+    <div class="bloco">
+      <h2>Versão</h2>
+      <p>Ciclo Assist <strong id="versao">…</strong></p>
+    </div>
+    <div class="bloco">
+      <h2>Janela</h2>
+      <label class="chave">
+        <input type="checkbox" id="pino">
+        <span>Manter a janela do Ciclo Assist na frente do Media Composer, do Premiere e do Resolve</span>
+      </label>
+      <p class="explica">É o mesmo pino do topo da janela principal.</p>
+    </div>
+    <div class="bloco">
+      <h2>Ao abrir</h2>
+      <label class="linha" for="inicio">O Ciclo Assist começa em
+        <select id="inicio">
+          <option value="assistir">Assistir</option>
+          <option value="preparar">Preparar</option>
+          <option value="conformar">Conformar</option>
+          <option value="ultima">a última aba usada</option>
+        </select>
+      </label>
+      <p class="explica" id="inicioRecado">Vale a partir da próxima vez que o app abrir.</p>
+    </div>
+    <div class="bloco">
+      <h2>Pasta de dados</h2>
+      <p class="explica">Onde o app guarda as preferências, o registro e o cache de cada módulo.</p>
+      <p class="caminho" id="pasta">…</p>
+      <button type="button" class="botao" id="abrirPasta">Abrir a pasta</button>
+    </div>
+  </section>
+
+  <section data-conteudo="entregar" hidden>
+    <h1>Entregar</h1>
+    <p class="explica">O módulo Entregar (Promo Entrega) ainda não está no Ciclo Assist. Os ajustes dele aparecem aqui
+      quando ele chegar.</p>
+  </section>
+
+  <section data-conteudo="fora" hidden>
+    <h1 id="foraTitulo"></h1>
+    <p class="explica" id="foraTexto"></p>
+    <button type="button" class="botao" id="foraTentar">Tentar de novo</button>
+  </section>
+</main>
+<script src="ajustes.js"></script>
+</body>
+</html>

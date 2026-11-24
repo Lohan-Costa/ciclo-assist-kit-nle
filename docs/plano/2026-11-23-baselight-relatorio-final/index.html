@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ciclo Assist no Baselight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<style>
+/* VOICE relatório de registro, do design system do autor (tema.css)
+   IDEA o placar de um conform: cada plano conferido, o que não chegou dito
+   PICTURE os números da capa + as telas do app e do Baselight
+   COLOUR as do tema: verde-água, âmbar só para alerta
+   TYPE Space Grotesk / IBM Plex Sans / IBM Plex Mono
+   LAYOUT capa escura, seções com cabeçalho, tabelas que empilham no celular */
+.paineis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:18px;align-items:start}
+.paineis figure img{max-height:620px;object-fit:cover;object-position:top}
+.secoes{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0;padding:14px 0 0;list-style:none}
+.secoes a{white-space:nowrap}
+td.n{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.capa .secoes a{color:var(--teal)}
+@media(max-width:600px){.stack td.n{text-align:left}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head><body>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Baselight · relatório final · 21 a 23/11/2026</p>
+  <h1>O corte do Premiere e do Media Composer chega ao Baselight nos originais, e o que não chega é dito</h1>
+  <div class="barra"></div>
+  <p class="lead">Dois casos reais, um do Premiere e um do Media Composer, conformados no Baselight 7.0.3 e conferidos plano a plano contra o vídeo de referência. Em volta deles, um laboratório de mídia sintética que procurou de propósito o erro que <strong>ninguém vê</strong>: o arquivo trocado, o quadro adiantado, a cor que some. O Ciclo Assist passou a fazer o caminho inteiro de dentro do app: conformar, conferir, corrigir, marcar e, quando o corte muda, levar a cor do colorista para a versão nova.</p>
+  <div class="numeros">
+    <div class="numero"><b>132/133</b><span>PRODUCAO-C (Premiere) contra o vídeo de referência</span></div>
+    <div class="numero"><b>100/100</b><span>PRODUCAO-A (Media Composer) contra o vídeo de referência</span></div>
+    <div class="numero"><b>99/99</b><span>PRODUCAO-A: a cor do colorista levada ao corte final</span></div>
+    <div class="numero"><b>11</b><span>erros calados achados no laboratório e corrigidos</span></div>
+  </div>
+  <ul class="secoes">
+    <li><a href="#casos">Os dois casos</a></li><li><a href="#laboratorio">O laboratório</a></li><li><a href="#atualizar">Atualizar corte</a></li><li><a href="#app">No app</a></li><li><a href="#calados">Erros calados</a></li><li><a href="#limites">Limites</a></li>
+  </ul>
+</div></header>
+
+<main class="wrap">
+
+<section id="casos">
+  <div class="cab"><p class="eyebrow">Caso 1 · Premiere 26.5 → Baselight</p><h2>PRODUCAO-C: 132 de 133 pontos, com retime, máscaras e títulos</h2>
+    <p class="muted">O trailer (projeto <code>PRODC_FINAL_isolado_1.prproj</code>) foi lido pelo leitor do Conformar, conformado nos originais e traduzido sem clique: retime pelo gráfico Time×Time, Motion, dez composições com máscara e sete títulos. O único ponto que falta (08:18, "THE") é o tracking de letras do título do Premiere, que o Text do Baselight não tem. A cor do offline fica com o colorista, como foi decidido.</p></div>
+  <div class="telas duas">
+    <figure><a href="img/q528.jpg"><img src="img/q528.jpg" alt="Quadro 528: referência e Baselight lado a lado"></a><figcaption><b>Composição com máscara</b>22 s: a escadaria entra atrás da perna, no segundo trecho do fundo. Semelhança com a referência de 0,67 para 1,00.</figcaption></figure>
+    <figure><a href="img/q1530.jpg"><img src="img/q1530.jpg" alt="Quadro 1530: referência e Baselight lado a lado"></a><figcaption><b>Imagem parada</b>64 s: o logo era lido como sequência de imagens e saía preto. De 0,00 para 1,00.</figcaption></figure>
+  </div>
+  <p>O que não foi traduzido entrou como marker "[Ciclo]" na scene, no plano:</p>
+  <div class="tabela"><table class="stack"><thead><tr><th>Quadro</th><th>O quê</th></tr></thead><tbody id="PRODC"></tbody></table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Caso 2 · Media Composer 25.12 → Baselight</p><h2>PRODUCAO-A: 100 de 100 planos nos BRAW originais</h2>
+    <p class="muted">O AAF do curta (<code>PRODA_RELINKER_ALTA.aaf</code>) conformado direto nos BRAW do HD original, 100 % pelo TapeName e pelo ClipName em 17 s. Dois acertos foram necessários: o FrameFlex (o MC preenche o quadro e o Baselight encaixava a câmera B, que é DCI) e o título, que o AAF traz só como texto (estilo medido no vídeo de referência e recriado como Text numa camada).</p></div>
+  <div class="telas duas">
+    <figure><a href="img/cr_scene.jpg"><img src="img/cr_scene.jpg" alt="Baselight com o Job Manager mostrando a scene CR03T3"></a><figcaption><b>A scene final</b>CR03T3 no job LAB_BASELIGHT; o último EDL é o AAF do curta.</figcaption></figure>
+    <figure><a href="img/cr_titulo.jpg"><img src="img/cr_titulo.jpg" alt="O título PRODUCAO-A na referência e no Baselight"></a><figcaption><b>O título recriado</b>Referência e Baselight. O fade fica no tempo certo e um pouco mais escuro nas pontas: a curva do dissolve do Baselight (aviso no marker).</figcaption></figure>
+  </div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Quadro</th><th>Marker "[Ciclo]"</th></tr></thead><tbody id="cruz"></tbody></table></div>
+</section>
+
+<section id="laboratorio">
+  <div class="cab"><p class="eyebrow">Laboratório BL08 · casamento</p><h2>O Baselight sozinho troca arquivos calado; com a conferência do Ciclo, não</h2>
+    <p class="muted">Dez pegadinhas de mídia sintética (mesmo nome em dois dias, TC zerado, daily renomeado, acento, drop-frame, sequência DPX…), montadas no Premiere 2027 e no Media Composer 25.12 e conferidas no render pelo código de barras de cada quadro. Certo · alerta (o editor fica sabendo) · errado calado.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Caminho</th><th class="c">Certo</th><th class="c">Alerta</th><th class="c">Errado</th><th>Onde erra</th></tr></thead><tbody id="bl08"></tbody></table></div>
+  <figure><a href="img/premiere_montagem.jpg"><img src="img/premiere_montagem.jpg" alt="A sequência do laboratório no Premiere 2027"></a><figcaption><b>A montagem do laboratório</b>No Premiere 2027, montada pela ponte, sem mouse. Cada cor de fundo é uma câmera: é por ela que o render denuncia a troca de arquivo.</figcaption></figure>
+</section>
+
+<section id="atualizar">
+  <div class="cab"><p class="eyebrow">Laboratório BL09 · atualizar corte</p><h2>Quando o corte muda, a cor do colorista vai para a versão nova, conferida plano a plano</h2>
+    <p class="muted">A v1 com uma cor que identifica cada plano; a v2 com uma mudança de cada tipo. O Ciclo conforma a v2 numa scene NOVA (a do colorista fica intacta), cola a cor pelo Multi-Paste (arquivo + TC), confere cada plano pela impressão da cor e corrige o que discordar pela cópia do BLG. O que não tem cor de origem é dito em marker.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Situação</th><th class="c">Resultado</th><th>O que mudou no Ciclo</th></tr></thead><tbody id="bl09"></tbody></table></div>
+  <figure><a href="img/resolve_364.jpg"><img src="img/resolve_364.jpg" alt="Quadro do original A002C001 no Resolve mostrando o quadro 000364"></a><figcaption><b>O render da cor de outra taxa, no Resolve</b>O render (23,976) de um plano de original 29,97 DF voltou à montagem e foi religado ao original pelo DRT: o quadro mostra 000364, o quadro de fonte exato. Antes da correção do In, mostrava 363.</figcaption></figure>
+</section>
+
+<section id="app">
+  <div class="cab"><p class="eyebrow">No Ciclo Assist</p><h2>O colorista faz tudo de um painel, sem abrir o Baselight para conformar</h2>
+    <p class="muted">O app reconhece o Baselight aberto e o De Lá Pra Cá vira o painel de quem recebe. O mesmo Importar de sempre (projeto do Premiere, AAF, bin ou Carta Aberta) termina numa scene nova do job da produção, conferida, com markers só nos planos com problema.</p></div>
+  <div class="paineis">
+    <figure><a href="img/e2-03-antes-de-montar.jpg"><img src="img/e2-03-antes-de-montar.jpg" alt="Painel: a análise antes de montar"></a><figcaption><b>A análise</b>19 de 20 planos nos originais; o que não tem original é dito antes.</figcaption></figure>
+    <figure><a href="img/e4-01-pergunta-job-aberto-ou-da-producao.jpg"><img src="img/e4-01-pergunta-job-aberto-ou-da-producao.jpg" alt="Painel: a pergunta do job"></a><figcaption><b>O job</b>Produção diferente do job aberto: "No job aberto" ou "Em <i>produção</i>", com "não perguntar de novo".</figcaption></figure>
+    <figure><a href="img/e2-05-conformado-no-baselight.jpg"><img src="img/e2-05-conformado-no-baselight.jpg" alt="Painel: o resumo do conform"></a><figcaption><b>O resumo</b>Certos, corrigidos e offline de propósito, plano a plano.</figcaption></figure>
+    <figure><a href="img/e5-04-atualizado-com-a-cor-do-colorista.jpg"><img src="img/e5-04-atualizado-com-a-cor-do-colorista.jpg" alt="Painel: atualizado com a cor do colorista"></a><figcaption><b>Levar a cor de uma scene</b>8 de 8: o que veio do colorista, o que ele dividiu, o que ficou sem cor e por quê.</figcaption></figure>
+    <figure><a href="img/e5-11-chat-atualizado-no-baselight.jpg"><img src="img/e5-11-chat-atualizado-no-baselight.jpg" alt="Chat do Ciclo Assist com o resultado no Baselight"></a><figcaption><b>Pelo chat</b>"Leva para o Baselight trazendo a cor da v1": o cartão, o "Pode fazer" e o resultado, 8 de 8.</figcaption></figure>
+  </div>
+  <div class="telas duas" style="margin-top:22px">
+    <figure><a href="img/e3-01-carta-pergunta-importar-ou-conformar.jpg"><img src="img/e3-01-carta-pergunta-importar-ou-conformar.jpg" alt="Carta Aberta: importar timeline ou conformar"></a><figcaption><b>Pela Carta Aberta</b>O editor envia pela Carta; do lado da cor, "Importar timeline" (as mídias como estão) ou "Conformar com De Lá Pra Cá" (nos originais).</figcaption></figure>
+    <figure><a href="img/e3-08-baselight-texto-do-marker-ciclo.jpg"><img src="img/e3-08-baselight-texto-do-marker-ciclo.jpg" alt="Baselight mostrando o texto de um marker do Ciclo"></a><figcaption><b>O marker no Baselight</b>"[Ciclo] offline de propósito: sem decisão do Ciclo…": o colorista lê o motivo no próprio plano.</figcaption></figure>
+    <figure><a href="img/e5-14-producao-a-corte-final-cor-do-colorista.jpg"><img src="img/e5-14-producao-a-corte-final-cor-do-colorista.jpg" alt="Baselight com o corte final do PRODUCAO-A e a cor do colorista"></a><figcaption><b>O caso real atualizado</b>PRODUCAO-A: PRODA_CORTE.02 colorido → corte final "PARA COR", 99 planos em 12 s, a cor do colorista em 99 de 99.</figcaption></figure>
+  </div>
+</section>
+
+<section id="calados">
+  <div class="cab"><p class="eyebrow">O que a conferência pegou</p><h2>Onze erros que passariam sem ninguém ver, todos corrigidos</h2>
+    <p class="muted">Cada um apareceu numa medição do laboratório ou de um caso real, e cada um ganhou teste no Conformar. A regra que guiou todos, como foi decidido: entrega com alerta é melhor que erro calado.</p></div>
+  <div class="provas" id="erros"></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Decisões do autor aplicadas</p><h2>O que o Ciclo faz por regra, e não por palpite</h2></div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">Casamento</span><h3>Empate é do editor</h3><p>Dois originais igualmente plausíveis entram offline, com marker, a não ser que a imagem do daily confirme um deles. Reel e tape name são critério, como o nome. Cópias idênticas valem como uma só.</p></div>
+    <div class="card acao"><span class="selo">Cor</span><h3>A cor do offline não vai</h3><p>Lumetri, LUTs e camadas de ajuste da montagem ficam de fora: a cor é do colorista. A scene entra no espaço de cor da montagem.</p></div>
+    <div class="card acao"><span class="selo">Atualizar corte</span><h3>Look e grupo seguem o take trocado</h3><p>O plano novo ou o take trocado recebe o look da cena e entra no grupo do plano que substitui (ou dos dois vizinhos), com marker. A cor própria do plano continua do colorista.</p></div>
+    <div class="card acao"><span class="selo">Markers</span><h3>Só nos planos com problema</h3><p>"[Ciclo]" com o motivo, no plano: offline de propósito, fora do ponto, não traduzido, trecho do original, cor que ficou de fora.</p></div>
+  </div>
+</section>
+
+<section id="limites">
+  <div class="cab"><p class="eyebrow">Limites e pendências</p><h2>O que ainda não está provado</h2></div>
+  <div class="grade">
+    <div class="card aviso"><span class="selo ambar">Pendente</span><h3>Os casos pelo painel</h3><p>O PRODC e o conform do PRODUCAO-A foram feitos pela cadeia do estudo; pelo painel do app foram provados o BL08, o BL09 e a atualização do PRODUCAO-A. Rodar o PRODC inteiro pelo painel é o próximo teste.</p></div>
+    <div class="card aviso"><span class="selo ambar">Pendente</span><h3>Efeitos sem tradução</h3><p>P&B, Gaussian Blur, conteúdo da camada de ajuste, tracking de título e estabilização do MC: entram como marker. A sequência DPX pelo AAF do MC chega 7 quadros fora do ponto (dito).</p></div>
+    <div class="card aviso"><span class="selo ambar">Pendente</span><h3>Medidas que faltam</h3><p>O render de outra taxa com um AAF exportado pelo próprio MC; o som de outra taxa no DRT do Resolve; o envio a partir de um MC no Windows pela Carta (o Baselight só roda no Mac, e o lado do Windows não foi medido).</p></div>
+    <div class="card aviso"><span class="selo ambar">Risco</span><h3>Ambiente</h3><p>Trial do Baselight até cerca de 05/12. A estação do Baselight é de um programa por vez. O MC 25.12 aberto pelo terminal com o idioma português cai ao iniciar: os programas são abertos sem o <code>LANG</code> da sessão.</p></div>
+  </div>
+  <p class="muted">Registro: <code>bancodedadosnles/plugins/baselight/README.md</code> (seções BL08 e BL09) e <code>protocolos/drt-drp/estruturas.md</code> · planos <code>docs/plano/2026-11-21-baselight.md</code> e <code>2026-11-22-baselight-no-app.md</code> · diários em <code>MIDIAS DE TESTES/9 SAIDAS DOS APPS/_BASELIGHT/estudo/</code> · bancadas em <code>laboratorio-de-midia/lab/bancadas/</code>. Relatórios de etapa: <a href="https://claude.ai/artifact/4kanc6RGKvBo9uXkMaTiqr">PRODUCAO-C</a> · <a href="https://claude.ai/artifact/2L1yKFtyQnm5wgLuW7BRQm">laboratório de casamento</a> · <a href="https://claude.ai/artifact/C3fHr38DkAKLSMV4u3gi3x">atualizar corte</a>.</p>
+</section>
+
+<footer class="rodape"><span>Ciclo Assist · Conformar → Baselight</span><span>Relatório final · 23/11/2026</span></footer>
+</main>
+
+<script>{
+const m=(n,t)=>`<i class="marca ${t}">${n}</i>`;
+const PRODC=[["74","Preto e branco (Black & White) do LOU_7310, V3"],["117","Gaussian Blur do PRJ-0006-252, V3"],["162","Camada de ajuste na V4: o conteúdo não é lido"],["193","Títulos: sem o tracking de letras do Premiere"],["535","Preto e branco do LOU_7310, V4"]];
+const PRODA=[["1","FrameFlex: preenchido no padrão; o recorte do MC não vem no AAF"],["735","Título recriado; o fade do Baselight escurece um pouco as pontas"],["3640","Estabilização do MC não aplicada"],["5780","Estabilização do MC não aplicada"]];
+const linhas=a=>a.map(r=>`<tr><td class="n">${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+document.getElementById('PRODC').innerHTML=linhas(PRODC);
+document.getElementById('cruz').innerHTML=linhas(PRODA);
+const BL08=[
+ ["Premiere · o Baselight sozinho (Filename, ClipName, None)","12–15","1–3","1–5","troca de cartão, de dia, de número; −1,8 s na fonte de 59,94"],
+ ["Premiere · o Ciclo decide + conferência + troca + markers","14","4","0","—"],
+ ["MC · o Baselight sozinho","10–13","2","3–6","os mesmos, mais −2,4 s na fonte de 29,97"],
+ ["<strong>Produto, pelo painel: Premiere</strong>","19","1","0","P10 offline de propósito, com marker"],
+ ["<strong>Produto, pelo painel: Media Composer</strong>","18","1","0","P10 (sequência DPX) 7 quadros fora do ponto, dito"]];
+document.getElementById('bl08').innerHTML=BL08.map(r=>`<tr><td>${r[0]}</td><td class="c">${m(r[1],'certo')}</td><td class="c">${m(r[2],'alerta')}</td><td class="c">${m(r[3],r[3]==='0'?'certo':'errado')}</td><td>${r[4]}</td></tr>`).join('');
+const BL09=[
+ ["Plano novo, movido, aparado, estendido, take trocado, retirado","7/7","a cor pelo arquivo + TC, conferida pela impressão do BLG"],
+ ["O colorista dividiu um plano em dois","8/8","a v2 é cortada no mesmo quadro de fonte antes do conform"],
+ ["A scene do colorista aberta: salva / não salva","8/8 · para","sem salvar, o Ciclo para antes e pede o ⌘S"],
+ ["Cor animada (keyframes)","7/7","os keyframes andam com a fonte também na cópia do Ciclo"],
+ ["Look sobre vários planos → take trocado e plano novo","7/7 · 5/5","decisão do autor: o look vai a eles, só essa camada"],
+ ["Grupos do colorista","7/7","refeitos pelo casamento; o take trocado entra no grupo"],
+ ["Várias trilhas, plano escondido","9/9","a conferência não espera o plano coberto"],
+ ["Reposicionamento e camada 0 (espaço de entrada, decode do BRAW)","7/7 · 99/99","Multi-Paste com a camada 0, conferida depois da correção"],
+ ["O render da cor voltando: Premiere · MC · outra taxa · Resolve","7/7 · 7/7 · 3/3 · 4/4","casado pelo reel + TC de fonte, com o ponto deslocado"],
+ ["<strong>Caso real: PRODUCAO-A, PRODA_CORTE.02 → corte final</strong>","99/99","97 pelo Multi-Paste, 2 corrigidos; look e keyframes no lugar"]];
+document.getElementById('bl09').innerHTML=BL09.map(r=>`<tr><td>${r[0]}</td><td class="c"><i class="marca certo">${r[1]}</i></td><td>${r[2]}</td></tr>`).join('');
+const ER=[
+ ["O Baselight escolhe o arquivo sozinho","Com mais de um arquivo do mesmo nome, o bl-conform casa um deles sem avisar: de 1 a 5 planos trocados no laboratório.","O xmeml leva o original decidido; depois do conform, cada plano é conferido e trocado (bl-shots -replace)"],
+ ["Empate resolvido pelo primeiro da lista","O casador do MC marcava o empate e devolvia o 1º candidato; o religar levava o plano ao dia errado.","Empate sem caminho até o editor escolher; a imagem do daily confirma quando separa"],
+ ["Nome com acento sem original","O exFAT do Mac lista em NFD e o projeto busca em NFC: o CORAÇÃO_01 ficava offline.","Uma chave só para o índice (NFC, minúscula)"],
+ ["Timeline curta casada pela gravação","Numa timeline de poucos segundos, o bl-conform casava pelo TC de gravação: 5 de 5 fora do ponto.","--TimeType Source fixo"],
+ ["Multi-Paste que diz que colou","Com MaintainTracks=1, na scene do AAF real, não colava nada e respondia sucesso.","MaintainTracks=0, e a cor sempre conferida depois"],
+ ["A troca de arquivo errava o plano visível","Com plano escondido em outra trilha, a conferência casava pelo início e o -replace trocava a imagem do plano de cima.","O esperado ignora o plano coberto; a conferência casa por arquivo e fim"],
+ ["Grupos e camada 0 perdidos","O Multi-Paste do produto perdia os grupos do colorista, o espaço de cor de entrada e o decode do RAW; o BLG ainda mexia no decode.","Grupos refeitos e conferidos; LayerZeroAndStack; a camada 0 conferida depois da correção"],
+ ["O render da cor fora do ponto","Ao trocar o render pelo original, o ponto continuava contado do início do render: 4–43 em vez de 64–103, e a conferência aprovava.","O ponto anda o deslocamento na troca (MC, Premiere → Baselight e → Resolve)"],
+ ["O TC do render de outra taxa sumia","O Baselight grava o TC de fonte no contador cru da trilha de timecode, na base do original; o ffprobe o converte ou recusa.","O contador é lido cru do arquivo"],
+ ["O Resolve um quadro antes","Com In inteiro, o Resolve arredonda para baixo a fonte de outra taxa: 363 e 127 em vez de 364 e 128.","O DRT grava o In com fração, no formato nativo do Resolve"],
+ ["Cópia idêntica virando empate","Os originais copiados em duas pastas faziam o render da cor empatar consigo mesmo.","Cópias idênticas valem como uma só também no trecho"]];
+document.getElementById('erros').innerHTML=ER.map((a,i)=>`<div class="prova"><div class="n">${String(i+1).padStart(2,'0')}</div><div class="corpo"><h3>${a[0]}</h3><p class="pergunta">${a[1]}</p><p class="medido">${a[2]}</p></div></div>`).join('');
+}</script>
+</body></html>

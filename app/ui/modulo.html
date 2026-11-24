@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo Assist</title>
+<!-- A página LOCAL de cada aba: "ligando…" até o motor do módulo atender (aí o Rust leva a aba ao painel dele —
+     `src/supervisor.rs`), e o estado se ele cai ou não sobe (religando, ou o motivo e o botão). A aba Entregar mora aqui até o Promo Entrega ter
+     janela própria. -->
+<link rel="stylesheet" href="modulo.css">
+</head>
+<body>
+<main>
+  <h1 id="nome"></h1>
+  <p class="sub" id="sub"></p>
+  <p class="estado"><span class="ponto" id="ponto"></span><strong id="titulo">ligando…</strong></p>
+  <p class="detalhe" id="detalhe"></p>
+  <button type="button" id="tentar" class="tentar" hidden>Tentar de novo</button>
+</main>
+
+<script src="modulo.js"></script>
+</body>
+</html>

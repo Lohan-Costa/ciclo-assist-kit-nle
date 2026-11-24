@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+# De Lá Pra Cá — dependências do serviço do Media Composer (Python 3.11+)
+#
+# O serviço embute o motor, então herda as dependências dele e acrescenta o
+# cliente gRPC que fala com o Media Composer.
+
+# ── Motor (herdado do RELINKER) ──────────────────────────────────────────
+pyaaf2>=1.4.0            # ler e reescrever AAF (parser + relink_aaf)
+pyavb>=1.4.0             # ler e autorar bins .avb (rota .avb)
+pymediainfo>=6.0.0       # metadados técnicos dos arquivos candidatos
+ffmpeg-python>=0.2.0     # extração de frames
+imagehash>=4.3.0         # pHash do desempate visual
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+Pillow>=10.0.0
+
+# ── Saídas para outros NLEs (dormentes até a aba "Daqui Pra Lá") ─────────
+zstandard>=0.22.0        # blobs zstd do .drt do Resolve
+opentimelineio>=0.17.0   # formato neutro
+
+# ── Cliente do Media Composer ────────────────────────────────────────────
+grpcio>=1.60.0           # fala com o backend mcapi em [::1]:9100
+protobuf>=4.25.0
+
+# O servidor HTTP é a stdlib (ThreadingHTTPServer + SSE) — de propósito:
+# menos dependência para o PyInstaller empacotar.
+#
+# Requer `ffmpeg` no PATH.

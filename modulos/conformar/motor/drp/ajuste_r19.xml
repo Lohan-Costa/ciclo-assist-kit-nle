@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Forma NATIVA do "Adjustment Clip" da página Edit (Resolve Studio 19.0.0b.59, Windows), para
+     motor/drp/writer.py::_ajustes_na_timeline. Origem: o caso U01 (03 CASOS/ATUALIZAR/U01 VERSOES DO
+     RESOLVE/resolve19.drt, 2026-09-28, o adjustment clip do roteiro do autor), SEM a pLmVerTable (a
+     correção de cor do teste; o clipe comum do esqueleto também não tem). Banco: drt-drp/estruturas.md
+     §"Resolve 19 × 21" — um Sm2TiVideoClip sem MediaRef, In 86313. O writer troca DbId, Start,
+     Duration, o Start do FieldsBlob e a MediaFrameRate. -->
+<Sm2TiVideoClip DbId="2f4067d6-9d5c-4d11-8235-c47eb59b61a6">
+       <FieldsBlob>0000000200000017800a0220011210000000000000000500000000ffffffff</FieldsBlob>
+       <PrettyType>Adjustment Clip</PrettyType>
+       <Name>Adjustment Clip</Name>
+       <Start>86760</Start>
+       <Duration>120</Duration>
+       <LinkedItemSync/>
+       <WasDisbanded>false</WasDisbanded>
+       <MarkersBA/>
+       <UiMemento>0</UiMemento>
+       <Flags>0</Flags>
+       <PriorityIndex>0</PriorityIndex>
+       <EffectFiltersBA/>
+       <ImportExportMetadataBA/>
+       <RenderTextEnabled>true</RenderTextEnabled>
+       <RenderTextGanged>true</RenderTextGanged>
+       <RenderTextPrefixed>true</RenderTextPrefixed>
+       <In>86313</In>
+       <MixedFrameRateAlignment>0</MixedFrameRateAlignment>
+       <MediaStartTime>0</MediaStartTime>
+       <MediaFilePath/>
+       <MediaReelNumber/>
+       <MediaFrameRate>872211b5dcf937400000000000000000</MediaFrameRate>
+       <MediaTimemapBA>024013da6921735ee4</MediaTimemapBA>
+       <LastChangedTime>0</LastChangedTime>
+       <LastRenderedTime>0</LastRenderedTime>
+       <IsMarkedForCaching>false</IsMarkedForCaching>
+       <IsForceConformed>true</IsForceConformed>
+       <MatchConflictState>0</MatchConflictState>
+       <UseOppositeSrcForLeftEye>false</UseOppositeSrcForLeftEye>
+       <UseOppositeSrcForRightEye>false</UseOppositeSrcForRightEye>
+       <RenderCacheBA/>
+       <CurrentSelectorIdx>1074921472</CurrentSelectorIdx>
+       <IsPreConformed>false</IsPreConformed>
+       <PreConformMediaExtents>00000100000030c20000010000003042</PreConformMediaExtents>
+       <MediaMetadata/>
+       <Thumbnail>
+        <BtThumnail DbId="e9867478-f176-43cc-aea8-a8fc5bd199f8">
+         <FieldsBlob/>
+         <ImgWidth>-1</ImgWidth>
+         <ImgHeight>-1</ImgHeight>
+         <Buffer/>
+        </BtThumnail>
+       </Thumbnail>
+       <ThumbnailDirtyFlag>true</ThumbnailDirtyFlag>
+      </Sm2TiVideoClip>

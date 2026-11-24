@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "titulo": "Manifesto de templates AMA por formato p/ o media-bin builder genérico",
+    "descricao": "chave = fmt_key do _probe_key (media_bin.py): 'video|<codec>' ou 'audio|<coding>|<bits>|<canais>'. clip = nome do clipe-master dentro do template (handle p/ o clone_generic; a identidade é reescrita no clone). VÍDEO: 1 template por classe de ALTURA cobre qualquer largura (geometria patchada). ÁUDIO: precisa do FORMATO EXATO (coding/bits/canais).",
+    "atualizado": "2026-07-05",
+    "fonte": "eng-rev-bin-e-mdb/templates/ (vendorizados + NEUTRALIZADOS via oc_integration/neutralize_templates.py — zero identidade do projeto de teste)"
+  },
+  "templates": {
+    "audio|1|24|2|cena": {"file": "audio_1_24bit_2ch_cena.avb", "clip": "AVB_AUDIO_1_24BIT_2CH.", "kind": "audio"},
+    "audio|1|24|1|semcena": {"file": "audio_1_24bit_1ch_semcena.avb", "clip": "AVB_AUDIO_1_2", "kind": "audio"},
+    "audio|1|24|1": {"file": "audio_1_24bit_1ch.avb", "clip": "AVB_AUDIO_1_24BIT_1CH.", "kind": "audio"},
+    "audio|1|24|4": {"file": "audio_1_24bit_4ch.avb", "clip": "AVB_AUDIO_1_24BIT", "kind": "audio"},
+    "audio|1|24|4|semcena": {"file": "audio_1_24bit_4ch_semcena.avb", "clip": "B06_SOM_WAV-BWF.wav", "kind": "audio"},
+    "video|h264":   {"file": "h264_video_template.avb", "clip": "AVB_H264_VIDEO_TEMPLATE", "kind": "video"},
+    "audio|1|16|2": {"file": "audio_1_16bit_2ch.avb",   "clip": "AVB_AUDIO_1_16BIT_2CH.WAV", "kind": "audio"},
+    "audio|7|16|2": {"file": "audio_7_16bit_2ch.avb",   "clip": "AVB_AUDIO_7_16BIT_2CH.WAV", "kind": "audio"},
+    "audio|1|24|2": {"file": "audio_1_24bit_2ch.avb",   "clip": "AVB_AUDIO_1_24BIT_2CH.WAV", "kind": "audio"},
+    "audio|1|24|3": {"file": "audio_1_24bit_3ch.avb",   "clip": "AVB_AUDIO_1_24BIT_3CH.WAV", "kind": "audio"},
+    "audio|1|24|5": {"file": "audio_1_24bit_5ch.avb",   "clip": "AVB_AUDIO_1_24BIT_5CH.WAV", "kind": "audio"},
+    "audio|10|32|2": {"file": "audio_10_32bit_2ch.avb", "clip": "AVB_AUDIO_10_32BIT_2CH_______________________________.WAV", "kind": "audio"},
+    "audio|10|32|3": {"file": "audio_10_32bit_3ch.avb", "clip": "AVB_AUDIO_10_32BIT_3CH.WAV", "kind": "audio"},
+    "audio|10|32|4": {"file": "audio_10_32bit_4ch.avb", "clip": "AVB_AUDIO_10_32BIT_4CH.WAV", "kind": "audio"},
+    "audio|10|32|5": {"file": "audio_10_32bit_5ch.avb", "clip": "AVB_AUDIO_10_32BIT_5CH.WAV", "kind": "audio"}
+  }
+}

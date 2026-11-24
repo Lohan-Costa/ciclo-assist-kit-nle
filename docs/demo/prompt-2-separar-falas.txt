@@ -1,0 +1,7 @@
+Separe as falas da cena 7 usando os subclipes e o roteiro que anexei.
+
+Siga o método da casa para separar falas: consulte o método, estruture o roteiro, transcreva TODOS os subclipes anexados e só então monte o pedido. Quero uma bin nova com uma timeline por fala (C07_FALA01, C07_FALA02…), cada uma com o trecho de cada take em que a fala é dita, na ordem dos takes.
+
+Não monte a cena e não me pergunte nada antes do cartão de confirmação. Se a transcrição falhar em algum take, pare e me diga qual take e a mensagem de erro, sem montar nada.
+
+Quando terminar, responda só com: quantas falas, quantas variantes e o que ficou de fora, com o motivo.

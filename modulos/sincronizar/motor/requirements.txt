@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+# Dependências de RUNTIME do sidecar.
+#
+# ⛔ A linha `coding` acima NÃO é enfeite: sem ela o pip (até a 24.x, a do venv)
+# lê este arquivo na codificação do SO — cp1252 no Windows — e os emojis dos
+# comentários têm bytes que o cp1252 não tem (0x8F, 0x90). O `pip install`
+# morria com UnicodeDecodeError e derrubava o dev.bat (medido em 2026-09-15).
+#
+# ⛔⛔ VERSÕES FIXAS (`==`), não `>=` — auditoria de 2026-08-23.
+#
+# O que estava errado: com `>=`, o `pip install` do workflow de release resolvia o
+# que fosse mais NOVO no instante do build, e o PyInstaller empacotava isso no
+# `.exe`/`.dmg` que as pessoas baixam. Não havia lockfile, não havia hash, e não
+# havia a quarentena de 3 dias que a política de desenvolvimento seguro exige para
+# pacote recém-publicado. A cadeia inteira era:
+#
+#     tag → CI → pip resolve o mais novo → PyInstaller → instalador assinado por
+#     ninguém → máquina de quem monta
+#
+# ⭐ O contraste é o que fecha o caso: o Rust já tinha `Cargo.lock` e o JS já tinha
+# `package-lock.json` com integridade sha512 nos 232 pacotes. **Só o Python tinha
+# ficado de fora** — o projeto já sabia a prática, faltava aplicá-la aqui.
+#
+# ⚠️ Isto ainda NÃO é `--require-hashes`, que é o passo seguinte e o certo: pinar a
+# versão impede a resolução silenciosa, mas não prova que o artefato baixado é o
+# mesmo. Para fechar de vez, gerar com `pip-compile --generate-hashes` e passar
+# `--require-hashes` no CI. Registrado como o que falta.
+#
+# Ao subir uma versão aqui, respeite a quarentena: nada publicado há menos de 3 dias.
+
+pymediainfo==7.0.1
+pyaaf2==1.7.1
+pyavb==1.4.0
+
+# Cliente gRPC do Media Composer (avid/mcapi.py). O `grpcio-tools`, que gera o
+# stub, é de DESENVOLVIMENTO — ver tools/gen_mcapi_stubs.py.
+grpcio==1.83.0
+
+# O stub GERADO (avid/proto/mcapi_types_pb2.py) importa `google.protobuf` direto —
+# `grpcio` em si NÃO depende de `protobuf` (conferido: `pip show grpcio` não lista).
+# Faltava aqui e só não quebrava porque o venv de dev no macOS tinha `protobuf` por
+# TABELA, puxado de rodar `requirements-build.txt` (que traz `grpcio-tools`, e esse
+# sim depende de `protobuf`) na mesma pasta em algum momento. Um venv novo — como o
+# recriado numa sessão de Windows — expõe a falta: `ModuleNotFoundError: No module
+# named 'google'` ao chamar qualquer método do `MediaComposer`.
+protobuf==7.35.1
+
+ffmpeg-python==0.2.0
+# ⛔ 1.17.1 e não a mais nova: a partir da 1.18 o scipy exige **Python >= 3.12**, e
+# o workflow de release constrói o sidecar em **3.11**. Fixar a 1.18 quebrou o build
+# nos dois sistemas (2026-08-23), e o `pip install --dry-run` que rodei antes NÃO
+# pegou — porque rodou no venv de desenvolvimento, que é 3.12.
+#
+# ⭐ A lição está no desencontro, não no pacote: **o ambiente que testa não é o
+# ambiente que constrói.** Enquanto o CI for 3.11 e o desenvolvimento for 3.12, todo
+# pin precisa ser conferido contra 3.11, não contra a máquina de quem escreve.
+# Alinhar os dois é o conserto de verdade, e está registrado como pendência.
+scipy==1.17.1
+
+# Blobs zstd dos pool clips do DaVinci Resolve (drt/writer.py). Extensão C, mas
+# bem-comportada no PyInstaller.
+zstandard==0.25.0
+
+pytest==9.1.1

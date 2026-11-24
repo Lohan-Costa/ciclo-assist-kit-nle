@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Integrações — Ciclo Assist</title>
+<!-- ⭐ A seção Integrações da janela de configurações do app (2026-11-07). O que o Ciclo Assist instala nos editores:
+     no Premiere, a ponte invisível (uma extensão CEP sem painel); no Media Composer e no Resolve, nada — o app fala
+     com eles por fora (o MC pelo gRPC 9100, o Resolve Studio pela API externa). E as integrações ANTIGAS dos três
+     apps, que saem com cópia. A lógica é `cicloassist/integracoes.py`, a mesma do `tools/integracoes.py`. -->
+<link rel="stylesheet" href="/static/integracoes.css">
+</head>
+<body>
+<main>
+  <h1>Integrações</h1>
+  <p class="explica">O que o Ciclo Assist põe dentro de cada editor. Nenhum deles ganha painel: você usa tudo por esta
+    janela, e o app fala com os editores por fora.</p>
+
+  <section class="nle">
+    <header><h2>Premiere Pro</h2><span class="selo" id="prSelo">…</span></header>
+    <p class="explica">Uma extensão invisível, a <strong>ponte</strong>: é por ela que o app lê e monta no projeto
+      aberto. Ela não aparece no menu Janela › Extensões.</p>
+    <ul class="fatos">
+      <li id="prPonte">…</li>
+      <li id="prDepuracao">…</li>
+      <li id="prConexao">…</li>
+    </ul>
+    <button type="button" class="botao principal" id="instalar" hidden></button>
+    <p class="recado" id="recadoInstalar" hidden></p>
+  </section>
+
+  <section class="nle">
+    <header><h2>Media Composer</h2><span class="selo ok">nada a instalar</span></header>
+    <p class="explica">O app fala com o Media Composer pela API dele (a porta 9100), com o programa aberto.</p>
+    <ul class="fatos"><li id="mcConexao">…</li></ul>
+  </section>
+
+  <section class="nle">
+    <header><h2>DaVinci Resolve</h2><span class="selo ok">nada a instalar</span></header>
+    <p class="explica">O app fala com o Resolve Studio pela API externa de scripts, com o programa aberto.</p>
+    <ul class="fatos"><li id="rsConexao">…</li></ul>
+  </section>
+
+  <section class="nle" id="blocoAntigas" hidden>
+    <header><h2>Integrações antigas</h2><span class="selo alerta" id="antigasSelo"></span></header>
+    <p class="explica">Painéis e extensões que o Órbita e o De Lá Pra Cá instalavam antes de virarem módulos do Ciclo
+      Assist. Elas não são mais usadas e podem confundir o editor (painéis que não respondem). Tirar MOVE cada uma para
+      uma pasta de cópia: nada é apagado.</p>
+    <ul class="lista" id="antigas"></ul>
+    <button type="button" class="botao" id="tirar">Tirar e guardar uma cópia</button>
+    <p class="recado" id="recadoTirar" hidden></p>
+  </section>
+</main>
+<script src="/static/integracoes.js"></script>
+</body>
+</html>

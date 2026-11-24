@@ -1,0 +1,96 @@
+# .github/workflows/publish.yml
+#
+# Roda publish.py num runner limpo sempre que uma tag de release (v*) é empurrada para este
+# repo PRIVADO. Nunca rodar publish.py localmente — ver publish.py para o porquê. Modelo do
+# Órbita (`orbita-dev/.github/workflows/publish.yml`), com as lições dele já aplicadas.
+#
+# Repo público: github.com/Lohan-Costa/delapraca (destino do push abaixo). A credencial de push
+# é a deploy key `PUBLIC_REPO_SSH_KEY` (secret deste repo; a parte pública está no repo público
+# com permissão de escrita). Deploy key, não PAT: não expira (o PAT do Órbita expirou e derrubou
+# um release calado) e alcança UM repositório só.
+#
+# ⭐ Regra do autor (2026-10-05): o público recebe só código — `sanear.py` tira comentários e
+# docstrings, nenhum .md vai, os testes rodam aqui contra o artefato saneado e não são publicados.
+
+name: Publish public release
+
+on:
+  push:
+    tags:
+      - "v*"
+  # ENSAIO sob demanda (lição do Órbita: o publish falhou e ninguém viu por três dias). Rodado à
+  # mão, faz tudo — allowlist, sanear, testes, varredura de segredos — e PARA antes de publicar:
+  # o push exige que a ref seja uma tag.
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Menor privilégio: o job não usa o GITHUB_TOKEN para nada (o push vai pela deploy key).
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout do repo privado (limpo)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          # 3.12: a versão que o projeto exige; o `sanear.py` compara a árvore sintática do Python,
+          # e um interpretador mais velho não lê o código de 3.12.
+          python-version: "3.12"
+
+      - name: ffmpeg (os testes geram mídia sintética e leem com o ffprobe)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Auditoria de dependências (pip) — informativa, não bloqueia o release
+        run: |
+          pip install --quiet pip-audit
+          # Pelo LOCK: auditar o `.txt` (todo `>=`) reporta CVE das versões que o
+          # resolvedor escolheria hoje, não das que serão instaladas.
+          pip-audit -r requirements.lock || true
+
+      - name: Instalar gitleaks (versão e hash fixos)
+        # Este binário É o gate de segredos: um gitleaks adulterado sairia 0 em tudo e o publish
+        # seguiria. Hash registrado, conferido antes de usar, falha fechado (o mesmo do Órbita).
+        # Extrai num diretório isolado: o tarball traz README.md e LICENSE próprios, que
+        # sobrescreveriam os do checkout (incidente do Órbita).
+        run: |
+          set -euo pipefail
+          VER=8.30.1
+          SHA=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${VER}/gitleaks_${VER}_linux_x64.tar.gz"
+          tmpdir=$(mktemp -d)
+          curl -sSL -o "$tmpdir/gl.tgz" "$url"
+          echo "${SHA}  ${tmpdir}/gl.tgz" | sha256sum -c -
+          tar -xzf "$tmpdir/gl.tgz" -C "$tmpdir"
+          sudo mv "$tmpdir/gitleaks" /usr/local/bin/
+          rm -rf "$tmpdir"
+          gitleaks version
+
+      - name: Gerar o artefato público
+        run: python3 publish.py --source . --dest /tmp/public-artifact
+
+      # A GUARDA que torna o ensaio seguro: publica-se só a partir de uma TAG.
+      - name: Push para o repo público
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          PUBLIC_REPO_SSH_KEY: ${{ secrets.PUBLIC_REPO_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$PUBLIC_REPO_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+          cd /tmp/public-artifact
+          git init
+          git add -A
+          git -c user.name="delapraca-release-bot" -c user.email="release-bot@users.noreply.github.com" \
+            commit -m "Release ${GITHUB_REF_NAME}"
+          git remote add public git@github.com:Lohan-Costa/delapraca.git
+          git push --force public HEAD:main
+          git tag "${GITHUB_REF_NAME}"
+          git push --force public "${GITHUB_REF_NAME}"

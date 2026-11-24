@@ -1,0 +1,42 @@
+__pycache__/
+*.py[cod]
+.venv*/
+.pytest_cache/
+*.egg-info/
+
+# Artefatos de execução
+logs/
+*.log
+saida/
+
+# Mídia e modelos: pesados, licenciados, ou de cliente. Nunca no repo.
+*.mxf
+*.wav
+*.mp4
+*.aaf
+*.avb
+modelos/
+
+# Pacote gerado
+dist/
+
+# Gerado pelo instalar.ps1 nesta maquina: embute o caminho ABSOLUTO do venv,
+# entao versiona-lo entregaria ao proximo clone um atalho que aponta para
+# uma pasta que so existe aqui.
+iniciar.vbs
+
+# ⛔⛔ O que o MIDL gera do `.idl` do fabricante NÃO entra no repo: header e `_i.c` são
+# ARQUIVOS DE DESENVOLVIMENTO do SDK, e a licença do Blackmagic RAW permite redistribuir o
+# runtime e o código-objeto, não os headers. O `.exe` é código NOSSO compilado — esse vai.
+decodificadores/*/gerado/
+
+# A janela do app (Tauri): o que o build gera
+app/src-tauri/target/
+app/src-tauri/gen/
+
+# Iniciadores de sessao do Claude Code (do autor, so para abrir a sessao)
+*claude-iniciar*.bat
+*.prin
+
+# sombras do macOS no exFAT
+._*

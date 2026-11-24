@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Janela de conflito de mídia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<style>
+/* a maquete da janela: as cores e fontes do tema; o desenho é o do Baselight (conflito dentro da linha) + o porquê */
+.janela { background: var(--surface-dark); color: var(--on-dark); border-radius: 12px; overflow: hidden; border: 2px solid #2E413D; }
+.j-topo { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #2E413D; }
+.j-topo h3 { color: #F3F7F5; font-size: 18px; }
+.contagem { display: flex; gap: 8px; flex-wrap: wrap; }
+.pilula { font: 500 12px/1 var(--mono); letter-spacing: 1px; text-transform: uppercase; padding: 7px 10px; border-radius: 999px; border: 1.5px solid #3BB8AB; color: #5EE0CF; }
+.pilula.ambar { border-color: #F5B24A; color: #F5B24A; }
+.faixa-aviso { background: #3A2A12; color: #F5B24A; padding: 9px 18px; font-size: 14px; border-bottom: 1px solid #2E413D; }
+.linha { display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; padding: 11px 18px; border-bottom: 1px solid #22332F; font-size: 15px; }
+.linha .ev { font: 500 13px var(--mono); color: #A9B8B3; }
+.linha .nome { color: #F3F7F5; font-weight: 600; }
+.linha .apoio { color: #A9B8B3; font-size: 13px; }
+.estado { font: 500 12px var(--mono); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+.estado.ok { color: #5EE0CF; } .estado.decidir { color: #F5B24A; }
+.conflito { background: #182A27; border-bottom: 1px solid #22332F; padding: 14px 18px 18px 72px; display: grid; gap: 12px; }
+.conflito .pergunta { color: #F3F7F5; }
+.cands { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.cand { border: 2px solid #2E413D; border-radius: 10px; overflow: hidden; background: #142220; display: grid; }
+.cand.ref { border-color: #A9B8B3; }
+.cand img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
+.cand .info { padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; color: #C9D6D2; }
+.cand .info b { color: #F3F7F5; font-family: var(--mono); font-weight: 500; font-size: 13px; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 11px var(--mono); padding: 4px 7px; border-radius: 6px; background: #173A36; color: #5EE0CF; }
+.chip.nao { background: #3A2A12; color: #F5B24A; }
+.chip.img { background: #1F8A80; color: #fff; }
+.botao { justify-self: start; font: 600 13px var(--text); padding: 8px 12px; border-radius: 8px; border: 2px solid #5EE0CF; color: #10302D; background: #5EE0CF; }
+.botao.fantasma { background: transparent; color: #A9B8B3; border-color: #2E413D; }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.tira { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 3px; padding: 14px 18px; }
+.tira i { height: 22px; border-radius: 3px; background: #1F8A80; }
+.tira i.d { background: #F5B24A; } .tira i.t { background: #5EE0CF; outline: 2px solid #F3F7F5; outline-offset: 1px; }
+.tira-leg { padding: 0 18px 14px; font-size: 13px; color: #A9B8B3; }
+@media (max-width: 560px) { .linha { grid-template-columns: 40px 1fr; } .linha .estado { grid-column: 2; } .conflito { padding-left: 18px; } }
+</style>
+</head><body>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Ciclo Assist · Conformar · proposta</p>
+  <h1>A janela de conflito de mídia mostra o porquê de cada candidato</h1>
+  <div class="barra"></div>
+  <p class="lead">O desenho parte da janela de conform do Baselight 7.0.3: o conflito fica dentro da linha do evento e se resolve com um clique. A diferença está no que o Baselight não mostra: <strong>por que</strong> cada candidato serve, e a <strong>imagem</strong> para o editor comparar quando nome, TC e duração empatam.</p>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">A referência</p><h2>O que o Baselight faz bem, e onde para</h2></div>
+  <div class="telas duas">
+    <figure><a href="img/baselight_janela.jpg"><img src="img/baselight_janela.jpg" alt="Janela Conform do Baselight com variantes em porcentagem, aviso âmbar e a lista de eventos"></a>
+      <figcaption><b>Baselight</b>Variantes inteiras com a porcentagem de eventos achados, aviso numa faixa âmbar e a lista evento a evento.</figcaption></figure>
+    <figure><a href="img/baselight_candidatos.jpg"><img src="img/baselight_candidatos.jpg" alt="Dois candidatos de 100% no mesmo evento, só o caminho os distingue"></a>
+      <figcaption><b>O limite</b>Dois candidatos com 100 % no mesmo evento (o P2 do laboratório). O editor só tem o caminho para decidir.</figcaption></figure>
+  </div>
+  <div class="grade">
+    <div class="card acao"><span class="selo">Fica</span><h3>Do Baselight</h3><p>Conflito dentro da linha do evento, candidatos logo abaixo, um clique escolhe; a escolha aparece no plano da timeline na hora; aviso em faixa de cor.</p></div>
+    <div class="card aviso"><span class="selo ambar">Muda</span><h3>No Ciclo</h3><p>Cada candidato diz o que bateu e o que não bateu (nome, duração, TC, raster, imagem); o quadro do daily aparece ao lado do quadro de cada candidato; cópias idênticas viram um só; offline tem motivo.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">A maquete</p><h2>Um empate de verdade, resolvido pela imagem</h2>
+    <p class="muted">Dados reais do laboratório BL08: o plano E03 usa o daily <code>A001C004</code>, e há dois originais com o mesmo nome, TC e duração (DIA01 e DIA02). As imagens são os quadros reais desse ponto.</p></div>
+  <div class="janela">
+    <div class="j-topo"><h3>Conflitos de mídia · BL08 CASAMENTO</h3>
+      <div class="contagem"><span class="pilula">16 casados</span><span class="pilula ambar">2 para decidir</span><span class="pilula ambar">2 sem original</span></div></div>
+    <div class="faixa-aviso">Nenhum plano é enviado com um arquivo escolhido por palpite. Os planos abaixo ficam offline até a decisão.</div>
+    <div class="linha"><span class="ev">E02</span><div><div class="nome">A001C003 · cartão B</div><div class="apoio">nome ✓ · duração 12,0 s ✓ · TC ✓ — o do cartão A foi descartado pela duração (20,0 s)</div></div><span class="estado ok">casado</span></div>
+    <div class="linha"><span class="ev">E03</span><div><div class="nome">A001C004</div><div class="apoio">2 candidatos empatam em nome, duração e TC</div></div><span class="estado decidir">decidir</span></div>
+    <div class="conflito">
+      <p class="pergunta">Qual destes é o original do plano? O quadro do daily está à esquerda.</p>
+      <div class="cands">
+        <div class="cand ref"><img src="img/daily.jpg" alt="Quadro do daily usado na montagem"><div class="info"><b>Daily na montagem</b><span>DAILIES/DIA01/A002 · in 00:00:02:23</span></div></div>
+        <div class="cand"><img src="img/cand_dia01.jpg" alt="Quadro do candidato do DIA01"><div class="info"><b>ORIGINAIS/DIA01/A002/A001C004.mov</b>
+          <div class="chips"><span class="chip">nome</span><span class="chip">duração 15,0 s</span><span class="chip">TC 11:00:00:00</span><span class="chip">1920×1080</span><span class="chip img">imagem 1,00</span></div>
+          <span class="botao">Usar este</span></div></div>
+        <div class="cand"><img src="img/cand_dia02.jpg" alt="Quadro do candidato do DIA02"><div class="info"><b>ORIGINAIS/DIA02/A002/A001C004.mov</b>
+          <div class="chips"><span class="chip">nome</span><span class="chip">duração 15,0 s</span><span class="chip">TC 11:00:00:00</span><span class="chip">1920×1080</span><span class="chip nao">imagem 0,89</span></div>
+          <span class="botao fantasma">Usar este</span></div></div>
+      </div>
+      <div class="acoes"><span class="botao fantasma">Deixar offline</span><span class="botao fantasma">Procurar em outra pasta</span></div>
+    </div>
+    <div class="linha"><span class="ev">E06</span><div><div class="nome">CENA12_T3</div><div class="apoio">nenhum original com esse nome · o reel do daily diz B001C007 (TC e duração batem)</div></div><span class="estado decidir">sem original</span></div>
+    <div class="linha"><span class="ev">E15</span><div><div class="nome">C001C002</div><div class="apoio">2 cópias idênticas (DIA01 e BACKUP) · usada a de DIA01</div></div><span class="estado ok">casado</span></div>
+    <div class="linha"><span class="ev">E20</span><div><div class="nome">A006C002</div><div class="apoio">original com TC zerado, daily com 21:00:00:00 · maior que o daily (1920×1080 × 960×540) — conferir</div></div><span class="estado decidir">casado, conferir</span></div>
+    <div class="tira" aria-hidden="true"><i></i><i></i><i class="t"></i><i class="d"></i><i></i><i class="d"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="d"></i><i></i><i></i><i></i><i class="d"></i></div>
+    <p class="tira-leg">A sequência inteira: verde-água = casado, âmbar = para decidir; o plano em foco tem contorno. Escolher um candidato muda o plano na hora.</p>
+  </div>
+  <p class="muted">Maquete estática. As notas de imagem foram medidas nestes três quadros (semelhança em cor, 64×36: 1,00 e 0,89). No produto a comparação existe no casador do MC (pHash contra o vid ref), ainda não neste fluxo.</p>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Regras da janela</p><h2>O que ela nunca faz</h2></div>
+  <ol class="passos">
+    <li>Nunca escolhe por palpite: empate sem desempate pela imagem fica offline até o editor decidir.</li>
+    <li>Nunca esconde o porquê: cada candidato mostra o que bateu e o que não bateu, com o número.</li>
+    <li>Junta cópias idênticas e diz qual foi usada.</li>
+    <li>Plano casado com dúvida (TC zerado, outra taxa) aparece com "conferir", não como casado limpo.</li>
+    <li>O que vai ao Baselight é exatamente o que a janela mostra; a conferência depois do conform confirma arquivo, in e out.</li>
+  </ol>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Decisões pendentes</p><h2>Três pontos antes de construir</h2></div>
+  <div class="grade">
+    <div class="card"><span class="selo">1</span><h3>Onde a janela mora</h3><p>Dentro da aba Conformar da janela do app (uma etapa antes de "enviar ao Baselight"), ou como janela própria que abre quando há conflito.</p></div>
+    <div class="card"><span class="selo">2</span><h3>A imagem como critério</h3><p>Mostrar a nota de imagem só como apoio visual, ou deixar que uma nota alta resolva sozinha o empate (hoje o casador do MC faz isso quando há vid ref).</p></div>
+    <div class="card"><span class="selo">3</span><h3>O reel como pista</h3><p>No daily renomeado, o reel apontou o original certo (o Baselight casou por ele). Mostrar o reel como sugestão, ou usá-lo como critério do casador.</p></div>
+  </div>
+</section>
+
+<footer class="rodape"><span>Ciclo Assist · janela de conflito de mídia</span><span>Proposta · 22/11/2026</span></footer>
+</main>
+</body></html>
