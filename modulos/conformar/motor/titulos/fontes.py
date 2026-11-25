@@ -6,7 +6,7 @@ Text do Resolve pede a FAMÍLIA e a FACE (`Optima` + `Regular`, `Arial` + `Regul
 tipográficas, 1/2 = as antigas); a `hhea` dá a ascendente, que posiciona a linha de base quando o
 Text é ancorado no topo.
 
-Medido em 2026-10-04 (Mac, Resolve 21.1, PRODB a 2880×1620): o topo da caixa do Text fica a
+Medido em 2026-10-04 (Mac, Resolve 21.1, PRODUCAO_B a 2880×1620): o topo da caixa do Text fica a
 `ascendente da hhea × corpo` acima da linha de base (Monaco 1,0; Optima 0,92), a menos de 3 px.
 No Windows (Resolve 19, medido no mesmo dia) valem as métricas do DirectWrite: `winAscent`, ou a
 `typo` quando a fonte liga `USE_TYPO_METRICS` (`_metricas_directwrite`). O índice usa as da

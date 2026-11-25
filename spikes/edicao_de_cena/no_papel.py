@@ -36,7 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bordas as _bordas  # noqa: E402
 
 PASTA = Path(__file__).resolve().parent
-BIN = r"%USERPROFILE%\Documents\Avid Projects\producao-a_CURTA\CENAS\C07.avb"
+BIN = r"%USERPROFILE%\Documents\Avid Projects\PRODUCAO-A_CURTA\CENAS\C07.avb"
 ROTEIRO = r"D:\MIDIAS DE TESTES\1 PRODUCOES\PRODUCAO-A\ROTEIRO\PRODUCAO-A CENA 7 roteiro.docx"
 SAIDA = r"D:\MIDIAS DE TESTES\9 SAIDAS DOS APPS\_CICLO ASSIST\2026-11-09 EDICAO C07"
 TAKES = ("C07_P01-001 C07_P01-002 C07_P02-001 C07_P02-001.1 C07_P02-002 C07_P02-003 "

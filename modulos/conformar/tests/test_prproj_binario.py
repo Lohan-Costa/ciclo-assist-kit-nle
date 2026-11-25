@@ -4,8 +4,8 @@ Rodar:
 
     .venv/bin/python tests/test_prproj_binario.py        (Windows: .venv-win/Scripts/python)
 
-O autor importou a timeline final do PRODB e as cartelas (os "Graphics" do Premiere, que viram
-Text do Resolve) não vieram. Duas causas, medidas no `FINALIZACAOPRODB_FINALIZACAO_PARA
+O autor importou a timeline final do PRODUCAO_B e as cartelas (os "Graphics" do Premiere, que viram
+Text do Resolve) não vieram. Duas causas, medidas no `FINALIZACAOPRODUCAO_B_FINALIZACAO_PARA
 RESOLVE.prproj` (Premiere 26.0.2):
 
   1. O Premiere grava um blob igual UMA vez; as outras ocorrências vêm vazias, só com o

@@ -6,7 +6,7 @@ faz pela API, juntando os clipes dele (`Timeline.CreateCompoundClip`). Por que n
 compound no DRT (a forma foi medida — banco `protocolos/drt-drp/estruturas.md`, "Compound Clip"):
 
   ⚠️ MEDIDO 2026-10-04 (Resolve 21.1.0.14, macOS): a API NÃO alcança clipe DENTRO de um compound
-  (`MediaPoolItem.GetTimeline()` do compound devolve None). O insert do interfone do PRODB tem
+  (`MediaPoolItem.GetTimeline()` do compound devolve None). O insert do interfone do PRODUCAO_B tem
   máscara + Basic 3D no Fusion, que a casca monta pela API: num compound vindo do DRT isso viraria
   "refazer à mão". Já uma composição montada ANTES sobrevive ao `CreateCompoundClip` (o quadro
   antes e depois, correlação 1,0 — timeline `gab_compound_fusion_r21`).

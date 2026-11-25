@@ -33,6 +33,9 @@ _SAMPLE = _amostras() / "TESTE_streamnumber_v5.prproj"
 
 def _root() -> ET.Element:
     import gzip
+    if not _SAMPLE.is_file():   # a amostra mora na MIDIAS DE TESTES, fora do Git (a cópia pública não a tem)
+        import pytest
+        pytest.skip(f"sem a amostra {_SAMPLE.name} (procurei a MIDIAS DE TESTES subindo de pasta e em {_SAMPLE.parent})")
     return ET.fromstring(gzip.open(_SAMPLE, "rt", encoding="utf-8").read())
 
 

@@ -71,7 +71,7 @@ def completar_path() -> list[str]:
     `PATH=/usr/bin:/bin:/usr/sbin:/sbin` (o de todo `.app` — matriz, linha "PATH de processo lançado").
     O `ffprobe` do Homebrew não estava nele, e o motor o chama pelo nome em 16 lugares: cada
     `_media_meta` falhava calado, todo clipe do pool herdava o TC da forma do esqueleto (03:44:58:12),
-    o casamento com os originais não sondava nada (tudo no proxy) e a timeline do PRODB entrou
+    o casamento com os originais não sondava nada (tudo no proxy) e a timeline do PRODUCAO_B entrou
     INTEIRA offline. De manhã o mesmo gesto tinha funcionado porque o serviço fora aberto pelo
     `ATUALIZAR.command`, com o PATH do terminal. Um lugar só, aqui, vale para as 16 chamadas e para
     quem quer que suba o serviço. No Windows, nada: o PATH do perfil já tem o `winget`."""

@@ -59,7 +59,7 @@ TAG:coding_history=A=PCM,F=48000,W=32,M=mono,R=48000,T=1 Ch;Ambisonics=off
 [/FORMAT]
 """
 
-LOCAL-2_001 = """[FORMAT]
+LOCAL_2_001 = """[FORMAT]
 TAG:comment=sSPEED=023.976-ND
 sTAKE=001
 sTAPE=250517
@@ -72,7 +72,7 @@ TAG:time_reference=4054350781
 [/FORMAT]
 """
 
-LOCAL-2_004 = """[FORMAT]
+LOCAL_2_004 = """[FORMAT]
 TAG:comment=sTAKE=004
 sTAPE=250517
 
@@ -82,7 +82,7 @@ TAG:time_reference=202406685
 [/FORMAT]
 """
 
-LOCAL-2_005 = """[FORMAT]
+LOCAL_2_005 = """[FORMAT]
 TAG:comment=sTAKE=005
 sTAPE=250517
 
@@ -116,8 +116,8 @@ def test_o_dia_do_gravador_pode_ter_virado_sem_o_tc_virar():
     """`LOCAL-2-001` foi gravado às 00:07 do dia 17 — a DATA já virou. Mas o TC
     dele marca 23:27, ainda do dia anterior no relógio jam-syncado. Os dois sinais
     contam coisas diferentes, e é por isso que a conta não pode confiar em um só."""
-    assert _bwf_origination(LOCAL-2_001) == ("2025-05-17", "00:07:50")
-    assert _bwf_start_seconds(LOCAL-2_001, SAMPLE_RATE) == pytest.approx(84465.6, abs=0.1)
+    assert _bwf_origination(LOCAL_2_001) == ("2025-05-17", "00:07:50")
+    assert _bwf_start_seconds(LOCAL_2_001, SAMPLE_RATE) == pytest.approx(84465.6, abs=0.1)
 
 
 def test_creation_time_que_nao_e_hora_pura_e_ignorado():
@@ -169,9 +169,9 @@ def test_o_bwf_mantem_a_distancia_real_entre_os_sons():
     """
     sons = [
         _sound("sp3.wav", SP3_TORE_001),
-        _sound("b001.wav", LOCAL-2_001),
-        _sound("b004.wav", LOCAL-2_004),
-        _sound("b005.wav", LOCAL-2_005),
+        _sound("b001.wav", LOCAL_2_001),
+        _sound("b004.wav", LOCAL_2_004),
+        _sound("b005.wav", LOCAL_2_005),
     ]
     cams = _camera_window(23.1, 25.3)
     engine._unwrap_sounds(sons, {"CAM A": cams}, ["CAM A"])
@@ -200,7 +200,7 @@ def test_som_sem_data_cai_na_janela_das_cameras():
 def test_sem_camera_com_relogio_nenhum_som_se_move():
     """Sem janela não há a que ancorar. Todo mundo fica no dia 0 — exatamente o
     comportamento de antes de o desdobramento existir."""
-    sons = [_sound("b005.wav", LOCAL-2_005)]
+    sons = [_sound("b005.wav", LOCAL_2_005)]
     engine._unwrap_sounds(sons, {}, [])
     assert sons[0].day_index == 0
     assert sons[0].tc_abs_sec == sons[0].tc_sec
@@ -210,6 +210,6 @@ def test_o_som_nao_herda_o_dia_de_timecode_da_camera():
     """Uma volta do TC dura 86 486 s a 23,976 fps; para o som ela dura 86 400 s
     exatos, porque `TimeReference` conta AMOSTRAS, não frames. Confundir as duas
     custaria 86 s por virada."""
-    s = _sound("b004.wav", LOCAL-2_004)
+    s = _sound("b004.wav", LOCAL_2_004)
     s.day_index = 1
     assert s.tc_abs_sec - s.tc_sec == pytest.approx(DAY_S)

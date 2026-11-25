@@ -4,7 +4,7 @@
 passou inteira ao largo de `cicloassist/nle/`: ela chamava `avid/escopo.py` direto. Com o
 painel dentro do Premiere, o editor viu, num projeto `.prproj` aberto na frente dele:
 
-- resultados recortados pelo `_Assist anterior` — um projeto do **Media Composer**, que estava
+- resultados recortados pelo `_ASSIST ANTERIOR` — um projeto do **Media Composer**, que estava
   **fechado**, servido pela FOTO da última varredura de bins;
 - a contagem em "**masterclipes**", substantivo que o Premiere não tem;
 - e o duplo clique respondendo *"o Media Composer não está aberto"*.
@@ -125,7 +125,7 @@ def _projeto_do_premiere(monkeypatch, tmp_path, arquivos=()):
 
 
 def test_a_busca_no_premiere_nao_usa_o_recorte_do_avid(monkeypatch, tmp_path):
-    """⛔⛔ O defeito do print: resultados do `_Assist anterior` dentro do Premiere.
+    """⛔⛔ O defeito do print: resultados do `_ASSIST ANTERIOR` dentro do Premiere.
 
     ⚠️ Com o Media Composer FECHADO, `escopo.agora()` cai na FOTO da última varredura de
     bins — que é de outro projeto e pode ser de dias atrás. Era isso que a aba mostrava.
@@ -136,25 +136,25 @@ def test_a_busca_no_premiere_nao_usa_o_recorte_do_avid(monkeypatch, tmp_path):
     _projeto_do_premiere(monkeypatch, tmp_path, [a])
     I.impressao(a)  # ⭐ o recorte usa a chave JÁ conhecida, nunca a medida na hora
 
-    foto = ESC.Escopo(chaves=frozenset({"f" * 64}), projeto="D:/X/_Assist anterior",
+    foto = ESC.Escopo(chaves=frozenset({"f" * 64}), projeto="D:/X/_ASSIST ANTERIOR",
                       origem="foto", editor="avid")
     monkeypatch.setattr(ESC, "agora", lambda *a, **k: foto)
 
     d = post("/busca/frase", {"termos": "drone", "nle": "premiere"})
     assert d["ok"] and d["escopo"]["editor"] == "premiere"
     assert d["escopo"]["projeto"] == "CICLO ASSIST TESTE.prproj"
-    assert "_Assist anterior" not in json.dumps(d, ensure_ascii=False)
+    assert "_ASSIST ANTERIOR" not in json.dumps(d, ensure_ascii=False)
 
 
 def test_sem_declarar_o_editor_a_busca_continua_do_avid(monkeypatch, tmp_path):
     """⚠️ Painel velho com serviço novo: o comportamento de antes, nunca uma tela vazia."""
-    foto = ESC.Escopo(chaves=frozenset({"f" * 64}), projeto="D:/X/_Assist anterior",
+    foto = ESC.Escopo(chaves=frozenset({"f" * 64}), projeto="D:/X/_ASSIST ANTERIOR",
                       origem="foto", editor="avid")
     monkeypatch.setattr(ESC, "agora", lambda *a, **k: foto)
     monkeypatch.setenv("CICLOASSIST_CACHE", str(tmp_path / "cache"))
 
     d = post("/busca/frase", {"termos": "drone"})
-    assert d["escopo"]["projeto"] == "_Assist anterior" and d["escopo"]["editor"] == "avid"
+    assert d["escopo"]["projeto"] == "_ASSIST ANTERIOR" and d["escopo"]["editor"] == "avid"
 
 
 def test_o_projeto_da_tela_e_o_do_editor_que_perguntou(monkeypatch, tmp_path):

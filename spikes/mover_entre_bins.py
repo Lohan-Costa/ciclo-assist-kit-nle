@@ -69,7 +69,7 @@ from avb.core import walk_references  # noqa: E402
 
 from cicloassist.avid.mcapi import TEMPO_DE_ARQUIVO_S, MediaComposer  # noqa: E402
 
-PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior")
+PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR")
 
 #: As fixtures do editor (2026-09-12, 22:47). ⛔ SOMENTE LEITURA.
 FIXTURE_ORIGEM = PROJETO / "BIN ORIGEM.avb"

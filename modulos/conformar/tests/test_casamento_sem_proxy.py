@@ -107,7 +107,7 @@ def main() -> int:
     ok("…fora das pastas indicadas continua sem original", fora["estado"], "sem_original")
 
     print("── TC e cópia do proxy, pelo projeto ──")
-    ARRI = "/Volumes/PRODB/BRUTO/A044C013_240725_R1X0.mov"
+    ARRI = "/Volumes/PRODUCAO_B/BRUTO/A044C013_240725_R1X0.mov"
     PA = {"dur_s": 39.958333, "tc_quadros": 1345158, "fps": 24.0, "w": 2880, "h": 1620, "fourcc": "apco"}
     arri = {"ok": True, "w": 0, "h": 0, "codec": None, "fps": 24.0, "dur_s": 39.958333}
     r = casar(ARRI, {"PROJ-X/A044C013_240725_R1X0.mxf": {**arri, "tc": "15:34:08:06"}}, PA)
@@ -127,8 +127,8 @@ def main() -> int:
 
     print("── o projeto real (R02) ──")
     from casos import CANDIDATAS_AMOSTRAS
-    caso = next((Path(x) / "03 CASOS" / "REAL" / "R02 PRODB EXEMPLOS" / "premiere" / "DU exemplos especificos.prproj"
-                 for x in CANDIDATAS_AMOSTRAS if x and (Path(x) / "03 CASOS" / "REAL" / "R02 PRODB EXEMPLOS").is_dir()), None)
+    caso = next((Path(x) / "03 CASOS" / "REAL" / "R02 PRODUCAO_B EXEMPLOS" / "premiere" / "DU exemplos especificos.prproj"
+                 for x in CANDIDATAS_AMOSTRAS if x and (Path(x) / "03 CASOS" / "REAL" / "R02 PRODUCAO_B EXEMPLOS").is_dir()), None)
     if caso is None or not caso.is_file():
         print("  PULADO — o caso R02 não está nesta máquina")
     else:

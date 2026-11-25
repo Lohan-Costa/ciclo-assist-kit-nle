@@ -37,7 +37,7 @@ import tempfile
 #: MEDIDO no laboratório (B14_MASCARA, 2026-10-10: borda reta conhecida, render do Premiere 23.2 × Resolve 19,
 #: Windows): o Feather é a largura TOTAL da transição, centrada no contorno (10–90 % = 0,915 × Feather, em px da
 #: FONTE — com Zoom 200 % dobra na tela); com o fator 1 o Resolve saía 17–20 % mais largo (F25…F500, com e sem
-#: zoom: Premiere ÷ Resolve = 0,83–0,86). A calibração anterior (fator 1, PRODB, 1 caso por correlação) não
+#: zoom: Premiere ÷ Resolve = 0,83–0,86). A calibração anterior (fator 1, PRODUCAO_B, 1 caso por correlação) não
 #: separava isso.
 SOFTEDGE_POR_PX = 0.845
 #: Desfoque: Blurriness do Gaussian Blur do Premiere (`AE.ADBE Gaussian Blur 2`) → XBlurSize do Blur do Fusion:
@@ -139,7 +139,7 @@ def _no_polygon(receita: dict, inverter_se_normal: bool, n: int) -> dict | None:
     m = (receita.get("mascaras") or [None])[0]
     if m is None:
         return None
-    # o Premiere soma as máscaras de um efeito; aqui só a 1ª (nenhum caso no PRODB)
+    # o Premiere soma as máscaras de um efeito; aqui só a 1ª (nenhum caso no PRODUCAO_B)
     w, h = (int(receita["fonte_px"][0]) or 1920, int(receita["fonte_px"][1]) or 1080)
     no = {"id": f"Polygon{n}", "tipo": "PolylineMask", "largura": w, "altura": h,
           "suave": m.get("suave_px", 0.0) * SOFTEDGE_POR_PX / w,
@@ -189,7 +189,7 @@ def plano(receitas: list[dict]) -> dict:
                 ligacoes.append(["MediaIn1", "EffectMask", poly["id"]])
             else:
                 # ⭐ o recorte DEPOIS de outro efeito (2026-11-20): o Premiere aplica a cadeia do último índice do arquivo
-                #   para o primeiro — o insert do PRODB ([Crop com máscara, Basic 3D] no arquivo) GIRA primeiro e
+                #   para o primeiro — o insert do PRODUCAO_B ([Crop com máscara, Basic 3D] no arquivo) GIRA primeiro e
                 #   recorta depois, com a máscara reta. Antes: raise (e a leitura em ordem de arquivo escondia o caso).
                 atual = recortar_depois(poly)
         elif efeito == "opacidade":

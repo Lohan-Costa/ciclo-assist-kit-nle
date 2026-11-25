@@ -2,10 +2,10 @@
 
 Fase A1 do plano `docs/plano/2026-11-08-agentes.md`. Mora em `<dados do Ciclo Assist>/producoes/<produção>/memoria.md`:
 
-    # PRODB
+    # PRODUCAO_B
 
     ## Identificação
-    - iXML: PRODB
+    - iXML: PRODUCAO_B
     - Premiere: PRODUCAO-B CORTE 3
 
     ## Padrões de metadado

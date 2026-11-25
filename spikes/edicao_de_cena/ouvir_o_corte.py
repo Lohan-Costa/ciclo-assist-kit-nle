@@ -24,7 +24,7 @@ import cicloassist.avid  # noqa: E402,F401
 from cicloassist.avid.take import resolver  # noqa: E402
 from cicloassist.midia import asr as _asr, audio as _audio  # noqa: E402
 
-BIN = r"%USERPROFILE%\Documents\Avid Projects\producao-a_CURTA\CENAS\C07.avb"
+BIN = r"%USERPROFILE%\Documents\Avid Projects\PRODUCAO-A_CURTA\CENAS\C07.avb"
 JANELA_S = 3.0
 
 

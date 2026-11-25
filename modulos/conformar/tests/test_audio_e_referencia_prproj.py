@@ -7,7 +7,7 @@ Rodar:
 - A referência achada na timeline (trilha de vídeo mais alta, um clipe de vídeo de ponta a ponta;
   imagem parada não conta) e as opções do som dela: A = trilha nova abaixo de todo o áudio, com
   solo; B = só o som da referência; nenhum. Com segmentos de mentira: roda em qualquer máquina.
-- O áudio do PRODB inteiro (2.536 clipes no Premiere): só com o disco `PRODB` montado; sem
+- O áudio do PRODUCAO_B inteiro (2.536 clipes no Premiere): só com o disco `PRODUCAO_B` montado; sem
   ele, essa parte é PULADA.
 """
 
@@ -111,10 +111,10 @@ def main() -> int:
     from drp.writer import build_drt
     # Os caminhos do filme vêm do manifesto do caso R03 (regra de 2026-10-04: cada caso é uma ilha)
     import casos as ilhas
-    filme = ilhas.carregar("REAL/R03 PRODB FILME") or {"arquivo": {}}
+    filme = ilhas.carregar("REAL/R03 PRODUCAO_B FILME") or {"arquivo": {}}
     wav = str(filme["arquivo"].get("wav_amostra") or "")
     if not wav or not os.path.isfile(wav):
-        print("  o disco PRODB não está montado — PULADO")
+        print("  o disco PRODUCAO_B não está montado — PULADO")
     else:
         def a_(tr, solo):
             return {**seg(tr, 0, 48, wav, audio=True), "timeline_tc_out": "00:00:02:00",
@@ -153,13 +153,13 @@ def main() -> int:
         ok("a mesa de 99 descomprime (qCompress: tamanho + zlib)",
            len(zlib.decompress(mesa[4:])) == struct.unpack(">I", mesa[:4])[0], True)
 
-    print("── o áudio do PRODB ──")
+    print("── o áudio do PRODUCAO_B ──")
     prproj = str(filme["arquivo"].get("prproj_corte") or "")
     from avb_bin.segmentos import caminho_confiavel   # como o app: o caminho do Mac vira a letra no Windows
     if os.name == "nt":
         prproj = caminho_confiavel(prproj)[0] or prproj
     if not os.path.isfile(prproj):
-        print("  o disco PRODB não está montado — PULADO")
+        print("  o disco PRODUCAO_B não está montado — PULADO")
     else:
         from prproj.leitura import Leitor
         from prproj.projeto import Projeto
@@ -173,7 +173,7 @@ def main() -> int:
         vols = [x["volume_db"] for x in au if x.get("volume_db") is not None]
         ok("volumes fixos traduzidos (dB), nenhum fora do que o Premiere permite (≤ +15)",
            (len(vols) > 500, max(vols) <= 15.0), (True, True))
-        ok("o PRODB não tem referência na timeline (a V5 é a máscara 1.85)",
+        ok("o PRODUCAO_B não tem referência na timeline (a V5 é a máscara 1.85)",
            any(x.get("referencia") for x in r["segmentos"]), False)
 
     print("── volume do clipe com keyframes ──")
@@ -191,7 +191,7 @@ def main() -> int:
             return {"Name": "Level", "Keyframes": self.kf, "StartKeyframe": None}.get(nome)
     with mock.patch.object(LT, "_valor", lambda p, prm, d: (p.valor, None)):
         av = {}
-        # UM keyframe (o PRODB tem 3): 0,316228 = 10^(−10/20) → −10 + 15 = +5 dB, o clipe todo
+        # UM keyframe (o PRODUCAO_B tem 3): 0,316228 = 10^(−10/20) → −10 + 15 = +5 dB, o clipe todo
         ok("um keyframe só é volume FIXO: vira o dB dele", LT._volume_db(_P("25867296000000,0.316227763891,0,0,0,0.1666,0,0.1666;"), None, av), 5.0)
         ok("…sem aviso de keyframes", av, {})
         av = {}

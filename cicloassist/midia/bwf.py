@@ -7,7 +7,7 @@ dois leitores do mesmo formato divergem calados. Aqui ela serve ao som GERENCIAD
 MEDIDO em 2026-10-25 (MC 25.12, Mac; o autor linkou pelo Source Browser três WAV do PRODC gravados num Sound Devices
 MixPre-6 — LOCAL-3-001 4 canais, FAIXA-W-C4-002 1 canal, FAIXA-W-C3-003 2 canais):
 
-    nome do master      = sSCENE + "/" + sTAKE           ("FAIXA-W-C4/002": a CENA e o TAKE, não o arquivo — por
+    nome do master      = sSCENE + "/" + sTAKE           ("faixa-w-C4/002": a CENA e o TAKE, não o arquivo — por
                                                            isso o "-" parece virar "/" e a extensão some)
     _USER.UBITS         = sUBITS
     _USER.TapeID        = sFILENAME (o arquivo, com a extensão)

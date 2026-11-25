@@ -370,10 +370,10 @@ def _pad_to_header_n(pts: list) -> list:
 #: Mapa de tempo REVERSO. A curva cobre a mídia INTEIRA de trás para frente: keyframe 0 = (X 0, Y Y0)
 #: e keyframe 1 = (X Y0/v, Y 0), com Y0 = YMax + (1 − v)/fps (54,6375 = 54,625 + 0,3/24) e
 #: YMax = (N − 1)/fps. O clipe janela nela pelo `In` (X em quadros da timeline). Medido no Resolve
-#: 21.1 (FCP 7 XML com Time Remap reverse a 70%, 2026-10-02 — caso PRODB).
+#: 21.1 (FCP 7 XML com Time Remap reverse a 70%, 2026-10-02 — caso PRODUCAO_B).
 #: ⚠️ CORRIGE (2026-10-03, Resolve 19.0.0b.59, Windows): o 21 grava os keyframes numa codificação
 #: COMPACTA (`80` + `0a 09 [11 <f64 Y>]` + `0a 09 [09 <f64 X>]`) e era ela que escrevíamos — o 19 NÃO
-#: a lê: descarta a curva calado e toca o `In` PARA A FRENTE a 100% (o M002C022 do PRODB mostrava
+#: a lê: descarta a curva calado e toca o `In` PARA A FRENTE a 100% (o M002C022 do PRODUCAO_B mostrava
 #: os quadros 102→266 da fonte onde deviam ser 1241→1123, conferido pela imagem). O gabarito do
 #: PRÓPRIO 19 (Change Clip Speed 70% + Reverse, exportado em DRT) usa o QHash de sempre — o MESMO
 #: molde de `build_speed_timemap` — com a mesma curva e o mesmo `In`: igual byte a byte, a menos de

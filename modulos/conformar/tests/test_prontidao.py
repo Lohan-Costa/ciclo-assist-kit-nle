@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_prontidao.py        (Windows: .venv-win/Scripts/python)
 
-O incidente que isto trava: o editor fez o Importar inteiro do PRODB pelo painel do Resolve e só
+O incidente que isto trava: o editor fez o Importar inteiro do PRODUCAO_B pelo painel do Resolve e só
 no FIM viu a timeline toda offline — o motor, subido pela casca com o PATH mínimo de `.app`, estava
 sem ffprobe. Três camadas:
 

@@ -27,7 +27,7 @@ import plataforma
 PASTA = "partidas"
 INDICE = "partidas.json"
 RE_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-#: "PRODA_CORTE.02", "PRODA_CORTE v3", "PRODA_CORTE_03" → "cruz_corte": o nome sem a versão.
+#: "PRODA_CORTE.02", "PRODA_CORTE v3", "PRODA_CORTE_03" → "proda_corte": o nome sem a versão.
 _VERSAO = re.compile(r"[\s._-]*(v|ver|versao|versão)?[\s._-]*\d+\s*$", re.IGNORECASE)
 
 

@@ -49,7 +49,7 @@ import cicloassist.avid  # noqa: E402,F401 — a string nula
 from cicloassist.avid.mcapi import TEMPO_DE_ARQUIVO_S, MediaComposer  # noqa: E402
 from cicloassist.avid.timeline import PREFIXO_DE_COMPOSICAO  # noqa: E402
 
-PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior")
+PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR")
 FIXTURE = PROJETO / "BIN COM SEQUENCIA AMA LINK.avb"      # ⛔ SOMENTE LEITURA
 TRABALHO = PROJETO / "_REC COPIA.avb"
 ORIGINAL = "TL com AMA"

@@ -36,7 +36,7 @@ from cicloassist.avid import timeline as T  # noqa: E402
 from cicloassist.avid.mcapi import TEMPO_DE_ARQUIVO_S, MediaComposer  # noqa: E402
 from cicloassist.avid.take import resolver  # noqa: E402
 
-BIN_ORIGEM = r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\CENAS\C07.avb"
+BIN_ORIGEM = r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\CENAS\C07.avb"
 #: ⚠️ Bin NOVA, e não a `_TESTE_CICLO` do spike 1. Aquela está ABERTA no Media
 #: Composer, e gravar por baixo de uma bin aberta é o caminho para uma bin plausível
 #: e corrompida — o banco registra que o MC reescreve do que tem em memória, sem

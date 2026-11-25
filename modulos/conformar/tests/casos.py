@@ -1,7 +1,7 @@
 """Os casos de teste como ILHAS: cada um com o seu projeto, as suas mídias e as suas expectativas.
 
 Regra do autor (2026-10-04): "não podemos misturar projetos". Um teste não pode achar mídia de
-outro projeto só porque ela está montada na máquina — o PRODUCAO-A é laboratório, o PRODB é
+outro projeto só porque ela está montada na máquina — o PRODUCAO-A é laboratório, o PRODUCAO_B é
 filme real, e o resultado de um não pode depender do que o outro deixou no disco. Antes, o teste do
 caso U03 (PRODA) varria TODO `Avid MediaFiles` montado (`pmr.raizes_de_midia`) e todo volume (o
 `existe_aqui` do receptor): a contagem de "mídia online" mudava com os HDs plugados.
@@ -59,7 +59,7 @@ def no_disco(disco: str, caminho: str) -> Path | None:
 
     ⛔ Medido 2026-10-04 (Windows): antes valia "a primeira letra onde o caminho existe". O PROJ-X_D
     (`E:`) tem uma CÓPIA de `PRODUCAO-B/PROJETOS`, então o `.prproj` do caso R03 era achado lá com o
-    PRODB desplugado, e o teste falhava em vez de pular (o áudio só mora no PRODB)."""
+    PRODUCAO_B desplugado, e o teste falhava em vez de pular (o áudio só mora no PRODUCAO_B)."""
     rel = caminho.replace("\\", "/").strip("/")
     if os.name == "nt":
         motor = str(Path(__file__).resolve().parent.parent / "motor")

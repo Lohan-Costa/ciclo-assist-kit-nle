@@ -6,7 +6,7 @@ Rodar:
 
 O critério forte foi o da imagem, no Resolve 21.1 (Mac): o Text+ gerado mostra o TC da timeline
 quadro a quadro (01:00:41:16 / 01:00:52:02 / 01:00:54:03 nos quadros 1000 / 1250 / 1299) e, sobre o
-PRODB, cai no lugar do burn-in da referência. Aqui fica o que não precisa do Resolve: o formato
+PRODUCAO_B, cai no lugar do burn-in da referência. Aqui fica o que não precisa do Resolve: o formato
 do `CompositionBA` (a forma comprimida, sem a qual o título sai preto), a conta da posição e do
 tamanho e o clipe "Fusion Title" no DRT.
 """
@@ -55,7 +55,7 @@ def main() -> int:
        all(x in t2 for x in ("Enabled4 = Input { Value = 1, }", "Opacity4 = Input { Value = 0.4, }",
                              "Red4 = Input { Value = 0, }")), True)
 
-    print("── a conta (o burn-in do PRODB, quadro 2880×1620) ──")
+    print("── a conta (o burn-in do PRODUCAO_B, quadro 2880×1620) ──")
     tam, (cx, cy) = textplus.geometria((0.8168055415153503, 0.0756789967417717), 17.0, 100.0, (2880, 1620))
     # medido na referência: dígitos de 65 px, caixa dos dígitos x 2360–2828, y 41–105 (de cima); o
     # Text+ desenha 1 px acima da conta, então a conta mira 74

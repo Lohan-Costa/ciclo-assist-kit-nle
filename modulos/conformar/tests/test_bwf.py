@@ -55,18 +55,18 @@ def wav(caminho: Path, desc: str = "", ixml: str = "", data="2022-04-07", hora="
 
 def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="dlpc_bwf_"))
-    desc = ("sSPEED=030.000-ND\r\nsTAKE=002\r\nsUBITS=$00000000\r\nsSCENE=FAIXA-W-C4\r\n"
+    desc = ("sSPEED=030.000-ND\r\nsTAKE=002\r\nsUBITS=$00000000\r\nsSCENE=faixa-w-C4\r\n"
             "sFILENAME=FAIXA-W-C4-002.WAV\r\nsTAPE=220407\r\nsCIRCLED=FALSE\r\nsTRK3=BOOM\r\nsTRK4=LAPELA\r\n")
-    ixml = ("<BWFXML><PROJECT>04-07-22</PROJECT><SCENE>FAIXA-W-C4</SCENE><TAKE>002</TAKE><TAPE>220407</TAPE>"
+    ixml = ("<BWFXML><PROJECT>04-07-22</PROJECT><SCENE>faixa-w-C4</SCENE><TAKE>002</TAKE><TAPE>220407</TAPE>"
             "<TRACK_LIST><TRACK_COUNT>2</TRACK_COUNT><TRACK><CHANNEL_INDEX>3</CHANNEL_INDEX>"
             "<INTERLEAVE_INDEX>1</INTERLEAVE_INDEX><NAME>BOOM</NAME></TRACK>"
             "<TRACK><CHANNEL_INDEX>4</CHANNEL_INDEX><INTERLEAVE_INDEX>2</INTERLEAVE_INDEX><NAME>LAPELA</NAME></TRACK>"
             "</TRACK_LIST></BWFXML>")
     r = bwf.como_o_avid(str(wav(tmp / "FAIXA-W-C4-002.WAV", desc, ixml)))
-    ok("⭐ o nome do master é CENA/TAKE, sem a extensão", r["nome"], "FAIXA-W-C4/002")
+    ok("⭐ o nome do master é CENA/TAKE, sem a extensão", r["nome"], "faixa-w-C4/002")
     ok("⭐ o _USER como o MC grava, na mesma ordem", list(r["user"].items()),
        [("UBITS", "$00000000"), ("TapeID", "FAIXA-W-C4-002.WAV"), ("Shoot Date", "2022-04-07 16:29:30"),
-        ("Scene", "FAIXA-W-C4"), ("Take", "002"), ("TRK1", "BOOM"), ("TRK2", "LAPELA"),
+        ("Scene", "faixa-w-C4"), ("Take", "002"), ("TRK1", "BOOM"), ("TRK2", "LAPELA"),
         ("Production", "04-07-22"), ("Circled", "no")])
     ok("a fonte de tape = sTAPE", r["tape"], "220407")
     r = bwf.como_o_avid(str(wav(tmp / "sem_ixml.WAV", desc)))

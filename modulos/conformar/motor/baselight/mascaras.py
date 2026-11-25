@@ -1,5 +1,5 @@
 """As MÁSCARAS de opacidade do Premiere no Baselight: a composição na pilha do plano de cima (Background Replacement +
-Shape). Veio do estudo PRODUCAO-C (`estudo/ferramentas/mascaras_PRODC.py`, `blg_composicao.py`,
+Shape). Veio do estudo PRODUCAO-C (`estudo/ferramentas/mascaras_prodc.py`, `blg_composicao.py`,
 `aplicar_composicao.py`, rodadas 20–24: os trechos mascarados com mínimo ≥ 0,87 quadro a quadro); banco
 `plugins/baselight/README.md` § "A MÁSCARA de opacidade = composição na PILHA" e seguintes.
 

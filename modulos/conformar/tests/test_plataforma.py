@@ -146,7 +146,7 @@ def main() -> int:
         falhas.append("a degradação zerou a seleção — é exatamente o bug que este teste trava")
 
     # ⛔ O PATH do serviço subido por `.app` no macOS (a casca do Resolve, 2026-10-04): sem o Homebrew,
-    # o ffprobe some e a timeline inteira do PRODB entrou offline. Com sistema e pastas de mentira.
+    # o ffprobe some e a timeline inteira do PRODUCAO_B entrou offline. Com sistema e pastas de mentira.
     import os
     from unittest import mock
 

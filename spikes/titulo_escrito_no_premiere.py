@@ -25,7 +25,7 @@ from cicloassist.carta import titulo_prproj as T  # noqa: E402
 
 #: o que se escreve — valores que não se confundem com nenhum padrão
 PEDIDO = {
-    "texto": "producao a",       # minúsculo de propósito: o All Caps tem de aparecer MAIÚSCULO na tela
+    "texto": "producao-a",       # minúsculo de propósito: o All Caps tem de aparecer MAIÚSCULO na tela
     "fonte": "ArialMT",
     "estilo": {
         1: ("f32", 137.0),          # corpo

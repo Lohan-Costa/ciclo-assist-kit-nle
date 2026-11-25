@@ -37,7 +37,7 @@ def test_timecode_manda_quando_existe():
     assert [s.path.name for s in sons] == ["LOCAL-2-004.wav", "LOCAL-2-005.wav"]
 
 
-def test_o_nome_NAO_manda__o_caso_LOCAL-2(monkeypatch):
+def test_o_nome_NAO_manda__o_caso_LOCAL_2(monkeypatch):
     """O caso real: `-005` gravado 20 h depois do `-004`. Ordenar por nome poria
     os dois lado a lado e a janela de desambiguação pegaria o intervalo errado."""
     quarto = _som("LOCAL-2-004.wav", bwf=("2025-05-16", "08:00:00"))

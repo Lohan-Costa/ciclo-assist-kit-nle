@@ -62,7 +62,7 @@ def test_titulo_do_avid_nao_herda_o_estilo_do_molde():
     est.update({15: ("u8", 1), 12: ("u32", 2), 8: ("f32", 23.0), 5: ("u8", 1)})
     doc.update({18: ("u8", 1), 11: ("u8", 1), 19: ("f32", 45.0)})
     legacy = {"titulador": "Avid Titler+ Legacy", "estilo_lido": False, "fundo": None,
-              "caixas": [{"texto": "producao a", "fonte": {"familia": "", "estilo": ""}, "corpo": None, "cor": None,
+              "caixas": [{"texto": "PRODUCAO-A", "fonte": {"familia": "", "estilo": ""}, "corpo": None, "cor": None,
                           "alinhamento": "centro", "posicao": None, "contorno": None, "sombra": None}]}
     arv, pos, avisos = T.compor_do_avid(arv, legacy, legacy["caixas"][0], 1920, 1080)
     relido = T.ler(T.escrever(arv))
@@ -83,7 +83,7 @@ def test_o_estilo_do_titler_legacy_da_cruz():
     raiz = Path(__file__).resolve().parents[1] / "modulos" / "conformar" / "motor"
     sys.path.insert(0, str(raiz))
     from titulos import avid as A
-    js = json.loads(Path(__file__).with_name("dados").joinpath("titler_legacy_cruz_estilo.json").read_text(encoding="utf-8"))
+    js = json.loads(Path(__file__).with_name("dados").joinpath("titler_legacy_proda_estilo.json").read_text(encoding="utf-8"))
     t = A.bloco(A.EID_LEGACY, "Avid Titler+", ["PRODUCAO-A"])
     esc = {A.UUID_ESCALA_LEGACY[0]: 0.85, A.UUID_ESCALA_LEGACY[1]: 0.85, A.UUID_BASE_LEGACY[0]: 0.5277608196355839}
     A.estilo_legacy(t, js, esc, '<variable attribut="vt_res" value="1080"/><variable attribut="FEjust_x" value="1"/>')

@@ -37,7 +37,7 @@ def mxf_completo(caminho: str) -> bool:
     01 11 01 00`; os 4 últimos bytes = o tamanho do RIP). Um MXF TRUNCADO (cópia ou gravação
     interrompida) fica SEM o RIP — o cabeçalho (duração, TC) continua dizendo o arquivo inteiro,
     por isso o ffprobe não acusa (medido 2026-10-02: A048C005 e A080C002 do
-    PRODB, Media Offline no Resolve)."""
+    PRODUCAO_B, Media Offline no Resolve)."""
     import struct
     try:
         with open(caminho, "rb") as f:
@@ -87,7 +87,7 @@ def sondar(caminho: str) -> dict:
             if t:
                 r["tmcd"] = t
     except subprocess.TimeoutExpired:
-        # LENTO não é ilegível: sem cache. ⛔ Medido 2026-10-04 (PRODB frio, 8 simultâneas): 5
+        # LENTO não é ilegível: sem cache. ⛔ Medido 2026-10-04 (PRODUCAO_B frio, 8 simultâneas): 5
         # ARRIRAW passaram de 60 s e eram recusados como ilegíveis — originais perfeitos no proxy.
         return {"ok": False, "lento": True}
     except (OSError, ValueError, subprocess.SubprocessError):
@@ -548,7 +548,7 @@ def casar_um(proxy: str, indice: dict[str, list[str]], projeto: dict | None = No
     # o editor indicou é a mídia que ele apontou — "encontrado", como o master achado pelo AAF, sem o "REFAZER no
     # original" (lab O01, a B22: o AAF dizia "encontrada" e o .prproj "sem original" para o MESMO arquivo).
     # ⛔ A cópia achada noutro lugar (`realocado`) NÃO entra aqui: sem o arquivo do projeto, nada diz se ela é o
-    # original ou uma cópia do proxy (PRODB: o ProRes Proxy copiado ao lado do ARRIRAW) — continua "sem original".
+    # original ou uma cópia do proxy (PRODUCAO_B: o ProRes Proxy copiado ao lado do ARRIRAW) — continua "sem original".
     if estado == "sem_original" and proxy_existe and _dentro(proxy, raizes):
         estado, bons = "proprio", [proxy]
     # ⭐ MUDOU DE LUGAR (autor, 2026-10-22, "provar e aceitar"): a cópia achada noutra pasta com a prova completa do que o
@@ -625,7 +625,7 @@ def casar(segmentos: list[dict], raizes: list[str], progresso=None,
         if m and s.get("media_ref") and not s.get("is_audio"):
             projeto.setdefault(s["media_ref"]["local_path"], m)
     # EM PARALELO (2026-10-04): cada proxy é independente e as sondagens são processos do ffprobe
-    # esperando disco — medido no PRODB (Windows, disco quente), 28 de 30 s da análise eram 600
+    # esperando disco — medido no PRODUCAO_B (Windows, disco quente), 28 de 30 s da análise eram 600
     # ffprobe em série. `progresso` corre na thread de quem chamou: se lança (Cancelar), as que
     # faltam são descartadas.
     feitos: dict[str, dict] = {}

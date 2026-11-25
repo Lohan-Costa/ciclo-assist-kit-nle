@@ -2,7 +2,7 @@
 
 ## Por que existe
 
-Em 2026-10-04 o editor fez o Importar inteiro do PRODB pelo painel do Resolve — escolher
+Em 2026-10-04 o editor fez o Importar inteiro do PRODUCAO_B pelo painel do Resolve — escolher
 sequência, pastas, revisar, montar — e só no FIM viu a timeline inteira offline. O serviço estava no
 ar e respondia; o que faltava era o `ffprobe` (o serviço subido pela casca nasceu com o PATH mínimo de
 `.app`). "Uma das piores experiências para o usuário final." Conectado ≠ pronto.

@@ -68,6 +68,9 @@ def cadeia(arq: str) -> list:
 
 
 def main() -> int:
+    if not GABARITOS.is_dir():   # bins do MC gravadas no SSD: não vão à cópia pública
+        print(f"pulou: sem os gabaritos do MC em {GABARITOS} (ficam no repositório privado)")
+        return 0
     tmp = Path(tempfile.mkdtemp(prefix="dlpc_taxas_"))
     wav = tmp / "B06_SOM_WAV-BWF.wav"
     subprocess.run([fftools.ffmpeg(), "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=4.0",

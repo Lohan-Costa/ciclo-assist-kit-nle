@@ -65,19 +65,19 @@ O nome é fixado no nascimento. Renomear na bin atualiza o manifesto, não move 
 
 ```
 <raiz do cache>\
-  _Assist anterior\                      ← o nome da pasta do projeto do Avid
+  _ASSIST ANTERIOR\                      ← o nome da pasta do projeto do Avid
     projeto.json                      ← as mídias que ESTE projeto usa, inclusive as de fora
     C001_23.976_video_04m12s_…_a3f9c1\
       midia.json                      ← o manifesto (substitui o fonte.json)
       transcricao.json · notas.json · vetores.npy · quadros\ · gerador.*.json
   SERIE EP 12\
-    projeto.json                      ← referencia _Assist anterior\C001_…_a3f9c1
+    projeto.json                      ← referencia _ASSIST ANTERIOR\C001_…_a3f9c1
   _banco\                             ← só com vários editores (Seção 6)
 ```
 
 ⭐ **A mídia mora na pasta do projeto que a processou primeiro; os outros a referenciam.**
 Copiar duplicaria gigabytes (um `audio.wav` tem dezenas de MB). A aba Vetores diz
-"processada em _Assist anterior".
+"processada em _ASSIST ANTERIOR".
 
 ⚠️ **Apagar o cache de um projeto** não apaga mídia que outro projeto usa: ela é movida para
 a pasta desse outro projeto, e a tela diz quantas foram.
@@ -137,7 +137,7 @@ O desenho, que já funcionou no De Lá Pra Cá (banco §4):
 
 O cache de hoje tem **27 mídias e 149 MB**, com transcrições e 7 decupagens do Claude. A
 migração não reprocessa nada: lê `fonte.json` e `gerador.*.json`, calcula o nome, move a
-pasta para `_Assist anterior\`, grava o manifesto com a identidade que já existe. A pasta
+pasta para `_ASSIST ANTERIOR\`, grava o manifesto com a identidade que já existe. A pasta
 antiga fica até o editor conferir.
 
 ⭐ **E ela vem ANTES do lote de decupagem no Mac.** As 165 decupagens nascem na estrutura

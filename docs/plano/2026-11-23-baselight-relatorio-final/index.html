@@ -44,11 +44,11 @@ td.n{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
   <div class="cab"><p class="eyebrow">Caso 1 · Premiere 26.5 → Baselight</p><h2>PRODUCAO-C: 132 de 133 pontos, com retime, máscaras e títulos</h2>
     <p class="muted">O trailer (projeto <code>PRODC_FINAL_isolado_1.prproj</code>) foi lido pelo leitor do Conformar, conformado nos originais e traduzido sem clique: retime pelo gráfico Time×Time, Motion, dez composições com máscara e sete títulos. O único ponto que falta (08:18, "THE") é o tracking de letras do título do Premiere, que o Text do Baselight não tem. A cor do offline fica com o colorista, como foi decidido.</p></div>
   <div class="telas duas">
-    <figure><a href="img/q528.jpg"><img src="img/q528.jpg" alt="Quadro 528: referência e Baselight lado a lado"></a><figcaption><b>Composição com máscara</b>22 s: a escadaria entra atrás da perna, no segundo trecho do fundo. Semelhança com a referência de 0,67 para 1,00.</figcaption></figure>
+    <figure><a href="img/q528.jpg"><img src="img/q528.jpg" alt="Quadro 528: referência e Baselight lado a lado"></a><figcaption><b>Composição com máscara</b>22 s: a local-3 entra atrás da perna, no segundo trecho do fundo. Semelhança com a referência de 0,67 para 1,00.</figcaption></figure>
     <figure><a href="img/q1530.jpg"><img src="img/q1530.jpg" alt="Quadro 1530: referência e Baselight lado a lado"></a><figcaption><b>Imagem parada</b>64 s: o logo era lido como sequência de imagens e saía preto. De 0,00 para 1,00.</figcaption></figure>
   </div>
   <p>O que não foi traduzido entrou como marker "[Ciclo]" na scene, no plano:</p>
-  <div class="tabela"><table class="stack"><thead><tr><th>Quadro</th><th>O quê</th></tr></thead><tbody id="PRODC"></tbody></table></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Quadro</th><th>O quê</th></tr></thead><tbody id="prodc"></tbody></table></div>
 </section>
 
 <section>
@@ -127,7 +127,7 @@ const m=(n,t)=>`<i class="marca ${t}">${n}</i>`;
 const PRODC=[["74","Preto e branco (Black & White) do LOU_7310, V3"],["117","Gaussian Blur do PRJ-0006-252, V3"],["162","Camada de ajuste na V4: o conteúdo não é lido"],["193","Títulos: sem o tracking de letras do Premiere"],["535","Preto e branco do LOU_7310, V4"]];
 const PRODA=[["1","FrameFlex: preenchido no padrão; o recorte do MC não vem no AAF"],["735","Título recriado; o fade do Baselight escurece um pouco as pontas"],["3640","Estabilização do MC não aplicada"],["5780","Estabilização do MC não aplicada"]];
 const linhas=a=>a.map(r=>`<tr><td class="n">${r[0]}</td><td>${r[1]}</td></tr>`).join('');
-document.getElementById('PRODC').innerHTML=linhas(PRODC);
+document.getElementById('prodc').innerHTML=linhas(PRODC);
 document.getElementById('cruz').innerHTML=linhas(PRODA);
 const BL08=[
  ["Premiere · o Baselight sozinho (Filename, ClipName, None)","12–15","1–3","1–5","troca de cartão, de dia, de número; −1,8 s na fonte de 59,94"],

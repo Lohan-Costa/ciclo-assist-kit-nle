@@ -1,5 +1,5 @@
 """As máscaras do Premiere (`mascaras.py`) numa scene, pela FLAPI. Roda no python da FilmLight, chamado por
-`enviar.aplicar_mascaras`; veio do estudo PRODUCAO-C (`estudo/ferramentas/mascaras_PRODC.py gerar/gravar1`).
+`enviar.aplicar_mascaras`; veio do estudo PRODUCAO-C (`estudo/ferramentas/mascaras_prodc.py gerar/gravar1`).
 
     efeitos… mascaras_flapi.py listar  localhost:JOB:SCENE            → JSON {formato, shots: [{n, shot_id, a, b, clip}]}
     efeitos… mascaras_flapi.py gravar1 localhost:JOB:SCENE n shot_id plano.blg.txt

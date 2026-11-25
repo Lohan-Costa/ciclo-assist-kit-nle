@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from nomes import campos as C
 
 # As colunas cruas de um master de Projeto B, como o Avid as nomeia.
-COLUNAS_PRODF = {
+COLUNAS_PRODUCAO_F = {
     "Name": "24-1T01.WAV",
     "Scene": "24-1",
     "Take": "01",
@@ -38,7 +38,7 @@ COLUNAS_PRODE = {
 # ── colunas cruas → campos digitáveis ────────────────────────────────────────
 
 def test_a_coluna_vira_campo_digitavel():
-    f = C.de_colunas(COLUNAS_PRODF)
+    f = C.de_colunas(COLUNAS_PRODUCAO_F)
     assert f["scene"] == "24-1"
     assert f["shoot_date"] == "2026-06-29 12:08:52"
     assert f["trk3"] == "BOOM 1"
@@ -50,7 +50,7 @@ def test_toda_chave_produzida_e_alcancavel_por_um_wildcard():
     alcança — e o editor veria, no autocomplete, um campo que nunca casa."""
     from nomes import template as T
 
-    for colunas in (COLUNAS_PRODF, COLUNAS_PRODE,
+    for colunas in (COLUNAS_PRODUCAO_F, COLUNAS_PRODE,
                     {"Nome-Original": "x", "50% OK": "y", "Áudio Nº": "z"}):
         for chave in C.de_colunas(colunas):
             assert T.CAMPO_VALIDO.fullmatch(chave), f"{chave!r} é indigitável"
@@ -102,7 +102,7 @@ def test_o_derivado_ve_a_ficha_ja_montada():
     """O derivador precisa ler `%scene` para poder derivar `%cena` — é assim que a
     claquete lê a coluna do Avid em vez de reparsear o nome."""
     vistos = {}
-    C.derivar(C.de_colunas(COLUNAS_PRODF), [lambda f: vistos.update(f) or {}])
+    C.derivar(C.de_colunas(COLUNAS_PRODUCAO_F), [lambda f: vistos.update(f) or {}])
     assert vistos["scene"] == "24-1"
 
 
@@ -132,7 +132,7 @@ def test_completar_da_a_TODOS_a_mesma_lista_de_chaves():
     padrão; chave PRESENTE e vazia é fato do material. Sem completar, `%production`
     levantaria no clipe do Projeto C e renderizaria no de Projeto B — o mesmo padrão
     bloqueando num clipe e passando no outro, dentro do mesmo arrasto."""
-    fichas = C.completar([C.de_colunas(COLUNAS_PRODF),
+    fichas = C.completar([C.de_colunas(COLUNAS_PRODUCAO_F),
                           C.de_colunas(COLUNAS_PRODE)])
     assert {k for k in fichas[0]} == {k for k in fichas[1]}
     assert fichas[1]["production"] == "", "faltou preencher com vazio"
@@ -148,8 +148,8 @@ def test_completar_de_lista_vazia_nao_estoura():
 def test_o_catalogo_traz_o_ROTULO_do_avid_junto():
     """⭐ O editor conhece a coluna como `Shoot Date`, não como `shoot_date`. O
     autocomplete tem de mostrar as duas coisas, senão ele não reconhece o que achou."""
-    cat = {c.nome: c for c in C.catalogo([C.de_colunas(COLUNAS_PRODF)],
-                                         rotulos=C.rotulos(COLUNAS_PRODF))}
+    cat = {c.nome: c for c in C.catalogo([C.de_colunas(COLUNAS_PRODUCAO_F)],
+                                         rotulos=C.rotulos(COLUNAS_PRODUCAO_F))}
     assert cat["shoot_date"].rotulo == "Shoot Date"
     assert cat["scene"].rotulo == "Scene"
 
@@ -191,7 +191,7 @@ def test_o_catalogo_declara_a_PROCEDENCIA():
 
 
 def test_sugerir_completa_pelo_prefixo():
-    cat = C.catalogo([C.de_colunas(COLUNAS_PRODF)])
+    cat = C.catalogo([C.de_colunas(COLUNAS_PRODUCAO_F)])
     nomes = [c.nome for c in C.sugerir(cat, "s")]
     assert "scene" in nomes and "shoot_date" in nomes
     assert "take" not in nomes
@@ -213,10 +213,10 @@ def test_sugerir_poe_o_casamento_EXATO_na_frente():
 
 def test_sugerir_sem_prefixo_devolve_o_comeco_do_catalogo():
     """Digitar só `%` já mostra o que existe — é como o editor descobre as colunas."""
-    cat = C.catalogo([C.de_colunas(COLUNAS_PRODF)])
+    cat = C.catalogo([C.de_colunas(COLUNAS_PRODUCAO_F)])
     assert len(C.sugerir(cat, "", limite=5)) == 5
 
 
 def test_sugerir_nao_distingue_maiuscula():
-    cat = C.catalogo([C.de_colunas(COLUNAS_PRODF)])
+    cat = C.catalogo([C.de_colunas(COLUNAS_PRODUCAO_F)])
     assert [c.nome for c in C.sugerir(cat, "SC")] == [c.nome for c in C.sugerir(cat, "sc")]

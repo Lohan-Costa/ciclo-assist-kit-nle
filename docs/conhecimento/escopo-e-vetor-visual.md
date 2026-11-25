@@ -20,7 +20,7 @@ faz reanalisar nunca acontecer duas vezes. Quem se estreita é a RESPOSTA.
 | a fila da aba Vetores | só o do projeto — **a menos que o editor tenha filtrado a tabela** |
 
 ⛔⛔ **`bins.ler()` é uma FOTO do último projeto varrido, e não serve de filtro.** Em
-2026-09-13 ela era do `_Assist anterior`, de dois dias antes, com o editor noutro projeto:
+2026-09-13 ela era do `_ASSIST ANTERIOR`, de dois dias antes, com o editor noutro projeto:
 filtrar por ela esconderia o material de hoje e deixaria passar o de ontem. O escopo lê as
 bins do projeto **aberto agora** (0,4 s, 42 bins) e só reaproveita a lista enquanto for
 dele; sem MC, cai para a foto **dizendo que é foto**.

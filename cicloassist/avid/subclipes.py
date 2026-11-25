@@ -6,7 +6,7 @@ quando não há esses tipos de arquivos"*. A busca só sabia de masters — o ca
 pelo UMID do master, e **subclipe não tem entrada nenhuma nele**. Quem sabe de subclipe é a
 BIN, e é ela que este módulo lê.
 
-## Medido no projeto do editor (`_Assist anterior`, 2026-09-21)
+## Medido no projeto do editor (`_ASSIST ANTERIOR`, 2026-09-21)
 
 | | |
 |---|---|

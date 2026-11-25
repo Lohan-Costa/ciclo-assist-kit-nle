@@ -4,14 +4,14 @@ Rodar:
 
     .venv/bin/python tests/test_mascara_fusion.py        (Windows: .venv-win/Scripts/python)
 
-O critério forte foi o da imagem, no Resolve 21.1 (Mac), contra o export do PRODB: o blur do
+O critério forte foi o da imagem, no Resolve 21.1 (Mac), contra o export do PRODUCAO_B: o blur do
 A055C012 (01:01:42:06), o insert do interfone (01:00:49:14) e o Basic 3D 20/20 do caso R02
 (0,9993 contra o export do Premiere). Aqui fica o que não precisa do
 Resolve: a receita que a leitura tira do PRPROJ, o texto do Polygon, as regras de inversão e a
 montagem dos nós (com uma composição de mentira), e o casamento que trata cópias idênticas de um
 original em dois HDs como UM original.
 
-Com o caso `03 CASOS/REAL/R02 PRODB EXEMPLOS` no disco (`DLPC_AMOSTRAS`), a leitura
+Com o caso `03 CASOS/REAL/R02 PRODUCAO_B EXEMPLOS` no disco (`DLPC_AMOSTRAS`), a leitura
 real também é conferida; sem ele, essa parte é PULADA.
 """
 
@@ -175,7 +175,7 @@ def main() -> int:
        [["MediaIn1", "EffectMask", "Polygon1"], ["CornerPositioner1", "Input", "MediaIn1"],
         ["MediaOut1", "Input", "CornerPositioner1"]])
     # ⭐ (2026-11-20) o Premiere aplica do último índice do arquivo para o primeiro: o recorte pode vir DEPOIS de outro
-    #   efeito (o insert do PRODB gira e depois recorta). Antes era recusado; agora é Merge sobre fundo transparente
+    #   efeito (o insert do PRODUCAO_B gira e depois recorta). Antes era recusado; agora é Merge sobre fundo transparente
     #   com o Polygon no EffectMask — o mesmo desenho da máscara de opacidade no fim.
     ok("Basic 3D → recorte: CornerPositioner → Merge (Background transparente) com o Polygon → MediaOut",
        fm.plano([b3, rec])["ligacoes"],
@@ -382,13 +382,13 @@ def main() -> int:
     caso = None
     from casos import CANDIDATAS_AMOSTRAS  # noqa: E402 (a pasta de testes, nas duas máquinas)
     for raiz in CANDIDATAS_AMOSTRAS:
-        p = os.path.join(raiz or "", "03 CASOS", "REAL", "R02 PRODB EXEMPLOS", "premiere",
+        p = os.path.join(raiz or "", "03 CASOS", "REAL", "R02 PRODUCAO_B EXEMPLOS", "premiere",
                          "DU exemplos especificos.prproj")
         if raiz and os.path.exists(p):
             caso = p
             break
     if caso is None:
-        print("Leitura do projeto de casos: PULADA (R02 PRODB EXEMPLOS não está no disco)")
+        print("Leitura do projeto de casos: PULADA (R02 PRODUCAO_B EXEMPLOS não está no disco)")
     else:
         print("Leitura do projeto de casos")
         from prproj.leitura import Leitor

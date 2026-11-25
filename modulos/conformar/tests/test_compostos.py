@@ -12,7 +12,7 @@ takes "desligados"), o grupo que vai para a casca e o `aplicar_compostos` com um
 mentira.
 
 O caso R02 (no SSD, `DLPC_AMOSTRAS`) dá o lado negativo: 2 takes multicam, nenhum nest. O projeto
-`…PARA RESOLVE.prproj` no HD PRODB dá o positivo (`C87_COMP_INTERFONE_2` em 01:22:49:07); sem o
+`…PARA RESOLVE.prproj` no HD PRODUCAO_B dá o positivo (`C87_COMP_INTERFONE_2` em 01:22:49:07); sem o
 HD, essa parte é PULADA.
 """
 
@@ -71,10 +71,10 @@ class Timeline:
         return Item(info["name"], itens[0].GetStart())
 
 
-def _PRODB() -> str | None:
+def _producao_b() -> str | None:
     """O `.prproj` da versão final do filme, pelo manifesto do caso R03 (nada escrito aqui)."""
     import casos as ilhas
-    c = ilhas.carregar("REAL/R03 PRODB FILME")
+    c = ilhas.carregar("REAL/R03 PRODUCAO_B FILME")
     p = c and c["arquivo"].get("prproj_final")
     return str(p) if p else None
 
@@ -124,7 +124,7 @@ def main() -> int:
     caso = None
     from casos import CANDIDATAS_AMOSTRAS  # noqa: E402 (a pasta de testes, nas duas máquinas)
     for raiz in CANDIDATAS_AMOSTRAS:
-        p = os.path.join(raiz or "", "03 CASOS", "REAL", "R02 PRODB EXEMPLOS", "premiere",
+        p = os.path.join(raiz or "", "03 CASOS", "REAL", "R02 PRODUCAO_B EXEMPLOS", "premiere",
                          "DU exemplos especificos.prproj")
         if raiz and os.path.exists(p):
             caso = p
@@ -138,10 +138,10 @@ def main() -> int:
         ok("⛔ take multicam NÃO vira compound (achatado na câmera escolhida)",
            [s["clip_name"] for s in segs if s.get("composto")], [])
 
-    print("── PRODB (HD): o nest do interfone ──")
-    proj = _PRODB()
+    print("── PRODUCAO_B (HD): o nest do interfone ──")
+    proj = _producao_b()
     if proj is None:
-        print("  HD PRODB não montado — PULADO")
+        print("  HD PRODUCAO_B não montado — PULADO")
     else:
         L = Leitor(Projeto(proj))
         nomes = {L.p.nome_da_sequencia(s): s for s in L._todas}

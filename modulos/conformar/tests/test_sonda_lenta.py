@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_sonda_lenta.py        (Windows: .venv-win/Scripts/python)
 
-⛔ Medido no PRODB com o disco FRIO e 8 sondagens simultâneas (Windows): 5 ARRIRAW passaram do
+⛔ Medido no PRODUCAO_B com o disco FRIO e 8 sondagens simultâneas (Windows): 5 ARRIRAW passaram do
 limite de 60 s do ffprobe e o casamento os recusou como ilegíveis —
 originais perfeitos ficariam no proxy, com marcador de refazer. Em série, com o mesmo disco frio, não
 aconteceu. Agora o estouro de tempo não vai para o cache, quem estourou é refeito UM POR VEZ no fim,

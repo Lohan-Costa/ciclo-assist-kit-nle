@@ -45,7 +45,7 @@ def _cc(**extra):
     return p
 
 
-def test_o_cc_da_cruz_se_traduz():
+def test_o_cc_da_proda_se_traduz():
     cc = C.ler_cc(_cc())
     assert cc["nao"] == [] and cc["sat"] == 87.5
     assert max(abs(a - b) for p, q in zip(cc["curva"], PRODA) for a, b in zip(p, q)) < 1e-9

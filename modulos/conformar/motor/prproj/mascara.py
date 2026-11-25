@@ -1,6 +1,6 @@
 """Máscara do Premiere (`AE.ADBE AEMask2`) → Polygon do Fusion.
 
-O contorno (`Path`) vem em base64 por keyframe. Estrutura `inferido` (PRODB, Premiere 26.0.2,
+O contorno (`Path`) vem em base64 por keyframe. Estrutura `inferido` (PRODUCAO_B, Premiere 26.0.2,
 2026-10-03): 17 bytes de cabeçalho; `u32` nº de vértices; por vértice `u32` (1 = suave, 0 = canto)
 + 3 pontos `f32` (x, y): o VÉRTICE, a tangente de ENTRADA e a de SAÍDA, normalizados (0–1) no
 quadro da FONTE do clipe, com Y para baixo.
@@ -93,7 +93,7 @@ def ler_mascaras(proj: Projeto, componente: Obj) -> list[dict]:
 
 def _transformada(vertices: list, m: dict, fonte: tuple[int, int]) -> list:
     """Aplica a transformação da própria máscara (Position, Anchor Point, Scale Height/Width,
-    Rotation — tudo no quadro da FONTE, normalizado) aos vértices. Identidade no PRODB."""
+    Rotation — tudo no quadro da FONTE, normalizado) aos vértices. Identidade no PRODUCAO_B."""
     from .leitura import _float, _ponto      # import tardio: leitura importa este módulo
     px, py = _ponto(m.get("Position"), (0.0, 0.0))
     ax, ay = _ponto(m.get("Anchor Point"), (px, py))

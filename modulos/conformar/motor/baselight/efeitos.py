@@ -1,6 +1,6 @@
 """Os efeitos de IMAGEM do Premiere no Baselight: a VELOCIDADE (Retime Time×Time, um keyframe por quadro) e o MOTION
 (camada Transform: escala, posição, rotação, flip — parado ou animado). Veio do estudo PRODUCAO-C de 2026-11-21/22
-(`estudo/ferramentas/traduzir_PRODC.py`, `blg_retime.py`, `blg_pilha.py`, `blg_transform.py`: 132 de 133 pontos contra a
+(`estudo/ferramentas/traduzir_prodc.py`, `blg_retime.py`, `blg_pilha.py`, `blg_transform.py`: 132 de 133 pontos contra a
 referência); banco `plugins/baselight/README.md` § Retime Time×Time e § "Retime com fonte de OUTRA taxa".
 
 Só stdlib: roda no python da FilmLight (`efeitos_flapi.py`) e nos testes.
@@ -407,7 +407,7 @@ def achar_plano(planos: list[dict], inicio: int, fim: int, clip: str) -> tuple[d
 def titulos(leitura: dict) -> list[dict]:
     """Os títulos da montagem (Graphic/Text do Premiere, sem mídia): {inicio, fim, texto, fonte, corpo}. ⭐ Decisão do
     autor (2026-11-23): em geral o texto NÃO vai à cor — cada título vira um marker com o que ele é; trazer o texto para
-    a scene (camada Text em modo Composite, estudo `titulos_PRODC.py`) fica como OPÇÃO, para o título narrativo/artístico."""
+    a scene (camada Text em modo Composite, estudo `titulos_prodc.py`) fica como OPÇÃO, para o título narrativo/artístico."""
     from .entrega import _rate, _tc_quadros
 
     base_tl, _ = _rate(float(leitura["timeline_fps"]))

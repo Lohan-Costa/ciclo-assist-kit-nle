@@ -27,7 +27,7 @@ VERSOES_CSXS = range(9, 13)
 
 #: As extensões do Premiere que saem (nome da pasta instalada).
 EXTENSOES_ANTIGAS = ("com.orbita.ponte", "com.orbita.sync", "com.orbita.sonda", "com.ciclomedia.delapraca.ppro",
-                     "com.ciclomedia.cicloassist.ppro", "com.ciclomedia.lab.ponte", "com.PRODUCAO-G.diarias")
+                     "com.ciclomedia.cicloassist.ppro", "com.ciclomedia.lab.ponte", "com.producao-g.diarias")
 #: Os painéis do Media Composer que saem (prefixos do `.avpi`).
 PREFIXOS_AVPI = ("com.ciclomedia.", "com.orbita.")
 #: O painel do Resolve (Workflow Integration) e os scripts que saem.

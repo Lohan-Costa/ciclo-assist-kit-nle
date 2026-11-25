@@ -80,7 +80,7 @@ def perguntar(proc: subprocess.Popen, texto: str) -> tuple[str, float]:
 def main() -> int:
     # ⭐ A sessão é derivada do caminho do projeto, de forma determinística: abrir o mesmo
     #    projeto amanhã dá o mesmo id, sem guardar mapa nenhum em lugar nenhum.
-    projeto = r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior"
+    projeto = r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR"
     sessao = str(uuid.uuid5(uuid.NAMESPACE_URL, "cicloassist:" + projeto.lower()))
     print(f"projeto ..... {projeto}")
     print(f"sessão ...... {sessao}  (derivada, não sorteada)\n")

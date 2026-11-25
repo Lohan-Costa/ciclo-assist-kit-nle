@@ -1,6 +1,6 @@
 """As faixas de texto dos títulos (marcadas `CICLO_TITULO_<i>`) e os pretos numa scene — o passo 1 de `titulos.py`.
 Entrada (stdin): {"duracoes": [quadros…], "pretos": [quadros…]}. Roda no python da FilmLight, chamado por
-`enviar.trazer_titulos`; veio do estudo (`titulos_PRODC.py inserir`). O tempo e a linha de cada faixa quem dá é o `montar`.
+`enviar.trazer_titulos`; veio do estudo (`titulos_prodc.py inserir`). O tempo e a linha de cada faixa quem dá é o `montar`.
 """
 import json
 import sys

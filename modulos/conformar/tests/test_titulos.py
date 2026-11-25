@@ -161,7 +161,7 @@ def main() -> int:
     ok("fundo em tela cheia → caixa 1,0 × 1,0 (decisão do autor)",
        [p[-8:] for p in (_filtros(efb)[54][3], _filtros(efb)[54][4])], [struct.pack("<d", 1.0)] * 2)
     leg = {"titulador": "Avid Titler+ Legacy", "estilo_lido": False,
-           "caixas": [{"texto": "producao a", "fonte": {"familia": "", "estilo": ""}, "corpo": None,
+           "caixas": [{"texto": "PRODUCAO-A", "fonte": {"familia": "", "estilo": ""}, "corpo": None,
                        "cor": None, "alinhamento": "centro", "posicao": None}], "fundo": None}
     efb, av = R.efeitos_do_texto(leg)
     ok("⭐ Legacy: o texto entra, com o estilo padrão do Resolve",

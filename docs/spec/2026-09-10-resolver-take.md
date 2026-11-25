@@ -29,7 +29,7 @@ são consumidoras dela.
 ## 2. O que foi medido antes de desenhar
 
 Tudo abaixo é `confirmado` contra o material real (MC 2025.6.58781 / Windows 11, projeto
-`_Assist anterior`, curta *PRODUCAO-A*), em 2026-09-10.
+`_ASSIST ANTERIOR`, curta *PRODUCAO-A*), em 2026-09-10.
 
 ### 2.1 ⭐ Um subclipe sincronizado mistura DOIS masters
 

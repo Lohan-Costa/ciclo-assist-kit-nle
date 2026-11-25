@@ -22,7 +22,7 @@ import pytest
 from nomes import template as T
 
 # O catálogo de um clipe de Projeto B, medido em `SOM DIRETO.avb`.
-CAMPOS_PRODF = {
+CAMPOS_PRODUCAO_F = {
     "name": "24-1T01.WAV",
     "scene": "24-1",
     "take": "01",
@@ -41,37 +41,37 @@ CAMPOS_PRODF = {
 # ── o básico ─────────────────────────────────────────────────────────────────
 
 def test_texto_sem_wildcard_sai_igual():
-    assert T.render("SEM NADA AQUI", CAMPOS_PRODF) == "SEM NADA AQUI"
+    assert T.render("SEM NADA AQUI", CAMPOS_PRODUCAO_F) == "SEM NADA AQUI"
 
 
 def test_um_campo_e_substituido():
-    assert T.render("%scene", CAMPOS_PRODF) == "24-1"
+    assert T.render("%scene", CAMPOS_PRODUCAO_F) == "24-1"
 
 
 def test_campos_e_literais_se_misturam():
-    assert T.render("C%cena_P%plano_T%take2", CAMPOS_PRODF) == "C24_P01_T01"
+    assert T.render("C%cena_P%plano_T%take2", CAMPOS_PRODUCAO_F) == "C24_P01_T01"
 
 
 def test_dois_por_cento_viram_um_literal():
     """`%%` é a válvula de escape. Sem ela não há como pôr um `%` no nome."""
-    assert T.render("100%% BOM", CAMPOS_PRODF) == "100% BOM"
+    assert T.render("100%% BOM", CAMPOS_PRODUCAO_F) == "100% BOM"
 
 
 def test_dois_por_cento_seguido_de_palavra_NAO_vira_campo():
     """⚠️ `%%scene` é o `%` literal e a palavra `scene`, não o campo."""
-    assert T.render("%%scene", CAMPOS_PRODF) == "%scene"
+    assert T.render("%%scene", CAMPOS_PRODUCAO_F) == "%scene"
 
 
 def test_o_mesmo_campo_pode_repetir():
-    assert T.render("%take-%take", CAMPOS_PRODF) == "01-01"
+    assert T.render("%take-%take", CAMPOS_PRODUCAO_F) == "01-01"
 
 
 def test_campos_colados_sem_separador():
-    assert T.render("%cena%take2", CAMPOS_PRODF) == "2401"
+    assert T.render("%cena%take2", CAMPOS_PRODUCAO_F) == "2401"
 
 
 def test_acentuacao_no_literal_sobrevive():
-    assert T.render("CENA %cena — ÁUDIO", CAMPOS_PRODF) == "CENA 24 — ÁUDIO"
+    assert T.render("CENA %cena — ÁUDIO", CAMPOS_PRODUCAO_F) == "CENA 24 — ÁUDIO"
 
 
 # ── ⚠️⚠️ o recuo: o coração do desenho ───────────────────────────────────────
@@ -84,14 +84,14 @@ def test_o_token_RECUA_ate_o_campo_que_existe():
     o token recua até o maior campo do catálogo que seja prefixo — `shoot` — e o que
     sobra (`_T`) vira literal.
     """
-    campos = dict(CAMPOS_PRODF, shoot="01")
+    campos = dict(CAMPOS_PRODUCAO_F, shoot="01")
     assert T.render("C%scene-P%shoot_T%take", campos) == "C24-1-P01_T01"
 
 
 def test_o_campo_exato_ganha_de_qualquer_recuo():
     """Com `shoot` e `shoot_date` no catálogo, `%shoot_date` é `shoot_date` — e não
     `shoot` seguido do literal `_date`. Recuar aqui daria a data errada."""
-    campos = dict(CAMPOS_PRODF, shoot="01")
+    campos = dict(CAMPOS_PRODUCAO_F, shoot="01")
     assert T.render("%shoot_date", campos) == "2026-06-29 12:08:52"
 
 
@@ -104,7 +104,7 @@ def test_o_recuo_prefere_o_campo_MAIS_LONGO():
     invertia o laço**. Era decoração. `%shoot_date_x` não está no catálogo e tem DUAS
     fronteiras válidas — `shoot_date` e `shoot` —, então só ele mede a direção.
     """
-    campos = dict(CAMPOS_PRODF, shoot="01")
+    campos = dict(CAMPOS_PRODUCAO_F, shoot="01")
     tokens = T.analisar("%shoot_date_x", campos)
     assert tokens[0].campo == "shoot_date", "recuou longe demais"
     assert tokens[0].cauda == "_x"
@@ -115,7 +115,7 @@ def test_o_recuo_fica_VISIVEL_na_analise():
     """⚠️ Recuar é uma decisão do motor sobre o que o editor digitou, e decisão calada
     é o que este projeto não aceita. `analisar` devolve a cauda que virou literal para
     o painel poder mostrá-la."""
-    campos = dict(CAMPOS_PRODF, shoot="01")
+    campos = dict(CAMPOS_PRODUCAO_F, shoot="01")
     tokens = T.analisar("%shoot_T", campos)
     assert len(tokens) == 1
     assert tokens[0].campo == "shoot"
@@ -130,7 +130,7 @@ def test_o_recuo_fica_VISIVEL_na_analise():
 
 def test_sem_recuo_possivel_o_campo_e_DESCONHECIDO():
     """`%xyz` não é prefixo de campo nenhum: erro, não literal."""
-    tokens = T.analisar("%xyz", CAMPOS_PRODF)
+    tokens = T.analisar("%xyz", CAMPOS_PRODUCAO_F)
     assert tokens[0].campo is None
     assert tokens[0].bruto == "%xyz"
 
@@ -163,7 +163,7 @@ def test_a_tag_fechada_NAO_recua():
     """⚠️ Recuo é para quem digitou sem delimitar. Quem fechou a tag já disse onde o
     campo acaba — recuar aqui seria o motor discordando de uma declaração explícita, e
     `%{shoot_t}` viraria `%shoot` + `_t` sem ninguém pedir."""
-    campos = dict(CAMPOS_PRODF, shoot="01")
+    campos = dict(CAMPOS_PRODUCAO_F, shoot="01")
     tokens = T.analisar("%{shoot_t}", campos)
     assert tokens[0].campo is None
     assert tokens[0].cauda == "", "a tag fechada não devolve cauda ao literal"
@@ -193,19 +193,19 @@ def test_a_tag_ABERTA_e_desconhecida_e_para_no_identificador():
 
 def test_a_tag_fechada_VAZIA_e_desconhecida():
     """`%{}` não é campo nenhum, e fingir que é literal esconderia um engano."""
-    tokens = T.analisar("%{}", CAMPOS_PRODF)
+    tokens = T.analisar("%{}", CAMPOS_PRODUCAO_F)
     assert tokens and tokens[0].campo is None
 
 
 def test_a_tag_fechada_nao_distingue_maiuscula():
-    assert T.render("%{SCENE}", CAMPOS_PRODF) == "24-1"
+    assert T.render("%{SCENE}", CAMPOS_PRODUCAO_F) == "24-1"
 
 
 def test_o_escape_ganha_da_tag_fechada():
     """⚠️ `%%{cena}` é um `%` literal seguido de `{cena}` — quem escapou o `%` está
     escrevendo texto, não abrindo tag."""
-    assert T.render("%%{cena}", CAMPOS_PRODF) == "%{cena}"
-    assert T.analisar("%%{cena}", CAMPOS_PRODF) == []
+    assert T.render("%%{cena}", CAMPOS_PRODUCAO_F) == "%{cena}"
+    assert T.analisar("%%{cena}", CAMPOS_PRODUCAO_F) == []
 
 
 def test_as_duas_formas_convivem_no_mesmo_padrao():
@@ -223,10 +223,10 @@ def test_o_recuo_so_acontece_na_fronteira_do_UNDERSCORE():
     composição. Sem a fronteira em `_`, o motor devolveria `24-1` + literal `x` e o
     editor levaria um lote inteiro com um `x` pendurado, sem nunca ver vermelho.
     """
-    tokens = T.analisar("%scenex", CAMPOS_PRODF)
+    tokens = T.analisar("%scenex", CAMPOS_PRODUCAO_F)
     assert tokens[0].campo is None, "recuou onde não havia fronteira"
     with pytest.raises(T.PadraoInvalido):
-        T.render("%scenex", CAMPOS_PRODF)
+        T.render("%scenex", CAMPOS_PRODUCAO_F)
 
 
 # ── o que bloqueia e o que só avisa ──────────────────────────────────────────
@@ -236,14 +236,14 @@ def test_campo_desconhecido_LEVANTA_em_vez_de_render_vazio():
     tem de recusar — se devolvesse vazio, um `%xyz` esquecido produziria um lote de
     nomes truncados que só o olho pegaria, clipe por clipe."""
     with pytest.raises(T.PadraoInvalido):
-        T.render("C%xyz_T%take", CAMPOS_PRODF)
+        T.render("C%xyz_T%take", CAMPOS_PRODUCAO_F)
 
 
 def test_campo_CONHECIDO_e_vazio_renderiza_vazio_sem_levantar():
     """⭐ A distinção do §11, aqui: chave AUSENTE é erro; chave PRESENTE e vazia é
     fato do material. No Projeto C não há cena, e travar todo padrão com `%cena` tornaria a
     ferramenta inútil justamente no produto que mais precisa dela."""
-    campos = dict(CAMPOS_PRODF, cena="")
+    campos = dict(CAMPOS_PRODUCAO_F, cena="")
     assert T.render("C%cena_T%take", campos) == "C_T01"
 
 
@@ -254,7 +254,7 @@ def test_valor_ZERO_nao_some_do_nome():
     0 ou um contador zerado desapareceriam do nome sem deixar rastro — nome plausível,
     dado perdido, ninguém avisado. Só `None` vira vazio.
     """
-    campos = dict(CAMPOS_PRODF, contador=0, vazio=None)
+    campos = dict(CAMPOS_PRODUCAO_F, contador=0, vazio=None)
     assert T.render("T%contador", campos) == "T0"
     assert T.render("T%vazio", campos) == "T"
 
@@ -268,7 +268,7 @@ def test_validar_aponta_ONDE_o_campo_invalido_esta():
     o campo terminaria. Pintar só `%xyz` insinuaria que `xyz` é um nome completo e que
     o problema é outro — e mandaria o editor procurar no lugar errado.
     """
-    ruins = T.validar("C%cena_%xyz_T%take", CAMPOS_PRODF)
+    ruins = T.validar("C%cena_%xyz_T%take", CAMPOS_PRODUCAO_F)
     assert len(ruins) == 1
     assert ruins[0].bruto == "%xyz_T"
     assert ruins[0].inicio == len("C%cena_")
@@ -277,27 +277,27 @@ def test_validar_aponta_ONDE_o_campo_invalido_esta():
 
 
 def test_validar_com_tudo_certo_devolve_lista_vazia():
-    assert T.validar("C%cena_P%plano", CAMPOS_PRODF) == []
+    assert T.validar("C%cena_P%plano", CAMPOS_PRODUCAO_F) == []
 
 
 def test_por_cento_solto_no_fim_e_invalido():
     """⚠️ O autor pediu explicitamente: `%` sem valor compatível bloqueia."""
-    ruins = T.validar("NOME%", CAMPOS_PRODF)
+    ruins = T.validar("NOME%", CAMPOS_PRODUCAO_F)
     assert len(ruins) == 1
     assert ruins[0].campo is None
 
 
 def test_por_cento_seguido_de_nao_letra_e_invalido():
     for padrao in ("%-x", "% ", "%1abc"):
-        ruins = T.validar(padrao, CAMPOS_PRODF)
+        ruins = T.validar(padrao, CAMPOS_PRODUCAO_F)
         assert ruins, f"{padrao!r} deveria ser recusado e não foi"
 
 
 # ── nomes de campo ───────────────────────────────────────────────────────────
 
 def test_o_campo_nao_distingue_maiuscula():
-    assert T.render("%SCENE", CAMPOS_PRODF) == "24-1"
-    assert T.render("%Cena", CAMPOS_PRODF) == "24"
+    assert T.render("%SCENE", CAMPOS_PRODUCAO_F) == "24-1"
+    assert T.render("%Cena", CAMPOS_PRODUCAO_F) == "24"
 
 
 def test_normalizar_traduz_coluna_do_avid_para_campo():
@@ -334,7 +334,7 @@ def test_normalizar_nao_deixa_o_campo_virar_algo_que_o_padrao_nao_alcanca():
 # ── o que o painel precisa saber ─────────────────────────────────────────────
 
 def test_campos_usados_lista_na_ordem_em_que_aparecem():
-    assert T.campos_usados("C%cena_P%plano_T%take2", CAMPOS_PRODF) == [
+    assert T.campos_usados("C%cena_P%plano_T%take2", CAMPOS_PRODUCAO_F) == [
         "cena", "plano", "take2"]
 
 
@@ -342,4 +342,4 @@ def test_padrao_vazio_produz_nome_vazio_sem_levantar():
     """⚠️ Render não é quem bloqueia o nome vazio — quem bloqueia é o consumidor, que
     é quem sabe que um clipe não pode se chamar nada. Misturar as duas coisas faria o
     motor recusar um padrão legítimo de outra função futura."""
-    assert T.render("", CAMPOS_PRODF) == ""
+    assert T.render("", CAMPOS_PRODUCAO_F) == ""

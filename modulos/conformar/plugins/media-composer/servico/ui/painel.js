@@ -2367,7 +2367,7 @@ let servicoOk = false;
 
 /* ── Prontidão (autor, 2026-10-04) ────────────────────────────────────────────
    As opções só aparecem com o motor PRONTO (`/prontidao`: ffprobe e ffmpeg RODAM, a pasta grava),
-   não só no ar — o Importar inteiro do PRODB foi feito com o motor sem ffprobe, e a timeline
+   não só no ar — o Importar inteiro do PRODUCAO_B foi feito com o motor sem ffprobe, e a timeline
    saiu toda offline no fim. Sem motor: "abra o De Lá Pra Cá"; conecta sozinha quando ele abre (a
    batida de 4 s), qualquer que seja a ordem (memória `app-obrigatorio-ordem-nao-importa`). */
 let falhasSeguidas = 0;

@@ -42,7 +42,7 @@ def test_recorte_corta_aos_limites_e_guarda_a_origem():
         _foto().recorte((3000, 0, 3100, 10))
 
 
-def test_com_cruz_nao_mexe_na_original():
+def test_com_proda_nao_mexe_na_original():
     img = np.zeros((50, 50, 3), np.uint8)
     m = tela.com_cruz(img, 25, 25)
     assert img.sum() == 0 and tuple(m[25, 25]) == (0, 0, 255)

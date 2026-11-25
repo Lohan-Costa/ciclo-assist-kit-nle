@@ -212,7 +212,7 @@ calado. Não existe lugar aqui de onde pegar "o offset do take", pela mesma raz�
 fala em 08:00 que nenhum subclipe alcança é material que só existe no master: mandá-lo para
 o fim por "já apareceu" enterraria a única linha que a tem.
 
-⛔⛔ **O editor COPIA o subclipe entre as bins de trabalho.** MEDIDO no `_Assist anterior`:
+⛔⛔ **O editor COPIA o subclipe entre as bins de trabalho.** MEDIDO no `_ASSIST ANTERIOR`:
 **290 pares (master, recorte) são 130 recortes distintos**, e um está em **6 bins**
 (`C04_FALAS`, `C04_FALAS NOVO`, `C04_FALAS NOVO 5`, `CENAS/C04`…). Sem juntar, "personagem f"
 mostrava o mesmo `C04_P06-T002` cinco vezes antes de qualquer outro material — a lista
@@ -295,7 +295,7 @@ master, 172 ms frio, nas 86 mídias que "personagem f" casa, para mostrar 40). D
 de fonte de um arquivo não muda.
 ⛔⛔ **E ele sai do master DA FALA, nunca do master do achado** (revisão de 2026-09-22).
 Numa linha FUNDIDA a chave do achado é a da IMAGEM — e está certo, é ela que endereça a
-miniatura —, enquanto as falas vieram do SOM. MEDIDO no `_Assist anterior`: **59 de 59** pares
+miniatura —, enquanto as falas vieram do SOM. MEDIDO no `_ASSIST ANTERIOR`: **59 de 59** pares
 imagem+som têm TC de fonte DIFERENTE, e a diferença é de HORAS (a câmera em `03:14:14:17`,
 o gravador em `11:42:00:00` — TC de rolo contra hora do dia). O TC mostrado errava por 8 h e
 meia, e é um número para o editor DIGITAR no Avid. Hoje cada fala carrega o master de onde
@@ -335,7 +335,7 @@ já disse que vai retrabalhar a área de filtro, e isso entra junto.
 
 **Primeiro teste real da aba dentro do Premiere, e ele viu três coisas.** Num projeto
 `CICLO ASSIST TESTE.prproj` aberto na frente dele: os resultados vinham recortados pelo
-`_Assist anterior` — projeto do **Media Composer**, **fechado**, servido pela FOTO da última
+`_ASSIST ANTERIOR` — projeto do **Media Composer**, **fechado**, servido pela FOTO da última
 varredura de bins —, a conta dizia "**masterclipes**", e o duplo clique respondia *"o Media
 Composer não está aberto"*.
 

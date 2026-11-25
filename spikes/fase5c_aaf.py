@@ -40,7 +40,7 @@ from aaf2.mobid import MobID  # noqa: E402
 from cicloassist.avid.mcapi import MediaComposer  # noqa: E402
 from cicloassist.avid.take import resolver  # noqa: E402
 
-BIN = r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\CENAS\C07.avb"
+BIN = r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\CENAS\C07.avb"
 BIN_DE_TESTE = "_TESTE_CICLO.avb"
 
 #: Dois trechos curtos, de takes DIFERENTES: é o que prova que a emenda cai no lugar e que

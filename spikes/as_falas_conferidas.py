@@ -38,7 +38,7 @@ from cicloassist.midia import asr as _asr  # noqa: E402
 from cicloassist.midia import cache as _cache  # noqa: E402
 from cicloassist.plano import falas as PF  # noqa: E402
 
-BIN = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\CENAS\C07.avb")
+BIN = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\CENAS\C07.avb")
 
 
 def falas_do_take(bin_: Path, nome: str):

@@ -103,10 +103,10 @@ def _melhor_deslocamento(a: np.ndarray, b: np.ndarray, r: int = 8) -> tuple[floa
     return best
 
 
-#: Abaixo disto, o ponto "não confere". Medido no PRODB (2026-10-03): 1.141 de 1.142 pontos
+#: Abaixo disto, o ponto "não confere". Medido no PRODUCAO_B (2026-10-03): 1.141 de 1.142 pontos
 #: acima; o único abaixo (0,988 deslocado) era cena escura com burn-in.
 LIMIAR = 0.75
-#: Segundos por ponto, medidos no filme do PRODB (1.142 pontos em 9,5 min, Resolve 19 e 21):
+#: Segundos por ponto, medidos no filme do PRODUCAO_B (1.142 pontos em 9,5 min, Resolve 19 e 21):
 #: a ESTIMATIVA que o painel mostra antes de começar.
 SEGUNDOS_POR_PONTO = 0.5
 
@@ -123,7 +123,7 @@ def comparar_um(imagem: str, referencia: str, quadro_ref: int, fps: float = 24.0
         return {"erro": "não leu" if a is None else "a referência não tem esse quadro"}
     # ⭐ SEM AS BORDAS (8 de 160 colunas e 8 de 90 linhas de cada lado): é onde mora o burn-in da
     # referência (TC no canto de cima, nome do clipe no de baixo). Numa cena escura o texto branco
-    # vira a coisa mais forte da imagem e derruba a semelhança — 5 falsos "não confere" no PRODB
+    # vira a coisa mais forte da imagem e derruba a semelhança — 5 falsos "não confere" no PRODUCAO_B
     # (2026-10-04), todos de 0,87 a 0,995 sem as bordas; e 2 quadros pretos que só diferiam no TC.
     a, b = a[_M:H - _M, _M:W - _M], b[_M:H - _M, _M:W - _M]
     if a.std() < 6 and b.std() < 6:               # dois quase pretos: a forma não se mede
@@ -185,7 +185,7 @@ def pontos_visiveis(segmentos: list[dict], fps: int = 24, margem: int = 1) -> li
         if s.get("is_effect"):
             continue
         # Imagem parada numa trilha ACIMA de outra (a máscara 1.85, um logo): é sobreposição, não
-        # plano do filme — os seus "pontos" eram quadros pretos com a máscara (PRODB, 2026-10-04).
+        # plano do filme — os seus "pontos" eram quadros pretos com a máscara (PRODUCAO_B, 2026-10-04).
         a = tcq(s["timeline_tc_in"])
         b = a + s["duration_frames"]
         ref_s = (s.get("media_ref") or {}).get("local_path") or s.get("clip_name") or ""

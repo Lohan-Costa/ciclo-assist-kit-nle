@@ -246,7 +246,7 @@ def main() -> int:
     ok("a forma BRAW é a do Resolve 19 (codec BRAW, flag 16406)", (g.get(5), g.get(18)), (b"BRAW", 16406))
 
     # ⭐ O REVERSO na forma do Resolve 19 (gabarito do próprio 19.0.0b.59, Windows, 2026-10-03:
-    # Change Clip Speed 70% + Reverse no M002C022 do PRODB, 1312 quadros a 24, exportado em DRT).
+    # Change Clip Speed 70% + Reverse no M002C022 do PRODUCAO_B, 1312 quadros a 24, exportado em DRT).
     # A forma COMPACTA do 21 fazia o 19 tocar o plano para a frente, calado.
     import struct
     from tools.inspect_drp import build_reverse_timemap
@@ -275,7 +275,7 @@ def main() -> int:
 
     # ⭐ ÁUDIO com velocidade constante (gabarito do 19.0.0b.59, 2026-10-03: Change Clip Speed 50% no
     # AMB_CM_EXT_DIA_RESIDENCIAL_VR.wav, 302,0107 s, timeline a 24): YMax = duração − 1/23,976 e o
-    # keyframe final = duração·r − 1 quadro da timeline. Sem isto, os 38 clipes de áudio com velocidade do PRODB entravam a 100%.
+    # keyframe final = duração·r − 1 quadro da timeline. Sem isto, os 38 clipes de áudio com velocidade do PRODUCAO_B entravam a 100%.
     from tools.inspect_drp import build_audio_speed_timemap
     audio_19 = (
         "0000000100000006000000080059004d0061007800000006004072df80da740da7000000080058004d00610078000000"

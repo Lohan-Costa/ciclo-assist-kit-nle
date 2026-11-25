@@ -138,7 +138,7 @@ notebook (Seção 5).
 | modelos | `siglip-server/modelos/`: **copiados do `_PRODUCAO-V`, não baixados**. Os três SHA-256 batem com os fixados no código. |
 | ambiente | `siglip-server/venv/`: Python 3.11 do Homebrew (o do sistema é 3.9), onnxruntime 1.30.0, numpy 2.4.6, tokenizers 0.23.2, pillow 12.3.0 |
 | scripts | `llm-server/iniciar|parar|status.command` agora ligam, param e mostram os dois. O SigLIP tem os próprios scripts em `siglip-server/`. |
-| modelos do `_PRODUCAO-V` | todos copiados para `CICLO ASSIST/modelos-PRODUCAO-V/` (7 GB: SigLIP, whisper large-v3-turbo, VAD, diarização, Qwen3-8B MLX), porque o SSD volta ao Windows |
+| modelos do `_PRODUCAO-V` | todos copiados para `CICLO ASSIST/modelos-producao-v/` (7 GB: SigLIP, whisper large-v3-turbo, VAD, diarização, Qwen3-8B MLX), porque o SSD volta ao Windows |
 
 ### 1. `status`
 

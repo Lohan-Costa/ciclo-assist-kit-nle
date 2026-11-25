@@ -6,7 +6,7 @@ comportamento nas bordas, que é onde um filtro de busca faz estrago:
 - ⛔ "não sei qual é o projeto" tem de ser SEM FILTRO, nunca "nenhuma mídia": um editor
   com o Media Composer fechado não pode ver o acervo dele sumir;
 - ⛔ a foto de uma varredura antiga NÃO vale como projeto aberto — foi exatamente o que
-  havia na máquina em 2026-09-13 (foto do `_Assist anterior`, de dois dias antes, com o
+  havia na máquina em 2026-09-13 (foto do `_ASSIST ANTERIOR`, de dois dias antes, com o
   editor trabalhando noutro projeto);
 - ⚠️ e toda resposta estreitada diz que foi estreitada, senão "não achei" vira "não
   existe".

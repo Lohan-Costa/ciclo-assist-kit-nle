@@ -126,7 +126,7 @@ def test_pasta_com_manifesto_vence_a_antiga_da_mesma_chave(tmp_path):
 def test_midia_criada_por_outro_processo_dentro_de_pasta_de_projeto_aparece(tmp_path):
     """⛔ Revisão de 2026-09-13: o índice guardava as pastas já vistas e nunca relistava a
     de projeto — a mídia nova de outro processo ficava invisível até reiniciar."""
-    projeto = tmp_path / "_Assist anterior"
+    projeto = tmp_path / "_ASSIST ANTERIOR"
     (projeto / "C001_x").mkdir(parents=True)
     (projeto / "C001_x" / "midia.json").write_text(
         json.dumps({"chave": C.de_umid(CAM_A)}), encoding="utf-8")

@@ -51,7 +51,7 @@ from cicloassist.midia import cache as _cache  # noqa: E402
 from cicloassist.midia import frames as _frames  # noqa: E402
 from cicloassist.avid.mcapi import MediaComposer  # noqa: E402
 
-BIN = r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\CENAS\C07.avb"
+BIN = r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\CENAS\C07.avb"
 
 #: Os takes, com o plano a que pertencem — o gabarito.
 TAKES = [

@@ -187,7 +187,7 @@ def _nle_da_tela(pedido: Pedido) -> str:
 
     ⛔⛔ **O conserto de 2026-09-21.** A aba Busca nasceu em 20/09, três dias depois do
     porte para o Premiere, e chamava o Avid direto: dentro do Premiere ela respondia com o
-    recorte do `_Assist anterior` (um projeto do Media Composer que nem estava aberto),
+    recorte do `_ASSIST ANTERIOR` (um projeto do Media Composer que nem estava aberto),
     escrevia "masterclipes" e o duplo clique dizia *"o Media Composer não está aberto"*.
     O painel manda `nle` em toda pergunta desta família agora — no corpo (POST) ou na
     query (GET).

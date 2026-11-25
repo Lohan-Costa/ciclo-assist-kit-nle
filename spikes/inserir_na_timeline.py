@@ -33,7 +33,7 @@ import cicloassist.avid  # noqa: E402,F401
 from cicloassist.avid import edicao as E  # noqa: E402
 from cicloassist.avid.take import fracao_da_taxa  # noqa: E402
 
-BIN = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\TL EDITADA"
+BIN = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\TL EDITADA"
            r"\TL EDITADA.avb")
 BASE = "PRODA_CORTE.02.Exported.01 - sem 07-01-02"
 RESULTADO = "PRODA_CORTE.02.Exported.01 - insert e gap"

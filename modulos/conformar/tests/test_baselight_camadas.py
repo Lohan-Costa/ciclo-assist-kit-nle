@@ -15,8 +15,15 @@ sys.path[:0] = [str(RAIZ / "motor")]
 from baselight import camadas as C  # noqa: E402
 
 DADOS = RAIZ / "tests" / "dados" / "baselight"
-CDL = (DADOS / "PRODC_plano_cdl.blg.txt").read_text(encoding="latin1")
-TRANSFORM = (DADOS / "PRODC_plano_transform.blg.txt").read_text(encoding="latin1")
+if not (DADOS / "prodc_plano_cdl.blg.txt").is_file():   # BLGs de uma produção real: não vão à cópia pública
+    _motivo = f"pulou: sem os BLGs reais em {DADOS} (cena de produção, fica no repositório privado)"
+    if __name__ == "__main__":
+        print(_motivo)
+        sys.exit(0)
+    import pytest
+    pytest.skip(_motivo, allow_module_level=True)
+CDL = (DADOS / "prodc_plano_cdl.blg.txt").read_text(encoding="latin1")
+TRANSFORM = (DADOS / "prodc_plano_transform.blg.txt").read_text(encoding="latin1")
 
 
 def test_marcar_poe_o_nome_do_ciclo_e_nao_toca_na_midia():

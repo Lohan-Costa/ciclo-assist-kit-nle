@@ -1376,7 +1376,7 @@ def _conferencia_de(relatorio: dict, timeline: str) -> dict | None:
 def travar_se_o_motor_nao_le(lidos: list[tuple[str, tuple]]) -> None:
     """Para ANTES do writer se o motor não está lendo as mídias de vídeo (`(caminho, (nb, fps, tc))`).
 
-    ⛔ 2026-10-04 (autor, Mac): o serviço sem ffprobe montou o PRODB inteiro — cada leitura falhou
+    ⛔ 2026-10-04 (autor, Mac): o serviço sem ffprobe montou o PRODUCAO_B inteiro — cada leitura falhou
     calada, todo clipe herdou o TC da forma do esqueleto e a timeline entrou toda offline no Resolve,
     depois de o editor fazer o processo inteiro. Arquivo quebrado é um ou outro; METADE sem TC nem
     duração com o motor NÃO pronto é o motor, e importar assim só entrega retrabalho (memória

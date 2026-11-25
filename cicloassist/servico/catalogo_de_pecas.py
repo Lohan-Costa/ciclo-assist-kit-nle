@@ -66,7 +66,7 @@ CATALOGO: dict[str, Peca] = {
     "confirmar_na_memoria": Peca("", ("gravou", "producao", "regras")),
 }
 
-#: Medido em 2026-11-08 na diária PRODB (`docs/plano/2026-11-08-agentes.md`): 4.840 tokens e 16,7 s. O revisor do sync: ~4 s, tokens não medidos.
+#: Medido em 2026-11-08 na diária PRODUCAO_B (`docs/plano/2026-11-08-agentes.md`): 4.840 tokens e 16,7 s. O revisor do sync: ~4 s, tokens não medidos.
 CUSTO_DO_AGENTE_DE_METADADO = (4840, 17)
 SEGUNDOS_DO_GERENTE = 4
 #: Medido em 2026-11-01 no MC 2024.6 (banco, `skills/piloto/SKILL.md`): abrir, criar, trocar e sair; US$ 0,04 a 0,12 de localizador e 22 a 58 s por operação.

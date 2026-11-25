@@ -46,7 +46,7 @@ from cicloassist.avid.mcapi import TEMPO_DE_ARQUIVO_S, MediaComposer  # noqa: E4
 from cicloassist.avid.take import resolver  # noqa: E402
 from cicloassist.plano import esquema as _plano  # noqa: E402
 
-BIN_ORIGEM = r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\CENAS\C07.avb"
+BIN_ORIGEM = r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\CENAS\C07.avb"
 NOME_DA_BIN = "_CORTE_L_E_J"
 
 #: O plano, no formato que o modelo escreve. Três cortes e duas transições: uma em J e

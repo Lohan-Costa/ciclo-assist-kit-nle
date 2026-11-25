@@ -4,7 +4,7 @@ Premiere → Premiere (organograma aprovado pelo autor em 2026-10-22): o app nun
 editor — grava esta cópia e o Premiere importa dela só a sequência pedida (`app.project.importSequences`), que entra
 como sequência NOVA com clipes novos; a original fica intacta.
 
-Medido (banco `plugins/premiere-cep/api-extendscript.md`): 23.2 (2026-10-09, PRODB e B11) e 26.5.2 (2026-10-22, R04:
+Medido (banco `plugins/premiere-cep/api-extendscript.md`): 23.2 (2026-10-09, PRODUCAO_B e B11) e 26.5.2 (2026-10-22, R04:
 corte idêntico em ticks, 0 offline, 143/144 pela referência). As regras de escrita:
 - num `<Media>`, `FilePath`, `ActualMediaFilePath` e `RelativePath` levam o caminho novo; o `Title` acompanha o NOME do
   arquivo quando ele muda; o `OfflineReason` sai;

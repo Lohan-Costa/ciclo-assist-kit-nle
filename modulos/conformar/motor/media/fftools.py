@@ -72,7 +72,7 @@ def ffprobe_exe() -> str:
     """O ffprobe para pôr na linha de comando: o embarcado, o do PATH, ou o nome cru (o erro de
     execução diz o que falta). ⛔ Nunca escrever `"ffprobe"` direto num `subprocess` do motor: era assim
     em 16 lugares, e o serviço subido pela casca do Resolve (PATH mínimo de `.app`) não o achava — a
-    timeline do PRODB entrou inteira offline (2026-10-04)."""
+    timeline do PRODUCAO_B entrou inteira offline (2026-10-04)."""
     return ffprobe() or "ffprobe"
 
 

@@ -47,9 +47,9 @@ def main() -> int:
             falhas.append(f"{rotulo}: veio {obtido!r}, esperava {esperado!r}")
 
     print("── 0. o nome sem a versão ──")
-    ok("PRODA_CORTE.02 / PRODA_CORTE v3 / PRODA_CORTE_03 → cruz_corte",
-       {P.base_do_nome(n) for n in ("PRODA_CORTE.02", "PRODA_CORTE v3", "PRODA_CORTE_03", "cruz_corte")},
-       {"cruz_corte"})
+    ok("PRODA_CORTE.02 / PRODA_CORTE v3 / PRODA_CORTE_03 → proda_corte",
+       {P.base_do_nome(n) for n in ("PRODA_CORTE.02", "PRODA_CORTE v3", "PRODA_CORTE_03", "proda_corte")},
+       {"proda_corte"})
 
     with tempfile.TemporaryDirectory() as tmp:
         dados, canal = Path(tmp) / "dados", Path(tmp) / "magic-cor"

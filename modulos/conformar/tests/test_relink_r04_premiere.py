@@ -64,7 +64,7 @@ def main() -> int:
        O._tc_confere(tc(19, 31, 58, 0, 60), 60, tc(19, 31, 58, 50, 100), 100), False)
 
     print("── o nome só ordena: a prova do som e da imagem ──")
-    indice = {O._CHAVE_NOME + "escadaria-005.wav": ["/B/LOCAL-3-005.WAV"]}
+    indice = {O._CHAVE_NOME + "local-3-005.wav": ["/B/LOCAL-3-005.WAV"]}
     ok("o som de mesmo nome e mesma duração é achado",
        O.pelo_nome("Y:/x/LOCAL-3-005.WAV", indice, lambda c: True)[0], ["/B/LOCAL-3-005.WAV"])
     ok("⭐ o homônimo de outra duração NÃO é achado",

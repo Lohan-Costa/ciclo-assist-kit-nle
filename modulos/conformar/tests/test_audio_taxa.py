@@ -5,7 +5,7 @@ Rodar:
     .venv/bin/python tests/test_audio_taxa.py        (Windows: .venv-win/Scripts/python)
 
 ⛔ O Resolve TOCA o áudio pela `MediaFrameRate` do clipe. O writer herdava 23,976 do molde: o som
-da referência do PRODB (mp4 a 24) ia 0,1% mais lento — começava junto, terminava ~5 s antes do
+da referência do PRODUCAO_B (mp4 a 24) ia 0,1% mais lento — começava junto, terminava ~5 s antes do
 bipe final, e nada no Inspector mostrava. O mesmo arquivo posto à mão vinha com 24 (DRT exportado
 da timeline, Resolve 21.1). A regra é a do import do Resolve: a taxa do VÍDEO do arquivo; arquivo
 só de áudio (WAV) = a do projeto (um WAV importado num projeto a 24 ganha FPS 24).
@@ -78,7 +78,7 @@ def main() -> int:
         gerar_video(v25, "25")
         gerar_wav(wav)
         print("── áudio dentro de vídeo: a taxa do vídeo do arquivo ──")
-        ok("mp4 a 24 numa timeline a 24 (o som da referência do PRODB): 24, não o 23,976 do molde",
+        ok("mp4 a 24 numa timeline a 24 (o som da referência do PRODUCAO_B): 24, não o 23,976 do molde",
            taxa_do_audio(v24, 24.0), 24.0)
         ok("mp4 a 24 numa timeline a 23,976: continua 24 (é a taxa do ARQUIVO)", taxa_do_audio(v24, 24000 / 1001), 24.0)
         ok("mp4 a 25 numa timeline a 24: 25", taxa_do_audio(v25, 24.0), 25.0)

@@ -79,7 +79,7 @@ pre,.scroll{overflow-x:auto}
     </div>
     <div>
       <h2>O PRODC em números</h2>
-      <table class="stack2"><thead><tr><th>O quê</th><th>Quantos</th></tr></thead><tbody id="PRODC"></tbody></table>
+      <table class="stack2"><thead><tr><th>O quê</th><th>Quantos</th></tr></thead><tbody id="prodc"></tbody></table>
       <p class="small" style="margin-top:10px">Lido de <code>ISOLADO/PROJETO/PRODC_FINAL_isolado.prproj</code>, sequência <code>PRODC_Trailer_v02_RESGATE</code>. A cor fica fora da v1 (decisão de 21/11).</p>
     </div>
   </div>
@@ -141,7 +141,7 @@ const F=[["O in do fundo","o deslocamento do arquivo do fundo, em segundos + mei
 document.getElementById("feito").innerHTML=F.map(f=>`<tr><td><b>${f[0]}</b></td><td>${f[1]}</td></tr>`).join("");
 const W=[["Planos de vídeo","89 (V1 63 · V2 10 · V3 11 · V4 3 · V6 1 · V7 1)"],["Taxas (tempo real em 23,976)","60 qps 34 · 25 qps 32 · 100 qps 14 · 23,976 9"],
  ["Motion","89"],["Rampas de velocidade","10"],["Máscaras de opacidade","11"],["Títulos / Gaussian Blur","7 / 3"],["Lumetri (fora da v1)","68"]];
-document.getElementById("PRODC").innerHTML=W.map(w=>`<tr><td>${w[0]}</td><td>${w[1]}</td></tr>`).join("");
+document.getElementById("prodc").innerHTML=W.map(w=>`<tr><td>${w[0]}</td><td>${w[1]}</td></tr>`).join("");
 const P=[["1 · A montagem","O bl-conform recusa o nosso FLE, e o XML do Premiere perde as rampas. Proposta: um xmeml gerado pelo nosso leitor só como transporte da montagem (corte, trilha, in/out, taxa), como a bancada da B14 já faz; retime, Motion e máscara pelos BLGs já provados. Alternativas: FLE pela interface (pilotado) ou o REA no bl-conform."],
  ["2 · O fundo de várias trilhas","O Background Replacement pega uma sequência só. (a) Uma camada por trilha de baixo, cada uma com a máscara do seu plano; (b) dividir o plano mascarado nos cortes de baixo — serve para corte em sequência, não para empilhamento; (c) achatar o trecho de baixo num plate (perde o online daquele trecho). Recomendo estudar (a) no laboratório."],
  ["3 · Forma qualquer, com alças","Converter vértice e alças do Premiere (fração da fonte, antes do Motion) para os pontos do Baselight, e recuar a curva b·F para dentro (17 a 175 px nos F do PRODC). Antes: ver na interface se a shape tem suavidade interna — há uma preferência escondida de “inner/outer”; se tiver, o recuo não é preciso."]];

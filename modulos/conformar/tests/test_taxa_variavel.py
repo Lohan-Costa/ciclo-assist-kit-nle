@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_taxa_variavel.py        (Windows: .venv-win/Scripts/python)
 
-⛔ O insert de celular do interfone (PRODB, 01:22:49:07) entrava 27 quadros adiantado no Resolve.
+⛔ O insert de celular do interfone (PRODUCAO_B, 01:22:49:07) entrava 27 quadros adiantado no Resolve.
 O arquivo tem 1.387 quadros e 25 q/s no cabeçalho, com quadros faltando (média 24,0); o Premiere o
 conta a 24,0118 q/s, o Resolve a 25. O DRT mandava a entrada na conta do Premiere.
 
@@ -102,7 +102,7 @@ def main() -> int:
            entrada_no_drt(fixa, 48, 25.0), 46)
 
         print("── os keyframes andam junto com a entrada ──")
-        # ⛔ 2026-10-08 (PRODB, 01:22:49): o rastreamento do insert ficou na conta do Premiere
+        # ⛔ 2026-10-08 (PRODUCAO_B, 01:22:49): o rastreamento do insert ficou na conta do Premiere
         # (677) e a entrada foi a 650 — o insert parado por 27 quadros. A leitura conta o keyframe
         # como entrada dela (fonte × speed_ratio) + quadro dentro do plano.
         kf = {"pos_x": [(48, 0.1), (60, 0.2), (71, 0.15)], "pos_y": [(48, 0.0), (60, 0.05), (71, 0.0)]}

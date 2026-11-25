@@ -1,6 +1,6 @@
 """Os efeitos de imagem do Premiere (velocidade e Motion, `efeitos.py`) nos planos de uma scene. Entrada (stdin):
 {"fps": f, "planos": [{inicio, quadros, clip, in_bl, q, motion, series}, …]}. Roda no python da FilmLight (o que tem a
-`flapi`), chamado por `enviar.aplicar_efeitos`; veio do estudo PRODUCAO-C (`estudo/ferramentas/traduzir_PRODC.py`,
+`flapi`), chamado por `enviar.aplicar_efeitos`; veio do estudo PRODUCAO-C (`estudo/ferramentas/traduzir_prodc.py`,
 132 de 133 pontos).
 
 O plano do Baselight acha o da montagem pelo metadado `clip` (o nome do clipitem) e pelo tempo: o conform corta o plano de

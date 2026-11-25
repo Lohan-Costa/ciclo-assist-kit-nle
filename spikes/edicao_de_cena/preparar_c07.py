@@ -26,7 +26,7 @@ from cicloassist.avid.take import resolver  # noqa: E402
 from cicloassist.motor import micro as _micro, percepcao as _perc  # noqa: E402
 from cicloassist.midia import vetores as _vetores  # noqa: E402
 
-BIN = r"%USERPROFILE%\Documents\Avid Projects\producao-a_CURTA\CENAS\C07.avb"
+BIN = r"%USERPROFILE%\Documents\Avid Projects\PRODUCAO-A_CURTA\CENAS\C07.avb"
 TAKES = ("C07_P01-001 C07_P01-002 C07_P02-001 C07_P02-002 C07_P02-003 "
          "C07_P02-004 C07_P03-001 C07_P03-002 C07_P03-003").split()   # C07_P02-001.1 tem 8 quadros
 

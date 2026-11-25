@@ -89,11 +89,11 @@ pre,.scroll{overflow-x:auto}html{scroll-padding-top:20px}
     <li><div><strong>Ler a sequência</strong> com o leitor do Conformar (<code>PRODC_FINAL_isolado_1.prproj</code>): 111 segmentos, nests achatados, máscara na fonte quadro a quadro, Motion, velocidade, títulos.</div></li>
     <li><div><strong>Gerar um xmeml</strong> só com a montagem (<code>xmeml_do_leitor.py</code>): cada clipe com a fonte declarada na taxa da timeline, imagem parada com in 0, clipe desligado fora.</div></li>
     <li><div><strong>Conformar</strong> com o <code>bl-conform</code> na scene em vídeo (<code>--space Video_Full --multiples</code>): 100 % por nome de arquivo e quadro de fonte, nos originais.</div></li>
-    <li><div><strong>Retime e Motion</strong> por BLG em cada plano (<code>traduzir_PRODC.py</code>): curva Time×Time um quadro por chave, Transform animado, flip por escala negativa.</div></li>
-    <li><div><strong>Máscaras</strong> (<code>mascaras_PRODC.py gerar/gravar</code>): composição BG Replacement + Shape por plano, aninhada quando o fundo também é mascarado; um processo curto por plano.</div></li>
-    <li><div><strong>Títulos</strong> (<code>titulos_PRODC.py</code>): faixas criadas pela FLAPI e transformadas, no arquivo da scene, em camadas de Text em modo Composite; Blank preto onde o título fica sobre o vazio.</div></li>
+    <li><div><strong>Retime e Motion</strong> por BLG em cada plano (<code>traduzir_prodc.py</code>): curva Time×Time um quadro por chave, Transform animado, flip por escala negativa.</div></li>
+    <li><div><strong>Máscaras</strong> (<code>mascaras_prodc.py gerar/gravar</code>): composição BG Replacement + Shape por plano, aninhada quando o fundo também é mascarado; um processo curto por plano.</div></li>
+    <li><div><strong>Títulos</strong> (<code>titulos_prodc.py</code>): faixas criadas pela FLAPI e transformadas, no arquivo da scene, em camadas de Text em modo Composite; Blank preto onde o título fica sobre o vazio.</div></li>
     <li><div><strong>Marcas e stills</strong> (<code>marcar_e_stills.py</code>): “[Ciclo]” em vermelho, só nos planos com aviso; rodar de novo troca só as nossas.</div></li>
-    <li><div><strong>Render e conferência</strong> (<code>render_scene.py</code>, <code>conferir_PRODC.py</code>, <code>conferir_trechos.py</code>): ProRes com Video LUT “scale” e comparação com o vid ref.</div></li>
+    <li><div><strong>Render e conferência</strong> (<code>render_scene.py</code>, <code>conferir_prodc.py</code>, <code>conferir_trechos.py</code>): ProRes com Video LUT “scale” e comparação com o vid ref.</div></li>
   </ol>
 </div></section>
 
@@ -102,7 +102,7 @@ pre,.scroll{overflow-x:auto}html{scroll-padding-top:20px}
   <p class="mute">Em cada par, à esquerda o vid ref do Premiere, à direita o render do Baselight. A diferença de cor é esperada: a v1 não leva cor. Os números são a correlação daquele quadro com o vid ref, no começo do dia 22 (render v6) e agora (v20).</p>
   <div class="grid">
     <figure><img src="img/q118.jpg" alt="Quadro 118, referência e Baselight"><figcaption><span>05 s · o fundo troca no meio do plano (PRJ-168 → JUL_7644)</span><span>0,31 → 0,99</span></figcaption></figure>
-    <figure><img src="img/q528.jpg" alt="Quadro 528, referência e Baselight"><figcaption><span>22 s · a escadaria entra atrás da perna (2º trecho do fundo)</span><span>0,67 → 1,00</span></figcaption></figure>
+    <figure><img src="img/q528.jpg" alt="Quadro 528, referência e Baselight"><figcaption><span>22 s · a local-3 entra atrás da perna (2º trecho do fundo)</span><span>0,67 → 1,00</span></figcaption></figure>
     <figure><img src="img/q205.jpg" alt="Quadro 205, referência e Baselight"><figcaption><span>08 s · título em Acumin sobre preto (o clipe de baixo está desligado no Premiere)</span><span>−0,03 → 0,79</span></figcaption></figure>
     <figure><img src="img/q570.jpg" alt="Quadro 570, referência e Baselight"><figcaption><span>23 s · legenda “Come with me.” em Arial, na base</span><span>0,98 (já conferia)</span></figcaption></figure>
     <figure><img src="img/q1530.jpg" alt="Quadro 1530, referência e Baselight"><figcaption><span>64 s · a imagem parada do logo (era lida como sequência)</span><span>0,00 → 1,00</span></figcaption></figure>

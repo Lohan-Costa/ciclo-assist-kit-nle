@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_andamento_drt.py        (Windows: .venv-win/Scripts/python)
 
-Pedido do autor: o "montando a timeline" do PRODB não é rápido, nem no Mac nem no Windows, e a
+Pedido do autor: o "montando a timeline" do PRODUCAO_B não é rápido, nem no Mac nem no Windows, e a
 barra só girava. O `build_drt` agora chama `andamento(feitos, total, atual, detalhe)` a cada arquivo
 do media pool (onde moram as sondagens do ffprobe) e a cada plano da timeline; o serviço o liga a
 `_etapa("montando", …)`. Este teste trava o contrato: a contagem só sobe, o total não muda no meio,

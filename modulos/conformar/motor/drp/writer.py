@@ -182,7 +182,7 @@ def _set_field(block: str, tag: str, value: str) -> str:
 
 _META_CACHE: dict[str, tuple] = {}
 #: Arquivos cuja sondagem ESTOUROU O TEMPO (disco frio e disputado): não vão para o cache — lento
-#: não é ilegível. ⛔ Medido 2026-10-04 (PRODB frio, 8 simultâneas): 5 ARRIRAW passaram de 60 s
+#: não é ilegível. ⛔ Medido 2026-10-04 (PRODUCAO_B frio, 8 simultâneas): 5 ARRIRAW passaram de 60 s
 #: e eram tratados como ilegíveis. `_sondar_em_paralelo` os refaz em série.
 _SONDA_LENTA: set[str] = set()
 #: Taxa da TIMELINE da geração em curso (ver `_build_drt`).
@@ -574,7 +574,7 @@ def _make_pool_clip(shape: str, name: str, db_id: str, uniq_id: str, matched_pat
 FORMATO_MXF, FORMATO_OUTRO = 4, 2
 FLAG_VIDEO, FLAG_AUDIO = 16384, 32768
 FORMAS_NATIVAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "formas_r19.xml")
-#: ARRIRAW (MXF OP1a): gabarito do Resolve 21.1 (2026-10-02, PRODB). Ver `_e_arriraw`.
+#: ARRIRAW (MXF OP1a): gabarito do Resolve 21.1 (2026-10-02, PRODUCAO_B). Ver `_e_arriraw`.
 FORMA_ARRIRAW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "formas_r21_arriraw.xml")
 #: Imagem parada (PNG/JPG/TIFF…): gabarito do Resolve 21.1 (2026-10-02). Ver `_e_still`.
 FORMA_STILL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "formas_r21_still.xml")
@@ -632,7 +632,7 @@ def _familia(caminho: str) -> str:
 _ARRIRAW_CACHE: dict[str, tuple[int, int] | None] = {}
 #: Operational Pattern OP1a no cabeçalho MXF (o gerenciado do Avid é OP-Atom: `…0d01020101 10…`).
 #: SMPTE 378: `06 0e 2b 34 04 01 01 vv 0d 01 02 01 01 01 qq 00` — `vv` = versão do registro e `qq` =
-#: os qualificadores (a ALEXA Mini do PRODB grava 0x09). Antes só o 0x09 valia, e um ARRIRAW de
+#: os qualificadores (a ALEXA Mini do PRODUCAO_B grava 0x09). Antes só o 0x09 valia, e um ARRIRAW de
 #: outra câmera ou firmware com outro qualificador passava como vídeo comum (revisão, 2026-10-03).
 _UL_OP1A = re.compile(rb"\x06\x0e\x2b\x34\x04\x01\x01[\x01-\x0f]\x0d\x01\x02\x01\x01\x01[\x00-\xff]\x00")
 
@@ -1006,7 +1006,7 @@ def _make_timeline_clip(shape: str, seg: dict, db_id: str, matched_path: str,
         # Resolve mostra o quadro floor(In × taxa_do_ARQUIVO / taxa_da_timeline), com a taxa que ELE
         # lê do cabeçalho (a do ffprobe, `r_frame_rate`). O `speed_ratio` do Premiere usa a taxa que o
         # PREMIERE calcula — iguais num arquivo normal, diferentes num de taxa VARIÁVEL (celular: 25 no
-        # cabeçalho, 24,0118 no Premiere, os mesmos 1.387 quadros). O insert do interfone do PRODB
+        # cabeçalho, 24,0118 no Premiere, os mesmos 1.387 quadros). O insert do interfone do PRODUCAO_B
         # entrava 27 quadros adiantado. A entrada passa a ser convertida pela taxa do Resolve.
         _nb_a, fps_arq, _tc_a = _media_meta(matched_path)
         fps_premiere = float(seg.get("source_fps") or 0)
@@ -1117,7 +1117,7 @@ def _make_timeline_clip(shape: str, seg: dict, db_id: str, matched_path: str,
 
     # Keyframe do Premiere = `In` da leitura (fonte × speed_ratio) + quadro dentro do plano
     # (`prproj/leitura.py::_segmento`). Se o `In` mudou aqui (taxa variável), os keyframes andam
-    # o mesmo tanto. ⛔ MEDIDO 2026-10-08 (Resolve 21.1, PRODB, insert do interfone em
+    # o mesmo tanto. ⛔ MEDIDO 2026-10-08 (Resolve 21.1, PRODUCAO_B, insert do interfone em
     # 01:22:49): o `In` foi a 650 pela taxa do arquivo e o rastreamento ficou em 677 — o insert
     # parado por 27 quadros, a placa andando e a borda escura da tela aparecendo.
     desloc_kf = 0 if (reverso or _e_still(matched_path)) else in_pt - in_leitura
@@ -1570,7 +1570,7 @@ def _make_audio_timeline_clip(shape: str, seg: dict, db_id: str, matched_path: s
     block = _set_field(block, "MediaReelNumber", _xml_escape(reel))
     block = _set_field(block, "MediaStartTime", repr(mst))   # segundos (BWF time_reference/sr)
     # ⛔ MediaFrameRate NÃO é informativo: o Resolve TOCA o áudio por ela. O molde trazia 23,976 e o
-    # writer não a trocava — MEDIDO 2026-10-08 (Resolve 21.1, PRODB): o som da referência (mp4 a
+    # writer não a trocava — MEDIDO 2026-10-08 (Resolve 21.1, PRODUCAO_B): o som da referência (mp4 a
     # 24) ia 0,1% mais lento, ~5 s fora no fim de 88 min, sem nada no Inspector; o mesmo arquivo
     # posto à mão na timeline vinha com 24. A taxa que o Resolve dá ao importar: a do VÍDEO do
     # arquivo; arquivo só de áudio (WAV) = a do projeto (medido: um WAV num projeto a 24 → FPS 24).
@@ -1809,7 +1809,7 @@ def build_drt(segments: list, match_results: list, output_drt: str,
     do `ffprobe` vêm do Avid: TC de origem, duração, fps. Sem isto o clipe sumia do DRT.
 
     `andamento(feitos, total, atual, detalhe)`: chamado a cada arquivo do pool e a cada plano da
-    timeline (pedido do autor, 2026-10-04: o "montando a timeline" do PRODB não é rápido, nem no
+    timeline (pedido do autor, 2026-10-04: o "montando a timeline" do PRODUCAO_B não é rápido, nem no
     Mac nem no Windows, e a barra só girava). `atual` = o arquivo, `detalhe` = o que está sendo escrito.
     """
     _semear_offline(offline)
@@ -1831,7 +1831,7 @@ def build_drt(segments: list, match_results: list, output_drt: str,
 #: (todas "B1o"); uma mesa MAIOR que a timeline serve (12 trilhas com ela: as 12 em B1o).
 #: ⭐ A mesa é a do Resolve 19 (o piso; regra do autor: formato que muda entre versões = o do 19, que o
 #: 21 atualiza ao abrir). Colhida 2026-10-03 no 19.0.0b.59 (Windows): timeline vazia + 99 trilhas mono
-#: pela API (`AddTrack`), exportada em DRT. Conferida pelo autor no filme do PRODB (38 trilhas):
+#: pela API (`AddTrack`), exportada em DRT. Conferida pelo autor no filme do PRODUCAO_B (38 trilhas):
 #: todas em Bus 1 e o som chega ao master. A do 21 (`fairlight_r21_mesa99.bin`, d49b7ee) saiu.
 TRILHAS_NA_MESA_DO_ESQUELETO = 16
 MESA_99 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fairlight_r19_mesa99.bin")
@@ -2018,7 +2018,7 @@ def _build_drt(segments: list, match_results: list, output_drt: str,
     _TIMELINE_OFFSET_FRAMES = 3600 * _NOMINAL_FPS
     if timeline_start_frames is not None:
         # O TC de início que VEIO DA ORIGEM (o `MZ.ZeroPoint` da sequência do Premiere; ausente = 0).
-        # Antes, toda timeline nascia em 01:00:00:00 e a referência do PRODB, com burn-in desde
+        # Antes, toda timeline nascia em 01:00:00:00 e a referência do PRODUCAO_B, com burn-in desde
         # 00:00:00:00, ficava uma hora fora — o manual da CASA-POS-1 pede o MESMO TC. Ele vale no `Start`
         # dos clipes e no `MediaExtents` da timeline (o gabarito do R02, do Resolve, que começa em 0:
         # MediaExtents (0,0, dur) e clipes em 0). Desde 2026-10-28 (autor) também o TC da sequência do
@@ -2099,7 +2099,7 @@ def _build_drt(segments: list, match_results: list, output_drt: str,
         passos["feitos"] += 1
 
     # As sondagens do pool EM PARALELO (o laço abaixo só lê os caches): medido 2026-10-04 no
-    # PRODB (Windows), 39 de 40 s do "montando" eram 923 ffprobe em série, ~37 ms cada.
+    # PRODUCAO_B (Windows), 39 de 40 s do "montando" eram 923 ffprobe em série, ~37 ms cada.
     sem_resposta = _sondar_em_paralelo(list(dict.fromkeys([matched[i] for i, _s in vsegs] + [matched[i] for i, _s in asegs])),
                         lambda p: passo(p, "media pool: o formato, o timecode, a duração e o som do arquivo"))
 
@@ -2135,7 +2135,7 @@ def _build_drt(segments: list, match_results: list, output_drt: str,
             db = _new_id()
             if _arquivo_de_video(p):
                 # Arquivo de VÍDEO usado SÓ no áudio (MP4 de música/efeito sonoro, comum no
-                # Premiere — 18 no PRODB): ganha o item de VÍDEO do pool, como o Resolve faz; um
+                # Premiere — 18 no PRODUCAO_B): ganha o item de VÍDEO do pool, como o Resolve faz; um
                 # Sm2MpAudioClip para ele não tem essência de áudio e o clipe fica MUDO (medido
                 # 2026-10-04: a "Obra Y" do Artista X, A11/A12, não tocava).
                 path_to_db[p] = db
@@ -2248,7 +2248,7 @@ def _build_drt(segments: list, match_results: list, output_drt: str,
                           if s and s.get("trilha_desligada") and not s.get("is_audio")}
 
     # A NUMERAÇÃO da origem fica: a trilha vazia (ou só com clipes desligados) entra vazia, em vez
-    # de sumir e descer as de cima. ⛔ VISTO 2026-10-04 (PRODB `…ROLO03_COM_REF`, Resolve 19): a
+    # de sumir e descer as de cima. ⛔ VISTO 2026-10-04 (PRODUCAO_B `…ROLO03_COM_REF`, Resolve 19): a
     # V7 do Premiere não tinha clipe que entrasse e a referência (V8) virou V7 — a conferência, o
     # Fusion e os compounds acham o clipe pelo número da trilha da origem, e o editor perde o layout.
     for t in range(1, max((k for k in by_track if k >= 1), default=0)):

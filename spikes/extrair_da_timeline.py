@@ -27,7 +27,7 @@ import cicloassist.avid  # noqa: E402,F401
 from cicloassist.avid import edicao as E  # noqa: E402
 from cicloassist.avid.take import fracao_da_taxa  # noqa: E402
 
-BIN = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\TL EDITADA"
+BIN = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\TL EDITADA"
            r"\TL EDITADA.avb")
 IN, OUT = "01:02:33:11", "01:02:54:03"
 SUFIXO = " - sem 07-01-02"

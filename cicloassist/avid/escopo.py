@@ -19,13 +19,13 @@ hora de responder — nunca o que se guarda.
 ## ⛔⛔ A foto do último projeto varrido não serve como filtro
 
 `bins.ler()` é o resultado da última vez que alguém clicou em "ler as bins" — que pode ser
-de **outro projeto** e de dias atrás (medido em 2026-09-13: a foto era do `_Assist anterior`,
+de **outro projeto** e de dias atrás (medido em 2026-09-13: a foto era do `_ASSIST ANTERIOR`,
 de 11/09, com o editor trabalhando noutro). Filtrar por ela devolveria o erro que se queria
 evitar, de cabeça para baixo: esconderia o material do projeto de hoje e deixaria passar o
 de ontem.
 
 ⇒ Aqui a lista vem do projeto **aberto agora**, e só é reaproveitada enquanto for dele e
-recente (`VALIDADE_S`). Varrer custa pouco — medido no `_Assist anterior`: 5.524 mobs em 42
+recente (`VALIDADE_S`). Varrer custa pouco — medido no `_ASSIST ANTERIOR`: 5.524 mobs em 42
 bins, 0,4 s (2026-09-11) e **323 masterclipes em 33 bins, 1,1 s** (2026-09-14, disco frio) —
 e o cache de processo existe só para não repetir isso a cada chamada de um mesmo turno.
 

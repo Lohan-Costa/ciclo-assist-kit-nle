@@ -9,7 +9,7 @@ atualizado em 2026-10-03) no SERVIÇO: o `abrir` lista as sequências de montage
 pastas lembradas daquele projeto; o `analisar_prproj` lê e casa (a tela "antes de montar"); o
 `preparar_avulso` monta a partir da análise, com os marcadores e o plano do Fusion por clipe.
 
-Precisa do caso `03 CASOS/REAL/R02 PRODB EXEMPLOS` (`DLPC_AMOSTRAS`); sem ele, PULA e sai 0.
+Precisa do caso `03 CASOS/REAL/R02 PRODUCAO_B EXEMPLOS` (`DLPC_AMOSTRAS`); sem ele, PULA e sai 0.
 Os HDs dos originais não são precisos: sem eles tudo fica "sem original", o que também é caso.
 """
 
@@ -40,8 +40,8 @@ def ok(nome, obtido, esperado):
         print(f"  ✗ {nome}: obtido {obtido!r}, esperado {esperado!r}")
 
 
-#: Os proxies que o `.prproj` do R02 aponta moram no HD PRODB (`caso.json`, `proxy_amostra`).
-#: Sem ele, o que depende de abrir a mídia PULA (medido no Windows, 2026-10-04, PRODB fora).
+#: Os proxies que o `.prproj` do R02 aponta moram no HD PRODUCAO_B (`caso.json`, `proxy_amostra`).
+#: Sem ele, o que depende de abrir a mídia PULA (medido no Windows, 2026-10-04, PRODUCAO_B fora).
 COM_PROXIES = True
 
 
@@ -50,13 +50,13 @@ def ok_proxy(nome, obter, esperado):
     if COM_PROXIES:
         ok(nome, obter(), esperado)
     else:
-        print(f"  PULADO (proxies no HD PRODB, fora desta máquina) — {nome}")
+        print(f"  PULADO (proxies no HD PRODUCAO_B, fora desta máquina) — {nome}")
 
 
 def achar_caso() -> Path | None:
     from casos import CANDIDATAS_AMOSTRAS  # noqa: E402 (a pasta de testes, nas duas máquinas)
     for raiz in CANDIDATAS_AMOSTRAS:
-        p = Path(raiz or "") / "03 CASOS" / "REAL" / "R02 PRODB EXEMPLOS" / "premiere" / \
+        p = Path(raiz or "") / "03 CASOS" / "REAL" / "R02 PRODUCAO_B EXEMPLOS" / "premiere" / \
             "DU exemplos especificos.prproj"
         if raiz and p.is_file():
             return p
@@ -96,7 +96,7 @@ def main() -> int:
     taxas()
     caso = achar_caso()
     if caso is None:
-        print("R02 PRODB EXEMPLOS não está no disco — o resto PULADO")
+        print("R02 PRODUCAO_B EXEMPLOS não está no disco — o resto PULADO")
         return 1 if falhas else 0
     with tempfile.TemporaryDirectory() as tmp:
         dados = Path(tmp)
@@ -118,7 +118,7 @@ def main() -> int:
             # As pastas dos originais são as do CASO (`caso.json`), não uma lista de HDs escrita aqui
             # (regra do autor, 2026-10-04: cada caso é uma ilha). Sem o HD do caso: uma pasta vazia.
             import casos as ilhas
-            manifesto = ilhas.carregar("REAL/R02 PRODB EXEMPLOS")
+            manifesto = ilhas.carregar("REAL/R02 PRODUCAO_B EXEMPLOS")
             esp = manifesto["expectativas"]["analise"]
             pastas = [str(p) for p in manifesto["raizes_arquivos"]]
             com_o_hd = not manifesto["faltando"]
@@ -224,7 +224,7 @@ def main() -> int:
             ok("…e sai do 'no proxy' do relatório",
                alvo_ign["nome"] in _T.faltam_sem_ignorados(a["casamento"], {alvo_ign["caminho"]}), False)
         else:
-            print("  PULADO (proxies no HD PRODB, fora desta máquina) — o marcador do ignorado")
+            print("  PULADO (proxies no HD PRODUCAO_B, fora desta máquina) — o marcador do ignorado")
 
         print("── o TC de início que veio da origem (MZ.ZeroPoint) ──")
         # "Respeitar o TC que veio da origem" (autor, 2026-10-04). O início do R02 é o que o CASO
@@ -236,7 +236,7 @@ def main() -> int:
         import zipfile as _zip
         from tools.prproj_para_drt import analisar as _an, montar as _mo
         import casos as _ilhas
-        esperado = _ilhas.carregar("REAL/R02 PRODB EXEMPLOS")["expectativas"]["inicio_quadros"]
+        esperado = _ilhas.carregar("REAL/R02 PRODUCAO_B EXEMPLOS")["expectativas"]["inicio_quadros"]
         ok("a leitura devolve o início que o caso declara", a["leitura"]["inicio"], esperado)
 
         def inicio_no_drt(drt_path):

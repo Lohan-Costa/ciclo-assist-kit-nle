@@ -17,22 +17,22 @@ REGRA = r"^(?P<cena>\d+B)-\d+-(?P<plano>\d+)T(?P<take>\d+)$"
 
 
 def texto(regras):
-    return ("# PRODB\n\n## Identificação\n- iXML: PRODB\n- Premiere: PRODUCAO-B CORTE 3\n\n"
+    return ("# PRODUCAO_B\n\n## Identificação\n- iXML: PRODUCAO_B\n- Premiere: PRODUCAO-B CORTE 3\n\n"
             "## Padrões de metadado\n```json\n" + json.dumps({"regras": regras}) + "\n```\n\n## Glossário\n- ct: não se sabe\n")
 
 
 @pytest.fixture
 def dados(tmp_path, monkeypatch):
     monkeypatch.setenv("SINCRONIZAR_DADOS", str(tmp_path))
-    pasta = tmp_path / "producoes" / "PRODB"
+    pasta = tmp_path / "producoes" / "PRODUCAO_B"
     pasta.mkdir(parents=True)
     (pasta / MP.ARQUIVO).write_text(texto([{"forma": "#B-#-#T#", "regex": REGRA}]), encoding="utf-8")
     return tmp_path
 
 
 def test_acha_pelo_apelido_sem_caixa_nem_acento(dados):
-    assert MP.achar("PRODUCAO-B corte 3").nome == "PRODB"
-    assert MP.achar("prodb").nome == "PRODB"
+    assert MP.achar("producao-b corte 3").nome == "PRODUCAO_B"
+    assert MP.achar("PRODUCAO-B").nome == "PRODUCAO_B"
     assert MP.achar("OUTRO PROJETO") is None
     assert MP.achar("") is None
 
@@ -43,13 +43,13 @@ def test_sem_pasta_de_producoes_nao_e_erro(tmp_path, monkeypatch):
 
 
 def test_a_regra_devolve_no_formato_da_claquete(dados):
-    r = MP.regras_do_projeto("PRODB")
+    r = MP.regras_do_projeto("PRODUCAO_B")
     assert MP.aplicar(r, "17B-18-1T02.WAV") == {"episodio": None, "cena": "C17B", "plano": "P01", "take": "T02"}
     assert MP.aplicar(r, "SEM PADRAO.WAV") is None
 
 
 def test_a_regra_vence_a_coluna_e_so_dentro_do_contexto(dados):
-    r = MP.regras_do_projeto("PRODB")
+    r = MP.regras_do_projeto("PRODUCAO_B")
     colunas = {"Scene": "17B-18-1", "Take": "02"}
     assert I.de_clipe("17B-18-1T02.WAV", None, colunas).cena == "17B-18-1"
     with I.com_regras(r):
@@ -142,20 +142,20 @@ def test_gravar_cria_o_arquivo_que_a_leitura_entende(tmp_path, monkeypatch):
 
 
 def test_gravar_de_novo_soma_e_nao_apaga_o_que_o_editor_escreveu(dados):
-    arquivo = dados / "producoes" / "PRODB" / MP.ARQUIVO
+    arquivo = dados / "producoes" / "PRODUCAO_B" / MP.ARQUIVO
     arquivo.write_text(arquivo.read_text(encoding="utf-8") + "\n## Decisões\nescrito à mão\n", encoding="utf-8")
-    MP.gravar("PRODUCAO-B", [{"forma": "#-#T#", "molde": "{cena}-{plano}T{take}"}], ["Novo Nome", "PRODUCAO-B corte 3"], ["ct: outra coisa", "ab: novo"], ["ct2"])
+    MP.gravar("PRODUCAO-B", [{"forma": "#-#T#", "molde": "{cena}-{plano}T{take}"}], ["Novo Nome", "producao-b corte 3"], ["ct: outra coisa", "ab: novo"], ["ct2"])
     texto = arquivo.read_text(encoding="utf-8")
     m = MP.achar("novo nome")
     assert "escrito à mão" in texto and len(m.regras) == 2
     assert m.glossario == ("ct: não se sabe", "ab: novo")     # o que já estava não é trocado
-    assert m.apelidos == ("PRODB", "PRODUCAO-B CORTE 3", "Novo Nome")
-    MP.gravar("PRODB", [{"forma": "#-#T#", "molde": "{plano}-{cena}T{take}"}])
+    assert m.apelidos == ("PRODUCAO_B", "PRODUCAO-B CORTE 3", "Novo Nome")
+    MP.gravar("PRODUCAO_B", [{"forma": "#-#T#", "molde": "{plano}-{cena}T{take}"}])
     assert len(MP.achar("novo nome").regras) == 2             # a mesma forma troca, não duplica
 
 
 def test_bloco_quebrado_nao_e_sobrescrito(dados):
-    arquivo = dados / "producoes" / "PRODB" / MP.ARQUIVO
+    arquivo = dados / "producoes" / "PRODUCAO_B" / MP.ARQUIVO
     arquivo.write_text("# X\n\n## Padrões de metadado\n```json\n{quebrado\n```\n", encoding="utf-8")
     with pytest.raises(ValueError, match="quebrado"):
         MP.gravar("X", [{"forma": "#T#", "molde": "{cena}T{take}"}])
@@ -173,5 +173,5 @@ def test_a_regra_gravada_sai_do_molde_mesmo_com_regex_velha(tmp_path, monkeypatc
     pasta = tmp_path / "producoes" / "X"
     pasta.mkdir(parents=True)
     velha = {"forma": "#-EXTRAT#", "molde": "{cena}-EXTRAT{take}", "regex": r"^(?P<cena>\d+)(?:\-EXTRAT|/)(?P<take>\d+)$"}
-    (pasta / MP.ARQUIVO).write_text(texto([velha]).replace("PRODB", "X"), encoding="utf-8")
+    (pasta / MP.ARQUIVO).write_text(texto([velha]).replace("PRODUCAO_B", "X"), encoding="utf-8")
     assert MP.aplicar(MP.regras_do_projeto("X"), "18/01") is None

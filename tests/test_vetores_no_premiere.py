@@ -271,7 +271,7 @@ def test_a_fila_do_premiere_ignora_o_recorte_do_avid(monkeypatch, tmp_path):
     novo = _arquivo(tmp_path, "C14 P1-T010.WAV")
     _projeto(monkeypatch, tmp_path, [{"arquivo": novo, "nome": "som", "bins": ["S"]}])
     monkeypatch.setattr(ESC, "agora", lambda *a, **k: ESC.Escopo(
-        chaves=frozenset({"f" * 64}), projeto="D:/X/_Assist anterior", origem="foto"))
+        chaves=frozenset({"f" * 64}), projeto="D:/X/_ASSIST ANTERIOR", origem="foto"))
     monkeypatch.setattr(I, "aproveitar", lambda arquivo, origem, rotulo=None, **k:
                         I.Aproveitamento(midia=C.Midia("e" * 64, origem=origem,
                                                        rotulo=rotulo)))

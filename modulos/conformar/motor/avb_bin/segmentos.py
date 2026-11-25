@@ -169,7 +169,7 @@ def caminho_confiavel(caminho: str) -> tuple[str | None, str]:
     if barras.startswith("//"):
         return None, "caminho de rede (UNC) — não verificado, por segurança"
     if any(p == ".." for p in barras.split("/")):
-        # O Premiere grava caminhos com `..` resolvidos pela metade (medido 2026-10-03 no PRODB:
+        # O Premiere grava caminhos com `..` resolvidos pela metade (medido 2026-10-03 no PRODUCAO_B:
         # `…/24Y07M23/../../../../../08_20240724/…/27A-1T05.WAV` — 55 clipes de áudio do filme, que
         # entravam OFFLINE). Absoluto com `..` não abre nada que o mesmo caminho sem `..` não abriria:
         # resolve-se pelo TEXTO (sem tocar no disco), pela forma (matriz, regra 3), e as checagens
@@ -247,10 +247,10 @@ def _volumes_windows() -> dict[str, str]:
 
 
 def _no_volume_desta_maquina(caminho: str, volumes: dict[str, str] | None = None) -> str | None:
-    """`/Volumes/PRODB/x.mov` (projeto salvo no Mac) lido no Windows: o mesmo arquivo numa letra.
+    """`/Volumes/PRODUCAO_B/x.mov` (projeto salvo no Mac) lido no Windows: o mesmo arquivo numa letra.
 
     Gêmeo de `_no_disco_desta_maquina` (matriz de plataforma, linha "caminho do OUTRO SO dentro de
-    dado"). Medido 2026-10-03: o HD `PRODB` do Mac monta no Windows como `F:` com o MESMO rótulo.
+    dado"). Medido 2026-10-03: o HD `PRODUCAO_B` do Mac monta no Windows como `F:` com o MESMO rótulo.
     Primeiro os discos com o rótulo do volume; se o rótulo não decide (renomeado, ou dois discos com
     ele), vale só se `<letra>:\\<resto>` existir em EXATAMENTE um disco — dois seriam palpite.
     """

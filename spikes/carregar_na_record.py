@@ -31,7 +31,7 @@ import avb  # noqa: E402
 
 from cicloassist.avid.mcapi import TEMPO_DE_ARQUIVO_S, MediaComposer  # noqa: E402
 
-PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior")
+PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR")
 #: ⛔ SOMENTE LEITURA — fixture do editor.
 BIN = PROJETO / "BIN COM SEQUENCIA AMA LINK.avb"
 BIN_DE_MIDIA = PROJETO / "BIN COM MIDIA AMA LINK.avb"

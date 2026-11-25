@@ -73,7 +73,7 @@ def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="dlpc_audio_avid_"))
     # o nome como o exFAT do Mac o lista: NFD
     acento = unicodedata.normalize("NFD", "LAB V07 ação.WAV")
-    cena = ("sTAKE=003\r\nsSCENE=FAIXA-W-C3\r\nsFILENAME=FAIXA-W-C3-003.WAV\r\nsTAPE=220407\r\n"
+    cena = ("sTAKE=003\r\nsSCENE=faixa-w-C3\r\nsFILENAME=FAIXA-W-C3-003.WAV\r\nsTAPE=220407\r\n"
             "sCIRCLED=FALSE\r\n")
     arquivos = [wav(tmp / acento, 1), wav(tmp / "LAB_V03-A.WAV", 1), wav(tmp / "FAIXA-W-C3-003.WAV", 2, cena)]
     r = audio.autorar_masters(arquivos, str(tmp / "saida.avb"), fps=24000 / 1001)
@@ -87,7 +87,7 @@ def main() -> int:
        {"TapeID": "LAB_V03-A.WAV", "Shoot Date": "2026-10-25 09:50:00", "Soundroll TC Rate": "25"})
     ok("⭐ sem cena: a fonte de baixo é de MÍDIA com o nome do arquivo (molde 1ch semcena)", m["LAB_V03-A.WAV"][1],
        [("MediaDescriptor", "LAB_V03-A.WAV"), ("PCMADescriptor", "LAB_V03-A.WAV")])
-    ok("⭐ com cena: a fonte de baixo é de TAPE com o sTAPE (molde 2ch cena)", m["FAIXA-W-C3/003"][1],
+    ok("⭐ com cena: a fonte de baixo é de TAPE com o sTAPE (molde 2ch cena)", m["faixa-w-C3/003"][1],
        [("PCMADescriptor", "FAIXA-W-C3-003.WAV"), ("TapeDescriptor", "220407")])
     ok("nenhum nome de molde (AVB…/TEMPLATE) sobrou nas fontes",
        [n for _u, fs in m.values() for _c, n in fs if n.startswith(("AVB", "TEMPLATE"))], [])

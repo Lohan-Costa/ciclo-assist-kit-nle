@@ -14,11 +14,11 @@ nos originais, com retime, Motion, máscaras e títulos, **sem clicar**: **132 d
 1. Leitor do Conformar → `WSD1_leitura.json` (111 segmentos).
 2. `xmeml_do_leitor.py --com-velocidade --fonte-na-taxa-da-timeline --com-imagens` (imagem com in 0; desligado fora).
 3. `bl-conform --space Video_Full --multiples` (100 % por nome e quadro de fonte).
-4. `traduzir_PRODC.py aplicar` — retime Time×Time e Motion por BLG (74 planos).
-5. `mascaras_PRODC.py gerar/gravar` — 10 composições (aninhadas; trechos pela shape), um processo por plano.
-6. `titulos_PRODC.py inserir/montar` — Text em camada Composite, pelo .blscene editado + `bl-import` (7 títulos).
+4. `traduzir_prodc.py aplicar` — retime Time×Time e Motion por BLG (74 planos).
+5. `mascaras_prodc.py gerar/gravar` — 10 composições (aninhadas; trechos pela shape), um processo por plano.
+6. `titulos_prodc.py inserir/montar` — Text em camada Composite, pelo .blscene editado + `bl-import` (7 títulos).
 7. `marcar_e_stills.py` — 5 marcas "[Ciclo]".
-8. `render_scene.py` + `conferir_PRODC.py` + `conferir_trechos.py`.
+8. `render_scene.py` + `conferir_prodc.py` + `conferir_trechos.py`.
 
 ## O que não foi (marcas na scene `BL10_WSD24T`)
 | quadro | o quê |

@@ -67,7 +67,7 @@ def main() -> int:
     from test_importar_prproj import achar_caso
     caso = achar_caso()
     if caso is None:
-        print("  PULADO — o caso R02 PRODB EXEMPLOS não está nesta máquina")
+        print("  PULADO — o caso R02 PRODUCAO_B EXEMPLOS não está nesta máquina")
     else:
         from avb_bin.segmentos import caminho_confiavel
         from tools.prproj_para_drt import analisar, montar

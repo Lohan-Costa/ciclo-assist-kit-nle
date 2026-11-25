@@ -27,7 +27,7 @@ from avb.mobid import MobID  # noqa: E402
 from cicloassist.avid import timeline as T  # noqa: E402
 from carta_aberta_group_clip import _comp, montar_grupo  # noqa: E402
 
-PROJETO = Path("~/Documents/Avid Projects/producao-a-ENSAIO")
+PROJETO = Path("~/Documents/Avid Projects/PRODUCAO-A-ENSAIO")
 CAM = "G01_CAM{}_T01_MOV-PRORES"
 SOM = "G01_SOMDIRETO_T01_WAV-BWF.wav"
 #: quadro de cada fonte no instante 10:00:12:00 da cena (o verdade.json: CAM 1 às :05, CAM 2 às :12, CAM 3 às :08,

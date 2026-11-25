@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_trilhas_vazias.py        (Windows: .venv-win/Scripts/python)
 
-⛔ Visto no Resolve 19 (PRODB `…ROLO03_COM_REF`): a V7 do Premiere não tinha clipe que entrasse
+⛔ Visto no Resolve 19 (PRODUCAO_B `…ROLO03_COM_REF`): a V7 do Premiere não tinha clipe que entrasse
 no DRT e o writer só criava trilha para os números com clipe — a referência (V8) virou V7. A
 conferência (`trilha_referencia`), o Fusion e os Compound Clips acham o clipe pelo NÚMERO da trilha
 da origem; e o editor perdia o layout. Agora a trilha vazia entra vazia.

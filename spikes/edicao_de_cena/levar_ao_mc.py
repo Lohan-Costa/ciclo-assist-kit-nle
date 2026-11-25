@@ -2,7 +2,7 @@
 
     python spikes/edicao_de_cena/levar_ao_mc.py "<pasta da saída>"
 
-Exige o projeto producao-a_CURTA aberto. Só cria bins NOVAS; a sequência é carregada na Record.
+Exige o projeto PRODUCAO-A_CURTA aberto. Só cria bins NOVAS; a sequência é carregada na Record.
 Plano: `docs/plano/2026-11-09-edicao-de-cena.md`.
 """
 

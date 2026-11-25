@@ -29,7 +29,7 @@ from cicloassist.avid.take import resolver  # noqa: E402
 from cicloassist.midia import cache as _cache  # noqa: E402
 
 SERVICO = "http://127.0.0.1:7824"
-BIN = r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior\CENAS\C07.avb"
+BIN = r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR\CENAS\C07.avb"
 TAKE = "C07_P03-T002"
 
 PERGUNTA = (

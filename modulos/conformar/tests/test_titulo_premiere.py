@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_titulo_premiere.py        (Windows: .venv-win/Scripts/python)
 
-Conferido pela imagem no Resolve 21.1 (Mac) contra a referência do PRODB (2880×1620):
+Conferido pela imagem no Resolve 21.1 (Mac) contra a referência do PRODUCAO_B (2880×1620):
 
   - claquete "PRODUCAO-B / Rolo Único" em Monaco: a 1ª linha caiu no pixel (corpo e posição);
   - título final "PRODUCAO-B" em Optima Regular, com o Graphic Group crescendo de 80% a 100%:
@@ -103,7 +103,7 @@ def _titulos():
     print("título do Premiere → bloco `titulo`")
     antes = _com_fonte("Monaco", "Regular", 1.0, linha=1.33349609375)
     try:
-        # A claquete do PRODB (valores lidos do projeto).
+        # A claquete do PRODUCAO_B (valores lidos do projeto).
         f = {"texto": {"texto": "PRODUCAO-B\nRolo Único", "fonte": "Monaco",
                        "Position": "0.04620361328125:0.4870452880859375", "Scale": "100."}, "t0": 0}
         cx = leitura._titulo_resolve(f, (2880, 1620), [], 254016000000 / 24)["caixas"][0]
@@ -142,7 +142,7 @@ def _titulos():
         fontes.traduzir = antes
 
 
-#: `Source Text` reais do PRODB: "16-4-SERIE-1" em ArialMT corpo 160, e o título final em
+#: `Source Text` reais do PRODUCAO_B: "16-4-SERIE-1" em ArialMT corpo 160, e o título final em
 #: Optima-Regular com o corpo padrão (o campo não vem).
 BLOB_ARIAL_160 = ("SAEAAAAAAABEMyIRDAAAAAAABgAKAAQABgAAAGQAAAAAAF4AHAAQAAwAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
                   "AAAAAAAAAAAAAAAAAAAAFgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAABcABwBeAAAAAAAAARQAAAAgAAAAMAAAAAAA"

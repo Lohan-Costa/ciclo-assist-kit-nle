@@ -71,7 +71,7 @@ from cicloassist.avid import avb_fiel  # noqa: E402
 from cicloassist.avid import timeline as _timeline  # noqa: E402
 from cicloassist.avid.mcapi import TEMPO_DE_ARQUIVO_S, MediaComposer  # noqa: E402
 
-PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_Assist anterior")
+PROJETO = Path(r"%USERPROFILE%\Documents\Avid Projects\_ASSIST ANTERIOR")
 
 #: As fixtures do editor (2026-09-13). ⛔ SOMENTE LEITURA.
 FIXTURES = {

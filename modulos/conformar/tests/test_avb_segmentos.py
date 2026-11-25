@@ -306,7 +306,7 @@ def main() -> int:
         ok("⛔ relativo com '..' recusado", c, None)
         c, _ = S.caminho_confiavel("//h/s/../x")
         ok("⛔ UNC com '..' continua UNC: recusado", c, None)
-        # o Premiere grava `..` resolvidos pela metade (55 clipes de áudio do PRODB entravam offline):
+        # o Premiere grava `..` resolvidos pela metade (55 clipes de áudio do PRODUCAO_B entravam offline):
         # absoluto com `..` se resolve pelo TEXTO, pela forma, sem tocar no disco.
         # Os caminhos com letra vão a `_resolver_pontos` direto: no Mac, `caminho_confiavel` leva
         # `D:/…` a `_no_disco_desta_maquina` (procura em /Volumes) e, com o disco de mentira, devolve
@@ -326,13 +326,13 @@ def main() -> int:
 
     # `/Volumes/<rótulo>/…` (projeto salvo no Mac) lido no Windows — o gêmeo de `_no_disco_desta_maquina`.
     # Pela FORMA, com discos de mentira: roda igual nas duas máquinas (medido no Windows 2026-10-03:
-    # PRODB do Mac = F: com o mesmo rótulo).
+    # PRODUCAO_B do Mac = F: com o mesmo rótulo).
     from unittest import mock
-    vols = {"D": "SSD", "E": "PROJ-X_D", "F": "PRODB", "G": "PRODB"}
+    vols = {"D": "SSD", "E": "PROJ-X_D", "F": "PRODUCAO_B", "G": "PRODUCAO_B"}
 
     def no(existem):
         return mock.patch("os.path.isfile", lambda p: p in existem)
-    alvo = "/Volumes/PRODB/PRODUCAO-B/INPUT/x.mov"
+    alvo = "/Volumes/PRODUCAO_B/PRODUCAO-B/INPUT/x.mov"
     with no({r"F:\PRODUCAO-B\INPUT\x.mov"}):
         ok("Mac → Windows: o disco de mesmo rótulo", S._no_volume_desta_maquina(alvo, vols), r"F:\PRODUCAO-B\INPUT\x.mov")
     with no({r"F:\PRODUCAO-B\INPUT\x.mov", r"E:\PRODUCAO-B\INPUT\x.mov"}):
@@ -346,7 +346,7 @@ def main() -> int:
            S._no_volume_desta_maquina(alvo, vols), None)
     with no(set()):
         ok("nenhum disco tem: None", S._no_volume_desta_maquina(alvo, vols), None)
-    ok("só o volume, sem arquivo: None", S._no_volume_desta_maquina("/Volumes/PRODB", vols), None)
+    ok("só o volume, sem arquivo: None", S._no_volume_desta_maquina("/Volumes/PRODUCAO_B", vols), None)
 
     print("\n── casamentos (o match_results do writer) ────────────────────")
     trilha = V([SourceClip(mid(1), 0, 10), SourceClip(mid(2), 0, 10)])

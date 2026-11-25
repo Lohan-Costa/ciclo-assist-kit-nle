@@ -1,6 +1,6 @@
 """TRAZER os títulos da montagem para a scene (a OPÇÃO do autor, 2026-11-23: "em geral o texto não é enviado, mas caso
 seja um elemento narrativo ou artístico, ele pode ser necessário"). Veio do estudo PRODUCAO-C
-(`estudo/ferramentas/titulos_PRODC.py`, rodadas 25–28: 132 de 133 com os títulos); banco `plugins/baselight/README.md`.
+(`estudo/ferramentas/titulos_prodc.py`, rodadas 25–28: 132 de 133 com os títulos); banco `plugins/baselight/README.md`.
 
 Medido (7.0.3 Mac): a API só cria o texto como FONTE (sobre preto, ou matte: as letras não aparecem); DENTRO de uma
 camada de grade (operador Text) ele é COMPOSITE e desenha sobre a imagem. A API não cria essa camada ⇒

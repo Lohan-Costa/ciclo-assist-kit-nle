@@ -61,7 +61,7 @@ class Projeto:
         """O `StartKeyframeValue` binário (base64) de um parâmetro — inclusive quando o Premiere o
         guardou em OUTRO lugar do arquivo.
 
-        ⛔ MEDIDO 2026-10-04 (Premiere 26.0.2, `FINALIZACAOPRODB_FINALIZACAO_PARA RESOLVE.prproj`): um
+        ⛔ MEDIDO 2026-10-04 (Premiere 26.0.2, `FINALIZACAOPRODUCAO_B_FINALIZACAO_PARA RESOLVE.prproj`): um
         blob igual é gravado UMA vez; as outras ocorrências vêm vazias, só com o `BinaryHash`
         (`<StartKeyframeValue Encoding="base64" BinaryHash="1660e736…"/>`). Lendo só o conteúdo do
         próprio parâmetro, as 13 cartelas do filme (o crédito final duplicado de outra sequência) saíam
@@ -101,7 +101,7 @@ class Projeto:
     def campo(self, o: Obj, tag: str) -> str | None:
         m = re.search(r"<%s>([^<]*)</%s>" % (re.escape(tag), re.escape(tag)), self.corpo(o))
         # o texto do XML vem escapado: um arquivo "doors &amp; closing.wav" não existe no disco
-        # (medido 2026-10-04: 4 efeitos sonoros do PRODB davam "inexistente" por isso)
+        # (medido 2026-10-04: 4 efeitos sonoros do PRODUCAO_B davam "inexistente" por isso)
         return _desescapar(m.group(1)) if m else None
 
     def de_tipo(self, tag: str) -> list[Obj]:

@@ -1,7 +1,7 @@
 """Uma sequência do Premiere → segmentos no modelo neutro do motor (`Segment.to_dict()`).
 
 Desce de cada plano da timeline até o ARQUIVO, atravessando sequência aninhada e multicam (o
-take da 1ª leva do PRODB é uma multicam de UMA câmera usada como subclipe), e compõe pelo
+take da 1ª leva do PRODUCAO_B é uma multicam de UMA câmera usada como subclipe), e compõe pelo
 caminho as três coisas que cada camada pode mudar:
 
   • tempo      — `InPoint` + (t − `Start`) × `PlaybackSpeed`, camada por camada;
@@ -39,7 +39,7 @@ _NAO_EFEITO = {"AE.ADBE Motion", "AE.ADBE Opacity", "AE.ADBE MPEG.SourceSettings
 def _texto_do_blob(b64: str) -> tuple[str | None, str | None]:
     """(texto, fonte PostScript) do `Source Text` do Premiere (FlatBuffers em base64).
 
-    `inferido` (PRODB, Premiere 26.0.2, 4 títulos): as strings vêm com prefixo u32 LE de
+    `inferido` (PRODUCAO_B, Premiere 26.0.2, 4 títulos): as strings vêm com prefixo u32 LE de
     tamanho; a fonte é a que tem forma PostScript (`Optima-Regular`) e o texto é a ÚLTIMA."""
     import base64
     import struct
@@ -54,7 +54,7 @@ def _texto_do_blob(b64: str) -> tuple[str | None, str | None]:
             s = b[i + 4:i + 4 + n]
             try:
                 txt = s.decode("utf-8")
-                # ⚠️ A QUEBRA DE LINHA vale (o Premiere grava `\r`): a claquete do rolo do PRODB
+                # ⚠️ A QUEBRA DE LINHA vale (o Premiere grava `\r`): a claquete do rolo do PRODUCAO_B
                 # é "PRODUCAO-B\rRolo Único", e o `isprintable` cru a recusava — sobrava o nome da fonte
                 # ("Monaco") como texto (medido 2026-10-04).
                 limpo = txt.replace("\r\n", "\n").replace("\r", "\n")
@@ -75,7 +75,7 @@ def _corpo_do_blob(b64: str) -> float | None:
     """O corpo (px) do 1º trecho do `Source Text`, ou `None` = o padrão (100).
 
     O blob é FlatBuffers depois de 12 bytes de cabeçalho: raiz → tabela do documento → campo 0
-    (vetor de trechos) → trecho[0] campo 1 (estilo) → campo 1 = float32. `inferido` (PRODB,
+    (vetor de trechos) → trecho[0] campo 1 (estilo) → campo 1 = float32. `inferido` (PRODUCAO_B,
     Premiere 26.0.2, 2026-10-04): 160 nos títulos em ArialMT; AUSENTE nos de corpo padrão (o
     FlatBuffers não grava o valor padrão), e esses medem 100 px na imagem."""
     import base64
@@ -144,7 +144,7 @@ def _alinhamento_do_blob(b64: str) -> str:
 RETIME = {None: None, "0": None, "1": None, "2": "optical_flow"}
 #: Rotação: o Premiere gira no sentido horário com valor positivo (tela, +Y para baixo).
 #: O Resolve, no anti-horário. `hipotese` até a comparação com o export (só o 180° do
-#: PRODB é indiferente ao sinal).
+#: PRODUCAO_B é indiferente ao sinal).
 SINAL_ROTACAO_RESOLVE = -1.0
 
 
@@ -214,7 +214,7 @@ def _valor(proj: Projeto, prm: Obj, t_midia: int | None):
                 if ta <= t_midia <= tb:
                     f = (t_midia - ta) / (tb - ta) if tb > ta else 0.0
                     return _interp(va, vb, f), True
-    # SEM keyframe vale o `StartKeyframe`: o `CurrentValue` pode ficar velho (8 escalas do PRODUCAO-C, 1 do PRODB — 28 e 54,7 no CurrentValue, 50 no StartKeyframe; a API do Premiere e a
+    # SEM keyframe vale o `StartKeyframe`: o `CurrentValue` pode ficar velho (8 escalas do PRODUCAO-C, 1 do PRODUCAO_B — 28 e 54,7 no CurrentValue, 50 no StartKeyframe; a API do Premiere e a
     # imagem dão o StartKeyframe; R04, 2026-10-10). COM keyframe (e sem instante) fica o CurrentValue.
     sk = proj.campo(prm, "StartKeyframe")
     if sk and not kfs:
@@ -326,11 +326,11 @@ def _interp(a: str, b: str, f: float) -> str:
 
 
 #: `Metadata` de uma linha do burn-in que é o TC da TIMELINE — o único medido (o burn-in do
-#: PRODB bate com o TC da referência em 01:00:59:02 e 01:22:49:07). 0 = linha vazia; os outros
+#: PRODUCAO_B bate com o TC da referência em 01:00:59:02 e 01:22:49:07). 0 = linha vazia; os outros
 #: valores (nome do clipe, TC da fonte…) estão `pendente`.
 BURNIN_TC_TIMELINE = 4
 #: Os 13 parâmetros de cada uma das 5 linhas do "Metadata & Timecode Burn-in", a partir do 2
-#: (0 = Size do efeito, 1 = Opacity do fundo). Premiere 26.0.2, PRODB (2026-10-08).
+#: (0 = Size do efeito, 1 = Opacity do fundo). Premiere 26.0.2, PRODUCAO_B (2026-10-08).
 _BURNIN_LINHA = ("aberta", "metadado", "posicao", "size", "rotulo", "trilha", "rotulo_trilha",
                  "campo", "formato", "exibicao", "offset", "tc_inicio", "usar_tc_inicio")
 
@@ -875,7 +875,7 @@ class Motion:
 
     Keyframe do Premiere (`<Keyframes>`): `tempo,valor,interp,…;` com o tempo em ticks da MÍDIA
     do item (o mesmo domínio do `InPoint`). `interp` 0 = linear (medido: o zoom do ovo frito,
-    PRODB 01:14:13:21, é `0`); outro código = curva, aproximada aqui como linear e avisada."""
+    PRODUCAO_B 01:14:13:21, é `0`); outro código = curva, aproximada aqui como linear e avisada."""
 
     def __init__(self, proj: Projeto, item: Obj):
         self.estatico: dict = {}
@@ -1216,7 +1216,7 @@ class Leitor:
     # -- inventário ---------------------------------------------------------
     def eh_multicam(self, s: Obj) -> bool:
         """Sequência MULTICAM (a fonte de ângulos), não nest. O `<IsMulticam>` do clipe NÃO serve:
-        o multicam desligado vem sem ele (505 takes do PRODB). A chave abaixo existe nas 280
+        o multicam desligado vem sem ele (505 takes do PRODUCAO_B). A chave abaixo existe nas 280
         sequências multicam e em nenhum nest, merged ou timeline de montagem (medido 2026-10-04,
         Premiere 26.0.2 — banco `protocolos/prproj/relink-e-geometria.md` §10.5)."""
         return "<Source.Monitor.Multicam.SwitchOnMulticamName>" in self.p.corpo(s)
@@ -1317,7 +1317,7 @@ class Leitor:
         # começa no piso do In (abaixo). A leitura antiga ("o Premiere mostra a curva pura") veio de stills a olho.
         remap = _remap_do_clipe(p, vc)
         # REVERSO: `<PlayBackwards>true</PlayBackwards>` no `<Clip>`, com a velocidade POSITIVA.
-        # Medido 2026-10-02 (PRODB, abertura, M002C022 a 0,7× para trás) contra o export: a
+        # Medido 2026-10-02 (PRODUCAO_B, abertura, M002C022 a 0,7× para trás) contra o export: a
         # fonte no instante t é (duração − 1 quadro) − InPoint − (t − Start) × velocidade, ou
         # seja, o InPoint/OutPoint do Premiere contam a partir do FIM da mídia.
         para_tras = p.campo(vc, "PlayBackwards") == "true"
@@ -1429,7 +1429,7 @@ class Leitor:
         # Aninhamento de COMPOSIÇÃO (não multicam): TODAS as trilhas internas valem, cada uma
         # numa CAMADA (0 = a de baixo). O `ler` dá a cada camada a mais uma trilha própria no
         # Resolve, logo acima — a ordem de empilhamento do Premiere fica. Medido 2026-10-02:
-        # C87_COMP_INTERFONE_2 do PRODB (placa do interfone + insert por cima); antes só a
+        # C87_COMP_INTERFONE_2 do PRODUCAO_B (placa do interfone + insert por cima); antes só a
         # trilha de cima era lida e a placa sumia.
         multicam = p.campo(vc, "IsMulticam") == "true"
         if para_tras:
@@ -1488,7 +1488,7 @@ class Leitor:
                     if any(v > 0 for v in mo.crop.values()):
                         # Crop no plano que aponta para o take: corta o QUADRO do take. O Cropping
                         # do Resolve corta a FONTE do clipe, então o retângulo volta para a fonte
-                        # pela geometria de dentro do take (inversa). PRODB 66-1-9 (2026-10-03).
+                        # pela geometria de dentro do take (inversa). PRODUCAO_B 66-1-9 (2026-10-03).
                         f["crop"], aviso = _crop_para_fonte(mo.crop, f["geo_fn"](a), tam_q,
                                                             f["fonte_px"], f.get("crop") or {})
                         f["crop_suave"] = max(f.get("crop_suave") or 0.0, mo.crop_suave)
@@ -1556,7 +1556,7 @@ class Leitor:
     # -- o ÁUDIO (2026-10-04) --------------------------------------------------
     def _canais(self, clip: Obj) -> list[int]:
         """Os canais do arquivo (0-based) que este clipe toca: `SecondaryContents ›
-        SecondaryContentItem › SecondaryContent › ChannelIndex` (medido no PRODB: 2.243 clipes
+        SecondaryContentItem › SecondaryContent › ChannelIndex` (medido no PRODUCAO_B: 2.243 clipes
         mono, 293 estéreo). Sem a lista, o canal 0."""
         p = self.p
         out = []
@@ -1797,7 +1797,7 @@ class Leitor:
                     continue
                 folhas, av = folhas_do[id(it)]
                 # Clipe DESLIGADO (Enable desmarcado): `<IsMuted>true</IsMuted>` no
-                # ClipTrackItem — não só a trilha. Medido no PRODB (30B-2-2, 8 quadros).
+                # ClipTrackItem — não só a trilha. Medido no PRODUCAO_B (30B-2-2, 8 quadros).
                 item_desligado = "<IsMuted>true</IsMuted>" in p.corpo(it)
                 sc = p.ref(it, "SubClip")
                 nome_plano = (p.campo(sc, "Name") if sc else None) or "?"
@@ -1831,7 +1831,7 @@ class Leitor:
         segs.sort(key=lambda d: (d["track"], d["timeline_tc_in"], not d["is_transition"]))
         # O TC de INÍCIO da sequência: `MZ.ZeroPoint` = o TC exibido na posição 0, em ticks (banco
         # `protocolos/prproj/escrita.md` §11). Ausente = 00:00:00:00 — o caso das timelines finais do
-        # PRODB, conferido pelo burn-in da referência (o quadro 119.280 mostra 01:22:50:00). O
+        # PRODUCAO_B, conferido pelo burn-in da referência (o quadro 119.280 mostra 01:22:50:00). O
         # Resolve começa a timeline nele: "respeitar o TC que veio da origem" (autor, 2026-10-04).
         m = re.search(r"<MZ\.ZeroPoint>(-?\d+)</MZ\.ZeroPoint>", p.corpo(s))
         inicio = max(0, round(int(m.group(1)) / tpf)) if (m and tpf) else 0
@@ -1854,10 +1854,10 @@ class Leitor:
         - `dur_s`: `Duration` do `VideoStream`, em ticks.
         - `tc_quadros`: o TC de início da mídia — `AlternateStart` ou `Start` do `Media`, em ticks de
           tempo REAL (banco, `prproj/relink-e-geometria.md` §6) → × a taxa da mídia = os quadros do TC.
-          MEDIDO 2026-10-09 (Premiere 26, PRODB A044C013): `Start` 56048,25 s × 24 = 1.345.158 =
+          MEDIDO 2026-10-09 (Premiere 26, PRODUCAO_B A044C013): `Start` 56048,25 s × 24 = 1.345.158 =
           15:34:08:06, o TC do original. Sem TC (celular), não há o campo.
         - `fourcc`: `CodecType` do `VideoStream` (1212503619 = "HEVC", o celular; 1634755439 = "apco",
-          o ProRes Proxy dos proxies ALEXA do PRODB)."""
+          o ProRes Proxy dos proxies ALEXA do PRODUCAO_B)."""
         p = self.p
         vs = p.ref(media, "VideoStream")
         dur = _int(p.campo(vs, "Duration")) if vs is not None else 0
@@ -2124,7 +2124,7 @@ class Leitor:
             "cutpoint": 0,
             "has_motion_effect": criativo or reverso,
             # Reverso tem forma PRÓPRIA no Resolve (`build_reverse_timemap`); uma rampa de
-            # inclinação negativa ele toca PARA FRENTE (medido 2026-10-02, a abertura do PRODB).
+            # inclinação negativa ele toca PARA FRENTE (medido 2026-10-02, a abertura do PRODUCAO_B).
             "motion_effect_type": "reverse" if reverso else ("constant" if criativo else None),
             "source_offset_map": [],
             # inclinação da curva do Resolve = segundos de fonte por segundo de timeline = a
@@ -2203,12 +2203,12 @@ class Leitor:
 
 
 #: Edge Feather do Premiere (px) → Softness do Cropping do Resolve. `inferido` — UMA calibração
-#: pela imagem (2026-10-03, PRODB 66-1-9, Feather 43, timeline 2880): varredura de Softness
+#: pela imagem (2026-10-03, PRODUCAO_B 66-1-9, Feather 43, timeline 2880): varredura de Softness
 #: 0–80 contra o export, pico em 4–5 (correlação 0,9983; 43 dava 0,9487).
 SOFTNESS_POR_PX = 0.105
 
 #: Corpo do Text do Premiere quando o blob não diz: 100 (o padrão do Essential Graphics; o
-#: `0x64` do blob do PRODB). Altura útil da letra sobre a linha de base, em corpos. `hipotese`.
+#: `0x64` do blob do PRODUCAO_B). Altura útil da letra sobre a linha de base, em corpos. `hipotese`.
 #: Corpo do texto do Premiere em px do quadro (o padrão do Essential Graphics). Conferido em
 #: 2026-10-04 pela imagem: a claquete em Monaco com Scale 100 tem 100 px de corpo num quadro de
 #: 1620 (largura de "PRODUCAO-B" e entrelinha automática de 120% = 120 px).
@@ -2230,7 +2230,7 @@ def _titulo_resolve(f: dict, quadro: tuple[int, int], av: list, tpf_tl: float = 
 
     Por cima, o Graphic Group (Vector Motion) transforma a camada INTEIRA em volta do ponto de
     âncora dele. Com a âncora no centro do quadro (o padrão), ele é o Transform do clipe do
-    Resolve — Zoom em volta do centro, inclusive ANIMADO (o título final do PRODB cresce de
+    Resolve — Zoom em volta do centro, inclusive ANIMADO (o título final do PRODUCAO_B cresce de
     80% a 100%; medido 2026-10-04: as keyframes de Zoom valem dentro do gerador do Text, em
     quadros desde o início do clipe). Âncora fora do centro: a escala do início vai embutida no
     corpo e na posição do texto."""
@@ -2289,7 +2289,7 @@ def _titulo_resolve(f: dict, quadro: tuple[int, int], av: list, tpf_tl: float = 
 
 def _volume_kf(p: Projeto, comp: Obj) -> list[tuple[int, float]]:
     """Keyframes do Volume do clipe: `[(ticks da MÍDIA, dB)]` (o tempo no domínio do `InPoint`, como
-    o do Motion). Formato medido no PRODB (2026-10-03): `ticks,valor,0,0,<alça>,0.166…,<alça>,0.166…;`
+    o do Motion). Formato medido no PRODUCAO_B (2026-10-03): `ticks,valor,0,0,<alça>,0.166…,<alça>,0.166…;`
     com o valor linear (1,0 = +15 dB). Alças de curva ignoradas: o Resolve recebe linear."""
     for prm in p.refs(comp, "Param"):
         if p.campo(prm, "Name") != "Level":
@@ -2322,7 +2322,7 @@ def _volume_no_trecho(volume_db, volume_kf: list, f: dict, a: int, b: int, tpf_t
     """`{volume_db, volume_kf}` de UM clipe do Resolve: a curva do Premiere AVALIADA no trecho dele.
 
     As keyframes ficam no tempo da MÍDIA, e um corte de lâmina copia todas para cada pedaço (no
-    PRODB, 5 pedaços do 17B-18-1T04 com as mesmas 4, nenhuma dentro de nenhum). Antes da 1ª vale
+    PRODUCAO_B, 5 pedaços do 17B-18-1T04 com as mesmas 4, nenhuma dentro de nenhum). Antes da 1ª vale
     o valor dela; depois da última, o da última; entre, linear na AMPLITUDE (o `Level` do Premiere).
     Saem: o valor nas duas pontas do clipe + as keyframes de dentro; curva constante no trecho vira
     volume FIXO. Tempo no domínio do `In` do writer (fonte × speed_ratio, quadros da timeline), como o
@@ -2361,7 +2361,7 @@ def _volume_no_trecho(volume_db, volume_kf: list, f: dict, a: int, b: int, tpf_t
 
 def _volume_db(p: Projeto, comp: Obj, avisos: dict) -> float | None:
     """O ganho FIXO do Volume do clipe, em dB. O Premiere guarda o `Level` como amplitude linear
-    com 1,0 = +15 dB (o máximo dele): o padrão 0,177828 = 10^(−15/20) = 0 dB (medido no PRODB:
+    com 1,0 = +15 dB (o máximo dele): o padrão 0,177828 = 10^(−15/20) = 0 dB (medido no PRODUCAO_B:
     6.150 parâmetros de Channel Volume nesse valor). dB = 20·log10(v) + 15. Com keyframes: não
     traduzido, com aviso (decisão do autor, 2026-10-04: keyframes só depois de medir)."""
     for prm in p.refs(comp, "Param"):
@@ -2373,7 +2373,7 @@ def _volume_db(p: Projeto, comp: Obj, avisos: dict) -> float | None:
         if not kfs and (p.campo(prm, "Keyframes") or "").strip(";").strip():
             chave = "volume do clipe com keyframes ilegíveis: usado o valor fixo"
             avisos[chave] = avisos.get(chave, 0) + 1
-        # UM keyframe só (`tempo,valor,…`) vale o clipe inteiro: é volume fixo (3 no PRODB)
+        # UM keyframe só (`tempo,valor,…`) vale o clipe inteiro: é volume fixo (3 no PRODUCAO_B)
         x = kfs[0][1] if kfs else _float(_valor(p, prm, None)[0], None)
         if x is None or x <= 0:
             return None

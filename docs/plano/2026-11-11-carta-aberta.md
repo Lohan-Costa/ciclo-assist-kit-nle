@@ -51,7 +51,7 @@ e quem puxa leva uma CÓPIA, mexe e devolve uma versão nova.
 Com **PRODUCAO-A** (`MIDIAS DE TESTES/1 PRODUCOES/PRODUCAO-A`):
 
 1. O editor A (Avid) cria o projeto "PRODUCAO-A" numa pasta em rede, cria `Diarias/D01` e manda para lá os
-   masterclipes da bin D01 do `producao-a_CURTA`. Depois seleciona a D01 e anexa a pasta dos convertidos (MP4/WAV)
+   masterclipes da bin D01 do `PRODUCAO-A_CURTA`. Depois seleciona a D01 e anexa a pasta dos convertidos (MP4/WAV)
    e a dos originais (BRAW): cada mídia fica com as três formas.
 2. O editor B (Premiere, outra máquina, a mesma rede, a mesma pasta) **traz uma diária**: entram os convertidos, nas
    mesmas bins que o A vê.
@@ -527,7 +527,7 @@ precisam para serem recriados (o fecho oculto da `.avb`, `user_placed=False`).
 
 ## 6. Material de teste
 
-- **OP-Atom:** `Avid MediaFiles` do SSD (protegido: só leitura), projeto `producao-a_CURTA`.
+- **OP-Atom:** `Avid MediaFiles` do SSD (protegido: só leitura), projeto `PRODUCAO-A_CURTA`.
 - **Versão de trabalho:** `MIDIAS DE TESTES/1 PRODUCOES/PRODUCAO-A/MIDIAS/CONVERTIDOS/D01…D04`: 118 `.mp4`, 196
   `.wav`/`.WAV` e 15 `.mxf` (MP4 confirmado pelo autor).
 - **Subclipes sincronizados:** as bins da PRODUCAO-A no MC (D02 subclipada pelo Órbita, `C07 FALAS`).
@@ -536,7 +536,7 @@ precisam para serem recriados (o fecho oculto da `.avb`, `user_placed=False`).
 
 ## 7. Perguntas ao autor
 
-1. ✅ Respondida (2026-11-12): o par de referência é o `GRUPO-MULTCAM` (MC, `producao-a-ENSAIO/EDICAO.avb`, feito à mão
+1. ✅ Respondida (2026-11-12): o par de referência é o `GRUPO-MULTCAM` (MC, `PRODUCAO-A-ENSAIO/EDICAO.avb`, feito à mão
    em 28/06) e a multicâmera das MESMAS fontes feita no Premiere 26.0.2 (Mac) por ponto de entrada, em
    `MIDIAS DE TESTES/1 PRODUCOES/PRODUCAO-A/SAIDAS/CARTA ABERTA/GRUPO-MULTCAM PREMIERE v01.prproj`. Fontes: as do
    FLATFILE-MULTCAM (`CAM A.mxf`, `CAM B.mxf`, `SOM-DIRETO.wav`). C0(f) LEITURA feita (banco `avb/sincronizacao-e-subclipes.md`
@@ -570,7 +570,7 @@ precisam para serem recriados (o fecho oculto da `.avb`, `user_placed=False`).
 ## O desafio da timeline real (autor, 2026-11-13): MC → Carta → Premiere, com a montagem da PRODUCAO-A
 
 Pedido: abrir no MC a timeline real de montagem, trazê-la para a Carta e levá-la ao Premiere, apontando para as OP-Atom.
-A timeline: `PRODA_CORTE.02.Exported.01` (`EMISSORA-APRS/producao-a/producao-a Bin.avb`), 26,5 min a 24 fps, V1–V3 e
+A timeline: `PRODA_CORTE.02.Exported.01` (`EMISSORA-APRS/PRODUCAO-A/PRODUCAO-A Bin.avb`), 26,5 min a 24 fps, V1–V3 e
 A1–A16. Feita SÓ de masters (89 clipes de imagem, 552 de som, 73 masters distintos; nenhum subclipe nem grupo), com
 143 transições, 180 `PanVolumeEffect`, 33 `Selector`, 9 `INT_EFF_SPATIAL_ADAPTER`, 7 correções de cor, 2 estabilizações,
 4 `MotionEffect` (velocidade) e 1 AudioSuite.

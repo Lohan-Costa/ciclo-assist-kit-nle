@@ -160,7 +160,7 @@ def _de_nome(nome: str, origem: str) -> Identidade | None:
 #: A marca de quem saiu daqui: o painel a mostra como "presumida", igual à cena presumida pela posição.
 FORMA_DA_DIARIA = "forma_da_diaria"
 _NUMERO_NUMERO = re.compile(r"^(\d+[A-Za-z]?)-(\d+)$")
-#: PRODB, medido em 2026-11-08: 33 de 43 (77%). "Todas" nunca valeria: uma diária real tem `18-EXTRA` e `17B-18-1`.
+#: PRODUCAO_B, medido em 2026-11-08: 33 de 43 (77%). "Todas" nunca valeria: uma diária real tem `18-EXTRA` e `17B-18-1`.
 _FATIA_MINIMA = 2 / 3
 _MINIMO_DE_TOMADAS = 3
 

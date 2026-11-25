@@ -188,8 +188,12 @@ def main() -> int:
             rec.mkdir(parents=True, exist_ok=True)
             copia = rec / f"{uuid.uuid4()}.drt"
             shutil.copyfile(trabalho, copia)
-            pe = s.preparar_versoes({"avulso": v1["chave"]}, {"avulso": v2["chave"]}, str(copia),
-                                    RW.contagem(str(copia)), inicio=86400)
+            # ⛔ Cada caso é uma ilha (regra do autor): sem o isolamento, o AAF da v02 aponta o room tone das A6/A7 para o
+            # HD externo V-001 e, com ele MONTADO, o Atualizar o achava e pedia para inserir — o teste passava ou falhava
+            # conforme o HD plugado ("a antiga test_aaf_leitura", 143/144 de nov/2026; achado em 2026-11-24).
+            with ilhas.isolar_midia(caso):
+                pe = s.preparar_versoes({"avulso": v1["chave"]}, {"avulso": v2["chave"]}, str(copia),
+                                        RW.contagem(str(copia)), inicio=86400)
             ok("⭐ o encaixe da v01 com a timeline do Resolve 21", pe["encaixe"]["pct"], 97.7)
             ok("⭐ cada plano novo pede EXATAMENTE a duração do Avid (fim exclusivo)",
                [(x["nome"], x["fim_fonte"] - x["inicio_fonte"], x["dur"]) for x in pe["inserir"]

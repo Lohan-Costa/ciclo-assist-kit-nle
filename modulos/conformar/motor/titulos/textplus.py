@@ -6,7 +6,7 @@ Text+ puxa o TC sozinho (modificador TimeCode), então o burn-in continua VIVO n
 da timeline em cada quadro, sem queimar números na mão.
 
 Medido no Resolve Studio 21.1 (macOS), 2026-10-08, com gabarito do próprio Resolve
-(`InsertFusionTitleIntoTimeline("Text+")` + `Export` DRT) e o burn-in do PRODB na referência:
+(`InsertFusionTitleIntoTimeline("Text+")` + `Export` DRT) e o burn-in do PRODUCAO_B na referência:
 
 - O clipe é um `Sm2TiVideoClip` "Fusion Title" com a composição em `CompositionTable/CompositionBA`:
   `[u32 BE tamanho]` + zlib de um mapa (o formato dos FieldsBlob: `count`, `0_name`,
@@ -36,7 +36,7 @@ K_TEXTPLUS = 124 / (0.1 * 1620)
 #: TC (11 caracteres) no Open Sans Semibold: largura = 7,2 × altura dos dígitos
 LARGURA_TC = 7.2
 #: folgas da caixa do Premiere, em alturas de dígito (medidas na referência). O `FOLGA_BAIXO` já
-#: desconta o 1 px que o Text+ desenha acima da conta (sobre o PRODB, a 1ª versão saiu 2 px alta).
+#: desconta o 1 px que o Text+ desenha acima da conta (sobre o PRODUCAO_B, a 1ª versão saiu 2 px alta).
 FOLGA_ESQ, FOLGA_BAIXO = 0.117, 0.246
 #: Extend da caixa do Text+ que dá as folgas do Premiere (horizontal; vertical pela borda de baixo)
 EXTEND_H, EXTEND_V = -0.147, -0.043

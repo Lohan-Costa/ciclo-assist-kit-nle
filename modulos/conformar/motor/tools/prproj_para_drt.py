@@ -1,7 +1,7 @@
 """Uma sequência do Premiere → DRT do Resolve religado aos ORIGINAIS de câmera.
 
     python -m tools.prproj_para_drt PROJETO.prproj "SEQUÊNCIA" SAIDA.drt \
-        --originais /Volumes/LB_03_T/PRODB [--originais …] [--referencia FILME.mp4]
+        --originais /Volumes/LB_03_T/PRODUCAO_B [--originais …] [--referencia FILME.mp4]
 
 Fluxo aprovado em 2026-10-02 (organograma "Do proxy do Premiere ao ARRIRAW no Resolve"):
   leitor de PRPROJ → casar proxy → original → `drp.writer.build_drt`.
@@ -476,7 +476,7 @@ def montar(prproj: str, sequencia: str, saida: str, originais: list[str],
             continue
         if s.get("is_audio"):
             # O som de câmera SEGUE o casamento do vídeo (decisão do autor, 2026-10-04: o proxy
-            # nasceu do ARRIRAW com o áudio dele; medido, o ARRIRAW do PRODB tem 5 canais): o
+            # nasceu do ARRIRAW com o áudio dele; medido, o ARRIRAW do PRODUCAO_B tem 5 canais): o
             # canal N do proxy → o canal N do original. O som direto (WAV) já é o original. Sem
             # marcador: o áudio não marca clipe a clipe.
             proxy = s["media_ref"]["local_path"]
@@ -537,7 +537,7 @@ def montar(prproj: str, sequencia: str, saida: str, originais: list[str],
         elif os.path.exists(no_disco(proxy, c)):
             caminho = no_disco(proxy, c)
             # IGNORADO pelo editor ("se não tem versão em alta, tudo bem": a máscara de letterbox do
-            # PRODB): entra pelo proxy, como sempre, mas sem o marcador de falso positivo.
+            # PRODUCAO_B): entra pelo proxy, como sempre, mas sem o marcador de falso positivo.
             if proxy not in ignorar:
                 motivo = c.get("duvida") or _MOTIVO.get(c.get("estado"), "sem original")
                 marcas.append({"quadro": ini, "cor": "Red", "nota": f"REFAZER no original: {motivo}",

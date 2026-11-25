@@ -215,11 +215,14 @@ def strip_internal_markers(dest: Path) -> None:
 
 
 # ⛔ Nomes de produção e de cliente: nenhum vai ao público, em NENHUMA grafia (banco, bugs-do-mundo-real B104: a lista
-# por string exata deixava passar "producao_a" e "producao-a"). Compara-se a forma normalizada (sem acento e
+# por string exata deixava passar "PRODUCAO_A" e "producao-a"). Compara-se a forma normalizada (sem acento e
 # caixa, separadores viram espaço); termo curto só como palavra inteira. Medido em 2026-10-28 no artefato saneado:
 # as bancadas de tools/, o molde formas_r19.xml e o preset_aaf.xml ainda levavam nomes reais.
 TERMOS_BLOQUEADOS = ["PRODUCAO-A", "PRODUCAO-A", "PRODUCAO-C", "PRODC", "PRODUCAO-B", "PRODUCAO-G", "EMISSORA", "PRODUCAO-V",
                      "MIDIAS DE TESTES"]
+#: os que só valem como PALAVRA INTEIRA (a sigla dentro de outra palavra não é ela). Lista, e não "até 4 letras": na
+#: cópia pública do kit a sigla vira um apelido mais longo e a regra mudava de comportamento (2026-11-25).
+TERMOS_SO_INTEIROS = ["PRODC"]
 
 
 def _normalizar(texto: str) -> str:
@@ -234,7 +237,8 @@ def bloqueados_em(texto: str) -> list[str]:
     achados = []
     for termo in TERMOS_BLOQUEADOS:
         n = _normalizar(termo)
-        if (re.search(rf"(?<![A-Z0-9]){re.escape(n)}(?![A-Z0-9])", t) if len(n) <= 4 else n in t):
+        inteiro = n in {_normalizar(x) for x in TERMOS_SO_INTEIROS}
+        if (re.search(rf"(?<![A-Z0-9]){re.escape(n)}(?![A-Z0-9])", t) if inteiro else n in t):
             achados.append(termo)
     return achados
 

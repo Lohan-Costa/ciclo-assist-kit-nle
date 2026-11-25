@@ -4,7 +4,7 @@ Rodar:
 
     .venv/bin/python tests/test_casos_ilhas.py        (Windows: .venv-win/Scripts/python)
 
-"Não podemos misturar projetos": o PRODUCAO-A é laboratório, o PRODB é filme real, e o resultado de
+"Não podemos misturar projetos": o PRODUCAO-A é laboratório, o PRODUCAO_B é filme real, e o resultado de
 um teste não pode depender do que outro projeto deixou no disco. Antes, o teste do caso U03 (PRODA)
 varria todo `Avid MediaFiles` montado e todo volume — a contagem mudava com os HDs plugados, e o room
 tone ausente aparecia como "falha".
