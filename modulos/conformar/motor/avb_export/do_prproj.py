@@ -41,7 +41,22 @@ def _achado(s: dict, analise: dict) -> str | None:
     alvo = _alvo_de(s, analise.get("casamento") or {})
     if not alvo and s.get("is_audio"):
         alvo = ((analise.get("sons") or {}).get(ref) or {}).get("realocado")
+        if not alvo:
+            # ⛔ o som que está NO caminho do projeto: o casamento é só do vídeo e o `relocar_sons` só lista o que está
+            #   FORA do lugar — o som no lugar entrava OFFLINE no Avid (medido 2026-11-25, B03 a 23,976: os 3 WAV)
+            from prproj.originais import recusado
+            if not recusado(ref) and os.path.isfile(ref):
+                alvo = ref
     return alvo if alvo and os.path.isfile(alvo) else None
+
+
+def _so_som(arq: str) -> bool:
+    """O arquivo é de SOM (WAV, AIFF…), que o Conformar autora pelo molde. Um MOV/MXF usado só como som (o som de câmera,
+    o MOV de pares estéreo) vai pelo LINK do MC, como o vídeo: o molde é de WAV, e o MOV entrava OFFLINE estando no
+    disco (medido 2026-11-25, MC 25.12 Mac, B03_PARES)."""
+    from prproj.originais import EXT_SOM
+
+    return os.path.splitext(str(arq))[1].lower() in EXT_SOM
 
 
 def _tamanho(arq: str):
@@ -116,6 +131,8 @@ def planejar(analise: dict) -> dict:
                     s["volume_auto"] = auto
             if not arq:
                 ausentes[chave] = _nome(ref)
+            elif s.get("is_audio") and not _so_som(arq):
+                video[arq] = _nome(arq)
             elif s.get("is_audio"):
                 fim = int(s.get("source_start_frames") or 0) + int(s.get("duration_frames") or 0)
                 audio[arq] = max(audio.get(arq, 0), fim)
@@ -350,7 +367,7 @@ def redirecionar(plano: dict, decisoes: dict) -> int:
             continue
         if str(k).startswith(OFFLINE):
             ausentes[k] = plano["ausentes"].get(k) or _nome(str(k)[len(OFFLINE):])
-        elif s.get("is_audio"):
+        elif s.get("is_audio") and _so_som(str(k)):
             fim = int(s.get("source_start_frames") or 0) + int(s.get("duration_frames") or 0)
             audio[k] = max(audio.get(k, 0), fim)
         else:
@@ -370,6 +387,12 @@ def specs_offline(plano: dict) -> tuple[dict, int]:
     specs = _offline_specs(plano["segmentos"], [{"segment_index": i, "matched_path": "x"} for i in faltam], handle)
     for chave, d in specs.items():
         d["name"] = plano["ausentes"].get(chave, d["name"])
+    # o som offline com TODOS os canais que a timeline usa (aqui o `source_slot_id` é o canal do arquivo, 1…N): sem isto
+    # o master offline tinha 2 trilhas e o canal 3+ apontava para trilha inexistente no MC (2026-11-25)
+    for s in plano["segmentos"]:
+        d = specs.get(s.get("mob_id"))
+        if d is not None and s.get("is_audio") and not (s.get("is_gap") or s.get("is_transition")):
+            d["canais"] = max(int(d.get("canais") or 1), int(s.get("source_slot_id") or 1))
     return specs, handle
 
 

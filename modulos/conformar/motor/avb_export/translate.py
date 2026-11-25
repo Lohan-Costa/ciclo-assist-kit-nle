@@ -2126,7 +2126,11 @@ def build(f, name, tracks, tpl, tc_fps, fmt_type, fmt_str, comp_mobs=None, inici
         seq.components.append(_filler(f, max(0, total - tlen(tr)), tkind))
         idx[tkind] += 1
         vt = f.create.Track(); vt.index = idx[tkind]; vt.component = seq; vt.lock_number = 0
-        vt.filler_proxy = _trackref(f, tkind)
+        # ⛔ o TrackRef de fundo ("o vazio mostra a trilha de baixo") é só da IMAGEM. O MC não grava `filler_proxy` em
+        # trilha de som (390 de 390 nas bins reais); com ele o VAZIO de uma trilha de som TOCAVA a de baixo — medido
+        # de ouvido no export do MC 25.12 (2026-11-25): A3 vazia tocava a A2, o tom saía 3×, 6×, 9× mais alto.
+        if tkind != "sound":
+            vt.filler_proxy = _trackref(f, tkind)
         if tkind == "sound":
             vt.session_attr = _attrs(f, _MONSTATE=2, _ENBLSTATE=1)
             # nº de canais da trilha: combiner/awarp emitem N canais -> trilha precisa de _TRACK_FORMAT=N
@@ -2278,6 +2282,7 @@ def build_avb(segments, timeline_fps, media_bin, out, seqname,
     # {media_hex -> comprimento do master} p/ clampar o OUT dos clipes (leitura TOLERANTE: a bin tem PCMA)
     from .reader import topen as _topen
     ml = {}
+    som: dict[str, list[int]] = {}                       # {media_hex -> índices das trilhas de SOM do master}
     with _topen(media_bin) as rf:
         for m in rf.content.mobs:
             if m.property_data.get("mob_type_id") != 2:
@@ -2288,8 +2293,20 @@ def build_avb(segments, timeline_fps, media_bin, out, seqname,
                 if seq is not None:
                     L = max(L, sum((c.property_data.get("length", 0) or 0)
                                    for c in (seq.property_data.get("components") or [])))
+                    try:
+                        if getattr(seq, "media_kind", None) == "sound":
+                            som.setdefault(m.mob_id.bytes_le.hex(), []).append(int(t.property_data.get("index")))
+                    except Exception:                    # noqa: BLE001 — sem o índice, o canal segue a regra do AAF
+                        pass
             ml[m.mob_id.bytes_le.hex()] = L
     set_master_len(ml)
+    # ⛔ O CANAL de quem não vem de AAF (o .prproj): o `source_slot_id` JÁ É o canal do arquivo (1…N) = a trilha de som do
+    #   master. Sem isto o `_chan` aplicava a regra do AAF ("slot − 1", o slot 1 do AAF costuma ser vídeo/TC): o R do
+    #   estéreo tocava o L e os 5 canais de um WAV saíam 1, 1, 2, 3, 4 (medido 2026-11-25, B03 a 23,976, MC 25.12 Mac).
+    if origem == "premiere":
+        for h in set((mob_hex or {}).values()):
+            if h in som:
+                CHANMAP[h] = {i: i for i in som[h]}
     # HANDLE offline: masters offline (chaves "offline:*" no media_map) foram autorados com folga nos
     # 2 lados (media_bin._offline_specs) -> desloca os clipes offline +H p/ centralizar e dar handle
     # às transições adjacentes (senão "Range specified for Dup" no MC). H = maior transição + margem.

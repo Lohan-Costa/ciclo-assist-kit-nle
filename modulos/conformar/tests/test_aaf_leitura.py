@@ -201,7 +201,22 @@ def main() -> int:
             ok("o take trocado: 2281 → 2729 (448 quadros)",
                [(x["inicio_fonte"], x["fim_fonte"]) for x in pe["inserir"] if x["tipo"] == "V"], [(2281, 2729)])
             ok("⭐ o áudio do take trocado vai até o CORTE (448), não sobre o cross-fade (488)",
-               sorted({(x["inicio_fonte"], x["fim_fonte"]) for x in pe["inserir"] if x["tipo"] == "A"}), [(2420, 2868)])
+               sorted({(x["inicio_fonte"], x["fim_fonte"]) for x in pe["inserir"]
+                       if x["tipo"] == "A" and not x["offline"]}), [(2420, 2868)])
+            # ⭐ O room tone que a v02 acrescentou nas A6/A7 não tem mídia na ilha do caso: entra OFFLINE no lugar, pelo
+            # rótulo (autor, 2026-11-25: "pode fazer o som novo entrar como offline também … nada sumir na timeline").
+            # Antes era pulado com "o plano não foi inserido".
+            off = [x for x in pe["inserir"] if x["offline"]]
+            ok("⭐ o som novo SEM mídia entra offline (o room tone das A6/A7), com o DRT dos rótulos",
+               (sorted({(x["tipo"], x["inicio_fonte"], x["fim_fonte"]) for x in off}), bool(off) and
+                (Path(pe["drt"]).parent / __import__("json").loads(Path(pe["drt"][:-4] + ".midias.json").read_text("utf-8"))
+                 ["offline_drt"]).is_file()),
+               ([("A", 8170, 8597)], True))
+            ok("⭐ …com o nome do ORIGINAL no rótulo, não o do MXF gerenciado (`…A01.6ABBB663AA0CA.mxf.wav` antes)",
+               sorted({Path(x["arquivo"]).name for x in off}),
+               ["129442__jmbphilmes__room-tone-medium-sized-apartment-room-with-open-window.wav"])
+            ok("…e nenhum plano novo some calado",
+               [a for a in pe["avisos"] if "não foi inserido" in a], [])
             ok("⭐ os 5 cross-fades do editor no corte do take trocado FICAM (autor, 2026-10-01)",
                sorted(t["trilha"] for t in RW.transicoes(pe["drt"]) if t["start"] == 93070), ["A1", "A2", "A3", "A4", "A5"])
             ok("nenhuma transição perdida em silêncio: os 2 fades do título (V3), que o Importar antigo não trouxe, são avisados",

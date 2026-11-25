@@ -76,13 +76,26 @@ def main() -> int:
         print("\n── 2. áudio ──")
         au = [x for x in p["planos"] if not x["v"]]
         ok("⭐ os dois mono do mesmo arquivo viram UM plano", p["conta"]["audio_juntado"], 1)
-        ok("as trilhas de áudio de 1 a n (a referência logo abaixo)", sorted(x["t"] for x in au), [1, 2])
-        ok("o som da referência é marcado como referência", [x["ref"] for x in au if x["t"] == 2], [True])
+        # (2026-11-25) a A2 do par juntado continua A2 (B051): vazia se o item é estéreo, com o canal 2 se é um polifônico
+        # de vários mono (a ponte põe cada canal na sua trilha) — a referência vai logo abaixo, na A3, nunca em cima dele
+        ok("as trilhas de áudio de 1 a n (a referência logo abaixo, depois da A2 do par)", sorted(x["t"] for x in au), [1, 3])
+        ok("o som da referência é marcado como referência", [x["ref"] for x in au if x["t"] == 3], [True])
+        ok("⭐ o plano de som leva o CANAL do arquivo, e o juntado vai junto (trilha e canal)",
+           [(x["c"], x.get("juntos")) for x in au if x["t"] == 1], [(1, [{"t": 2, "c": 2}])])
         # B051: com a A2 vazia, o som da A3 fica na A3 (antes descia para a A2) e a referência vai abaixo dela
         au3 = PM.plano([{**s, "track": 3} if s.get("is_audio") and int(s.get("track") or 0) < 1000 else s for s in segs],
                        casados, 23.976, "CORTE")["planos"]
         ok("B051: a A3 continua A3 com a A2 vazia; a referência logo abaixo (A4)",
            sorted({x["t"] for x in au3 if not x["v"]}), [3, 4])
+
+        # ⛔ (2026-11-25) da BIN do Avid o som vem 1000 + trilha (A1 = 1000): é som, não referência — A1 e A3 (a A2 vazia
+        #   fica vazia, B051); antes TUDO virava "referência" e era renumerado em sequência (a vazia sumia)
+        bin_ = [{**s, "track": 1000 + (0 if s.get("canal_arquivo") == 1 else 2)}
+                if s.get("is_audio") and int(s.get("track") or 0) < 1000 else s for s in segs]
+        ab = [x for x in PM.plano(bin_, casados, 23.976, "CORTE")["planos"] if not x["v"]]
+        ok("⭐ da bin (1000+): o som volta a ser A1/A3, a vazia fica, a referência logo abaixo",
+           sorted((x["t"], x["ref"]) for x in ab), [(1, False), (4, True)])
+        ok("…e o canal juntado guarda a trilha dele (A3)", [x.get("juntos") for x in ab if x["t"] == 1], [[{"t": 3, "c": 2}]])
 
         # B015/B108: o VÍDEO desligado no Avid (Mute Clips → disabled) não entra no Premiere — entrava LIGADO; o SOM
         # desligado entra como clipe desligado, como no Resolve (autor, 2026-10-29)
@@ -92,7 +105,7 @@ def main() -> int:
         ok("⭐ B015: o vídeo desligado não entra e é contado; o som desligado entra",
            (pd["conta"]["desligados"], pd["conta"]["audio_desligado"], len(pd["planos"]), len(p["planos"])), (1, 1, 3, 4))
         ok("⭐ …o som desligado vai marcado `desligado` (o dlpcMontar faz `c.disabled = true`); o ligado, sem a chave",
-           sorted((x["t"], x.get("desligado", False)) for x in pd["planos"] if not x["v"]), [(1, True), (2, False)])
+           sorted((x["t"], x.get("desligado", False)) for x in pd["planos"] if not x["v"]), [(1, True), (3, False)])
         par = [i for i, s in enumerate(segs) if s.get("is_audio") and int(s.get("track") or 0) == 1]
         pj = PM.plano([dict(s, disabled=True) if i == par[0] else s for i, s in enumerate(segs)], casados, 23.976, "CORTE")
         ok("…o par mono juntado com UM lado desligado entra LIGADO (o outro canal toca)",
@@ -105,6 +118,39 @@ def main() -> int:
         ok("o offline NÃO entra como plano", any(x["rec"] == 48 and x["v"] for x in p["planos"]), False)
         ok("o lento entra a 100 % (e marcado)", any(x["rec"] == 96 for x in v), True)
         ok("as mídias uma vez cada", len(p["midias"]), 2)
+
+        print("\n── 4. o offline NO LUGAR (2026-11-25: com os dados do Avid, o plano entra de um item offline) ──")
+        nao = str(Path(tmp) / "nao.mov")
+        metas = {nao: {"nb": 14578, "fps": 23.976, "fps_tc": 23.976, "tc": "04:53:47:11", "audio_canais": 2,
+                       "reel": "A001_03170454_C013"}}
+        po = PM.plano(segs, casados, 23.976, "CORTE", metas=metas)
+        ok("⭐ o offline entra como PLANO no lugar (V1, quadro 48, 24 quadros), e não como marcador",
+           ([(x["o"], x["v"], x["t"], x["rec"], x["dur"]) for x in po["planos"] if "o" in x],
+            [m["nome"] for m in po["marcas"] if m["nome"] == "OFFLINE"]), ([(0, True, 1, 48, 24)], []))
+        it = po["offline"][0]
+        ok("…o item: o NOME do arquivo, a fita, o TC em ticks (como o diálogo do Premiere grava) e a duração",
+           (it["nome"], it["fita"], it["inicio_ticks"], it["dur_ticks"], it["video"]),
+           ("nao.mov", "A001_03170454_C013", 4482134112456000, 154447845552000, True))
+        aux = PM.escrever_offline(po["offline"], tmp)
+        import gzip
+        import re
+        x = gzip.decompress(Path(aux).read_bytes()).decode("utf-8")
+        ok("⭐ o .prproj auxiliar: o cabeçalho do Premiere (FLG 0, OS 0x13) e o item OFFLINE na bin raiz",
+           (Path(aux).read_bytes()[:10].hex(), len(re.findall(r"<OfflineReason>5</OfflineReason>", x)),
+            "<Title>nao.mov</Title>" in x, len(re.findall(r"<Item Index=", x))),
+           ("1f8b0800000000000013", 1, True, 1))
+        # ⛔ o som direto de 8 canais: o item offline com os 8 canais MONO (um <Media> por canal), não estéreo — o offline
+        #   estéreo religado a um arquivo de mais canais deixa o canal 2 mudo (medido no 26.0.2, a matriz da B03)
+        m8 = PM._item_offline(nao, {**metas[nao], "audio_canais": 8})
+        x8 = gzip.decompress(Path(PM.escrever_offline([m8], tmp)).read_bytes()).decode("utf-8")
+        ok("⭐ o offline de 8 canais: 8 canais mono, cada um na sua mídia (StreamNumber 1…7)",
+           (m8["canais"], len(re.findall(r"<OfflineReason>5</OfflineReason>", x8)), len(re.findall(r"<StreamNumber>", x8))),
+           (8, 8, 7))
+        ids = [int(n) for n in re.findall(r'^\t<\w+ ObjectID="(\d+)"', x, re.M)]   # os de TOPO
+        ok("…os ObjectID em ordem crescente, sem repetir (§0.1 do banco)", (ids == sorted(ids), len(ids) == len(set(ids))),
+           (True, True))
+        sem = PM.plano(segs, casados, 23.976, "CORTE", metas={nao: {"nb": 0}})
+        ok("sem a duração do Avid, o marcador de antes (nada inventado)", [m["nome"] for m in sem["marcas"]].count("OFFLINE"), 1)
 
     print(f"\n{casos - len(falhas)}/{casos} casos")
     for f in falhas:

@@ -917,6 +917,16 @@ def resolve_efeitosNoMonitor(ctx):
     return _resolve_externo("efeitosNoMonitor", ctx.json() or {})
 
 
+@rota("POST", "/resolve/exportarTrabalho")
+def resolve_exportarTrabalho(ctx):
+    return _resolve_externo("exportarTrabalho", ctx.json() or {})
+
+
+@rota("POST", "/resolve/atualizar")
+def resolve_atualizar(ctx):
+    return _resolve_externo("atualizar", ctx.json() or {})
+
+
 @rota("POST", "/resolve/conferirInicio")
 def resolve_conferirInicio(ctx):
     return _resolve_externo("conferirInicio", ctx.json() or {})

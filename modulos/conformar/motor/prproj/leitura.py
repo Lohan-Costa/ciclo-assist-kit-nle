@@ -1557,14 +1557,49 @@ class Leitor:
     def _canais(self, clip: Obj) -> list[int]:
         """Os canais do arquivo (0-based) que este clipe toca: `SecondaryContents ›
         SecondaryContentItem › SecondaryContent › ChannelIndex` (medido no PRODUCAO_B: 2.243 clipes
-        mono, 293 estéreo). Sem a lista, o canal 0."""
+        mono, 293 estéreo). Sem a lista, o canal 0.
+        ⛔ Mais o `StreamNumber` da mídia que o canal aponta (`Content › *MediaSource › Media`): o arquivo de 3+ canais
+        ("N Mono") vira UMA mídia por canal, cada uma com o `ChannelIndex` 0 — sem somar o fluxo, os 5 canais de um WAV
+        de 5 liam todos o canal 1 (medido no 26.0.2, 2026-11-25, B03 a 23,976; banco `prproj/escrita.md` §11o).
+        ⛔ O fluxo começa na SOMA dos canais dos fluxos anteriores (`_inicio_do_fluxo`), não no número dele: num MOV com
+        dois pares estéreo o 2º par é o canal 3-4 (contando o número, saía 2-3 — B03_PARES, 2026-11-25).
+        ⛔ Canal SEM FONTE (`ChannelIndex` 2⁶⁴−1, ou sem `Content`) não toca nada e não vira trilha: o mono que sobra num
+        MOV de pares o Premiere abre como clipe de 2 canais com o 2º mudo (medido no 26.0.2). Todos mudos = lista vazia."""
         p = self.p
-        out = []
-        for oid in re.findall(r'<SecondaryContentItem Index="\d+" ObjectRef="(\d+)"/>', p.corpo(clip)):
+        out, itens = [], re.findall(r'<SecondaryContentItem Index="\d+" ObjectRef="(\d+)"/>', p.corpo(clip))
+        for oid in itens:
             sc = p.obj(oid)
-            ci = p.campo(sc, "ChannelIndex") if sc is not None else None
-            out.append(_int(ci, 0))
-        return out or [0]
+            ci = _int(p.campo(sc, "ChannelIndex"), 0) if sc is not None else 0
+            src = p.ref(sc, "Content") if sc is not None else None
+            if src is None or ci >= 2 ** 32:
+                continue
+            m = re.search(r'<Media ObjectURef="([^"]+)"', p.corpo(src))
+            med = p.obj(m.group(1)) if m else None
+            out.append((self._inicio_do_fluxo(med) if med is not None else 0) + ci)
+        return out if itens else [0]
+
+    def _inicio_do_fluxo(self, med: Obj) -> int:
+        """O canal (0-based) do ARQUIVO em que começa o fluxo de som desta mídia: a soma dos canais dos fluxos anteriores
+        do mesmo arquivo (`FileKey`; cada fluxo é uma `Media` com o `StreamNumber`, e os canais dele são o
+        `AudioStream › AudioChannelLayout`). Sem o layout de algum fluxo anterior (o offline que o Conformar escreve):
+        um canal por fluxo — o "N Mono"."""
+        p = self.p
+        fluxo = _int(p.campo(med, "StreamNumber"), 0)
+        if fluxo <= 0:
+            return 0
+        if getattr(self, "_fluxos", None) is None:
+            self._fluxos: dict[str, dict[int, int]] = {}
+            for m in p.de_tipo("Media"):
+                au = p.ref(m, "AudioStream")
+                lay = p.campo(au, "AudioChannelLayout") if au is not None else None
+                if lay:
+                    chave = p.campo(m, "FileKey") or p.campo(m, "FilePath") or ""
+                    self._fluxos.setdefault(chave, {})[_int(p.campo(m, "StreamNumber"), 0)] = \
+                        lay.count("channellabel") or 1
+        larg = self._fluxos.get(p.campo(med, "FileKey") or p.campo(med, "FilePath") or "", {})
+        if all(k in larg for k in range(fluxo)):
+            return sum(larg[k] for k in range(fluxo))
+        return fluxo
 
     def _folhas_audio(self, item: Obj, t0: int, t1: int, prof: int, avisos: list) -> list[dict]:
         """Folhas de áudio de `item` em [t0, t1) do contêiner: `{t0, t1, media, src_in, canais}`,
@@ -1651,10 +1686,20 @@ class Leitor:
                 nc = len(self._canais(clip)) if clip is not None else 1
                 largura[n] = max(largura.get(n, 1), nc)
                 brutos.append((n, it, folhas, desligada or "<IsMuted>true</IsMuted>" in p.corpo(it)))
-        base, prox = {}, 1000
-        for n in range(1, len(trilhas) + 1):
+        # ⭐ IDA E VOLTA (autor, 2026-11-25: "tudo mono no Avid"): o par A1/A2 do Avid vira UM estéreo na A1 do Premiere e
+        #   a A2 fica VAZIA (o lugar do R). Na volta, a trilha larga (estéreo = 2) já ocupa duas trilhas do Avid: a trilha
+        #   inteiramente vazia logo abaixo dela é esse lugar, e não ganha outra (antes a volta tinha +1 trilha vazia por
+        #   estéreo e empurrava as de baixo — medido na B03 a 23,976: 12 trilhas em vez de 10). A vazia que não segue um
+        #   estéreo continua vazia (B051).
+        base, prox, absorver = {}, 1000, 0
+        for n, (_trilha, itens) in enumerate(trilhas, start=1):
+            if not itens and absorver > 0:
+                base[n] = prox - absorver
+                absorver -= 1
+                continue
             base[n] = prox
             prox += largura.get(n, 1)
+            absorver = largura.get(n, 1) - 1
         tpf_tl = TPS / fps
         segs: list[dict] = []
         ocupado: dict[int, list] = {}

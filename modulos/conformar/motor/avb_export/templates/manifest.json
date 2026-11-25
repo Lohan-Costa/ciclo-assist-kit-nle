@@ -6,6 +6,8 @@
     "fonte": "eng-rev-bin-e-mdb/templates/ (vendorizados + NEUTRALIZADOS via oc_integration/neutralize_templates.py — zero identidade do projeto de teste)"
   },
   "templates": {
+    "audio|1|24|16": {"file": "audio_1_24bit_16ch.avb", "clip": "AVB_AUDIO_1_24BIT_16", "kind": "audio"},
+    "audio|1|24|8": {"file": "audio_1_24bit_8ch.avb", "clip": "AVB_AUDIO_1_24BIT_8", "kind": "audio"},
     "audio|1|24|2|cena": {"file": "audio_1_24bit_2ch_cena.avb", "clip": "AVB_AUDIO_1_24BIT_2CH.", "kind": "audio"},
     "audio|1|24|1|semcena": {"file": "audio_1_24bit_1ch_semcena.avb", "clip": "AVB_AUDIO_1_2", "kind": "audio"},
     "audio|1|24|1": {"file": "audio_1_24bit_1ch.avb", "clip": "AVB_AUDIO_1_24BIT_1CH.", "kind": "audio"},

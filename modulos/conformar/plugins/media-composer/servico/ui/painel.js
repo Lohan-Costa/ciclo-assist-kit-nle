@@ -3678,6 +3678,9 @@ const PONTE_APP = {
   conferirInicio: (pedido) => post("/resolve/conferirInicio", pedido),
   conferirQuadros: (pedido) => post("/resolve/conferirQuadros", pedido),
   conferirFim: (pedido) => post("/resolve/conferirFim", pedido),
+  // o Atualizar (2026-11-25): sem a casca do Resolve (Fase 4), ele não tinha ponte na janela do app
+  exportarTrabalho: (pedido) => post("/resolve/exportarTrabalho", pedido),
+  atualizar: (pedido) => post("/resolve/atualizar", pedido),
 };
 /* No modo Premiere, a conferência pela referência com o MESMO contrato (o Premiere exporta PNG pela ponte; o serviço
    o converte no JPEG que a conferência espera — `premiere_copia.py`). */
@@ -4315,6 +4318,7 @@ async function montarNoPremiere(p, idEnvio) {
     `<p class="previa-ok">✓ “${escapar(r.sequencia)}” no Premiere, na bin De Lá Pra Cá › Mídia</p><div class="placar">` +
     `<span class="pill ok">${r.colocados} de ${r.planos} planos no lugar</span>` +
     (p.nos_originais ? pill(p.nos_originais, "nos originais", "ok") : "") +
+    pill(c.offline_no_lugar, "offline no lugar (religar)", "warn") +
     pill(c.offline, "offline (marcador)", "warn") + pill(c.velocidade, "com velocidade (a 100 %, marcador)", "warn") +
     pill(c.transicoes, "transições (marcador)", "warn") + pill(c.titulos, "títulos (marcador)", "warn") +
     pill(c.transicoes_audio, "transições de áudio viraram corte seco") +
@@ -4325,6 +4329,9 @@ async function montarNoPremiere(p, idEnvio) {
     (r.nfalhas ? `<p class="aviso">${r.nfalhas} ${r.nfalhas === 1 ? "plano não entrou" : "planos não entraram"}: ${escapar((r.falhas || []).join(" · "))}</p>` : "") +
     (r.sem_item ? `<p class="aviso">${r.sem_item} ${r.sem_item === 1 ? "arquivo o Premiere não importou" : "arquivos o Premiere não importou"}.</p>` : "") +
     (r.aviso || []).map((a) => `<p class="aviso">${escapar(a)}</p>`).join("") +
+    (c.offline_no_lugar ? `<div class="dica">Os planos sem mídia entraram OFFLINE no lugar, com o nome do original, o TC e os
+      canais: quando a mídia estiver nesta máquina, selecione os itens offline na bin De Lá Pra Cá › Mídia ›
+      ${escapar(r.sequencia || "")} e use Vincular mídia.</div>` : "") +
     `<div class="dica">Esta primeira versão monta os CORTES: velocidade, transições, títulos e efeitos ficam marcados no lugar
       para refazer. O que é do Media Composer e ainda não traduz aparece nos marcadores da sequência.</div>` +
     (arquivo.arquivado ? `<div class="dica">A Carta foi para “já importados”.</div>` : "") +
@@ -6172,6 +6179,7 @@ async function executarAtualizar() {
       `<p class="previa-ok">✓ “${escapar(r.nome)}” atualizada. A anterior está em De Lá Pra Cá › Backup como “${escapar(r.backup)}”.</p>
        <div class="placar">
          <span class="pill ok">${Number(r.inseridos) || 0} plano(s) inserido(s)</span>
+         ${r.offline ? `<span class="pill warn">${Number(r.offline)} offline no lugar (religar)</span>` : ""}
          ${r.marcadores ? `<span class="pill warn">${r.marcadores} marcador(es)</span>` : ""}
          ${r.cores ? `<span class="pill warn">${r.cores} plano(s) colorido(s)</span>` : ""}
          ${p.acoes && p.acoes.apagar ? `<span class="pill">${p.acoes.apagar} item(ns) saíram</span>` : ""}

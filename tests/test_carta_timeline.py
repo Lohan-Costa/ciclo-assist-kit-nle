@@ -248,6 +248,140 @@ def test_enxerto_escreve_o_som_no_canal_certo_com_o_ganho(proj, tmp_path):
     assert not any(e.tag == "AudioClipTrackItem" and EP._chave(e) in ("60", "61") for e in R)   # os do molde saíram
 
 
+def test_enxerto_poe_o_plano_sem_midia_como_offline_no_lugar(proj, tmp_path):
+    """O plano sem arquivo NESTA máquina não some (autor, 2026-11-25): entra como o item do "Arquivo offline" do
+    Premiere (`prproj.offline`, medido no 26.0.2), com o nome do ORIGINAL (o da bin, com a extensão; o som sem
+    extensão ganha `.wav`), o TC (o do som na taxa da timeline) e o canal certo; o editor religa no Premiere."""
+    from cicloassist.carta import entrega_prproj as EP
+    cam = _ref_com_op_atom(proj, tmp_path, "S01_T002")
+    _, plano = referencias.criar(proj, "D", "B001_C021", {"nome_da_fonte": "B001_C021", "tipo": "video",
+                                 "fps": "24000/1001", "quadros": 500, "tc": "01:00:00:00"},
+                                 {"nle": "avid", "offline": True, "caminho_na_bin": "/Volumes/V-001/B001_C021.braw"})
+    _, sfx = referencias.criar(proj, "D", "PATAO DRONE", {"nome_da_fonte": "PATAO DRONE", "tipo": "audio", "fps": "24",
+                               "quadros": 100, "tc": "06:14:11:13", "canais_de_som": [2]}, {"nle": "avid", "offline": True})
+    molde = tmp_path / "entrega v01.prproj"
+    xml = (_MOLDE_SOM.replace("ARQA", str(tmp_path / "S01_T002_A01.mxf")).replace("WAV", str(tmp_path / "x.wav"))
+           .replace("ARQ", str(tmp_path / "S01_T002.mxf")))
+    EP._gravar_prproj(EP.ET.fromstring(xml.split("?>", 1)[1]), str(molde))
+    item = {"tipo": "sequencia", "timeline": True, "fps": "24000/1001", "tc_inicio_q": 0, "trilhas": [
+        {"tipo": "V", "k": 1, "transicoes": [], "sem_clipe": [], "clipes": [
+            {"midia": cam["id"], "inicio_q": 0, "entrada_q": 0, "fim_q": 10},
+            {"midia": plano["id"], "inicio_q": 10, "entrada_q": 24, "fim_q": 34}]},
+        {"tipo": "A", "k": 1, "transicoes": [], "sem_clipe": [], "clipes": [
+            {"midia": sfx["id"], "inicio_q": 10, "entrada_q": 5, "fim_q": 30, "canal": 2}]}]}
+    saida = str(tmp_path / "entrega v02.prproj")
+    rel = EP.escrever_timeline(proj, item, str(molde), saida, "MOLDE", "CORTE")
+    assert rel["clipes"] == 3 and rel["offline_no_lugar"] == 2 and rel["offline"] == 0 and not rel["sem_item"]
+    assert rel["itens_offline"] == ["B001_C021.braw", "PATAO DRONE.wav"]
+    R = EP._ler_prproj(saida)
+    por = {EP._chave(e): e for e in R if EP._chave(e)}
+    tpf = 10594584000
+    meds = {e.findtext("Title"): e for e in R if e.tag == "Media" and e.findtext("OfflineReason") == "5"}
+    assert set(meds) == {"B001_C021.braw", "PATAO DRONE.wav"}
+    assert meds["B001_C021.braw"].findtext("Start") == str(86400 * tpf)              # 01:00:00:00 a 23,976
+    assert meds["PATAO DRONE.wav"].findtext("Start") == str(((6 * 60 + 14) * 60 + 11) * 24 * tpf + 13 * tpf)
+    assert meds["PATAO DRONE.wav"].find("VideoStream") is None                        # só de som
+    raiz = next(e for e in R if e.tag == "RootProjectItem")
+    na_raiz = {i.get("ObjectURef") for i in raiz.iter("Item")}
+    off = {k: v for k, v in EP.midia_do_projeto(R).items() if k.startswith(EP.CHAVE_OFFLINE)}
+    assert len(off) == 2 and all(k[len(EP.CHAVE_OFFLINE):] in na_raiz for k in off)    # os dois na bin raiz
+
+    def da_trilha(grupo, inicio):
+        g = next(e for e in R if e.tag == grupo)
+        tr = por[g.find("./TrackGroup/Tracks/Track").get("ObjectURef")]
+        for x in tr.findall("./ClipTrack/ClipItems/TrackItems/TrackItem"):
+            ti = por[x.get("ObjectRef")]
+            if (ti.findtext("./ClipTrackItem/TrackItem/Start") or "0") == str(inicio * tpf):
+                sub = por[ti.find("./ClipTrackItem/SubClip").get("ObjectRef")]
+                return sub, por[sub.find("Clip").get("ObjectRef")]
+        raise AssertionError(f"nada em {inicio}")
+
+    sub, vc = da_trilha("VideoTrackGroup", 10)
+    assert por[sub.find("MasterClip").get("ObjectURef")].findtext("Name") == "B001_C021.braw"
+    assert vc.findtext("./Clip/InPoint") == str(24 * tpf)
+    sub, ac = da_trilha("AudioTrackGroup", 10)
+    assert por[sub.find("MasterClip").get("ObjectURef")].findtext("Name") == "PATAO DRONE.wav"
+    scs = ac.findall("./SecondaryContents/SecondaryContentItem")
+    assert len(scs) == 1 and por[scs[0].get("ObjectRef")].findtext("ChannelIndex") == "1"   # o canal 2
+    ids = [int(e.get("ObjectID")) for e in R if e.get("ObjectID")]
+    assert len(ids) == len(set(ids))                                                  # nenhum ObjectID repetido
+    # sem o offline (o caminho de antes): os dois ficam de fora, contados
+    rel2 = EP.escrever_timeline(proj, item, str(molde), str(tmp_path / "v03.prproj"), "MOLDE", "CORTE", com_offline=False)
+    assert rel2["clipes"] == 1 and rel2["offline"] == 2 and rel2["offline_no_lugar"] == 0
+
+
+def test_offline_de_som_direto_polifonico_leva_cada_canal_ao_seu(proj, tmp_path):
+    """Som direto de 5 canais sem arquivo aqui (autor, 2026-11-25: "muitos sons diretos têm mais canais"): o item offline
+    tem 5 canais MONO, cada um com a sua mídia (`StreamNumber`), como o 26.0.2 guarda o WAV polifônico importado; o
+    clipe do canal N aponta o clipe de som N do item. O nome quebrado pela bin (UTF-8 lido como Latin-1) volta certo."""
+    from cicloassist.carta import entrega_prproj as EP
+    cam = _ref_com_op_atom(proj, tmp_path, "S01_T002")
+    _, sd = referencias.criar(proj, "D", "C4 P1-T001", {"nome_da_fonte": "C4 P1-T001", "tipo": "audio", "fps": "24000/1001",
+                              "quadros": 2000, "tc": "10:16:52:00", "canais_de_som": [5]},
+                              {"nle": "avid", "offline": True, "caminho_na_bin": "/Volumes/SOM/PAT\u00c3\u0083O C4 P1-T001.WAV"})
+    molde = tmp_path / "entrega v01.prproj"
+    xml = (_MOLDE_SOM.replace("ARQA", str(tmp_path / "S01_T002_A01.mxf")).replace("WAV", str(tmp_path / "x.wav"))
+           .replace("ARQ", str(tmp_path / "S01_T002.mxf")))
+    EP._gravar_prproj(EP.ET.fromstring(xml.split("?>", 1)[1]), str(molde))
+    som = lambda k, canal: {"tipo": "A", "k": k, "transicoes": [], "sem_clipe": [], "clipes": [  # noqa: E731
+        {"midia": sd["id"], "inicio_q": 0, "entrada_q": 100, "fim_q": 50, "canal": canal}]}
+    item = {"tipo": "sequencia", "timeline": True, "fps": "24000/1001", "tc_inicio_q": 0, "trilhas": [
+        {"tipo": "V", "k": 1, "transicoes": [], "sem_clipe": [], "clipes": [
+            {"midia": cam["id"], "inicio_q": 0, "entrada_q": 0, "fim_q": 50}]}, som(1, 1), som(2, 3), som(3, 5)]}
+    saida = str(tmp_path / "entrega v02.prproj")
+    rel = EP.escrever_timeline(proj, item, str(molde), saida, "MOLDE", "CORTE")
+    assert rel["offline_no_lugar"] == 3 and rel["offline"] == 0 and not rel["fora"], rel["fora"]
+    assert rel["itens_offline"] == ["PATÃO C4 P1-T001.WAV"]
+    R = EP._ler_prproj(saida)
+    por = {EP._chave(e): e for e in R if EP._chave(e)}
+    meds = [e for e in R if e.tag == "Media" and e.findtext("OfflineReason") == "5"]
+    assert len(meds) == 5 and sorted(e.findtext("StreamNumber") or "0" for e in meds) == ["0", "1", "2", "3", "4"]
+    off = next(v for k, v in EP.midia_do_projeto(R).items() if k.startswith(EP.CHAVE_OFFLINE))
+    assert EP.canais_do_item(off) == 5
+    atg = next(e for e in R if e.tag == "AudioTrackGroup")
+    fluxos = []
+    for t in atg.find("./TrackGroup/Tracks"):
+        tr = por[t.get("ObjectURef")]
+        ti = por[tr.find("./ClipTrack/ClipItems/TrackItems/TrackItem").get("ObjectRef")]
+        ac = por[por[ti.find("./ClipTrackItem/SubClip").get("ObjectRef")].find("Clip").get("ObjectRef")]
+        med = por[por[ac.find("./Clip/Source").get("ObjectRef")].find("./MediaSource/Media").get("ObjectURef")]
+        fluxos.append(med.findtext("StreamNumber") or "0")
+    assert fluxos == ["0", "2", "4"]                       # os canais 1, 3 e 5
+    ids = [int(e.get("ObjectID")) for e in R if e.get("ObjectID")]
+    assert len(ids) == len(set(ids))
+
+
+def test_offline_so_e_estereo_com_a_certeza_de_uma_trilha_de_2_canais(proj, tmp_path):
+    """⛔ Medido no 26.0.2 (`spikes/offline_premiere_matriz.py`, 2026-11-25): o offline ESTÉREO religado a um arquivo de
+    mais canais deixa o canal 2 MUDO; em N mono religa certo. Sem saber os canais (a referência do Avid), 2 = 2 MONO."""
+    from cicloassist.carta import entrega_prproj as EP
+    (proj.raiz / "D").mkdir(exist_ok=True)
+    _, sem = referencias.criar(proj, "D", "SD", {"nome_da_fonte": "SD.WAV", "tipo": "audio", "fps": "25", "quadros": 100}, {})
+    _, est = referencias.criar(proj, "D", "MUS", {"nome_da_fonte": "MUS.wav", "tipo": "audio", "fps": "25", "quadros": 100,
+                                                  "canais_de_som": [2]}, {})
+    _, duo = referencias.criar(proj, "D", "DUO", {"nome_da_fonte": "DUO.mov", "tipo": "audio", "fps": "25", "quadros": 100,
+                                                  "canais_de_som": [1, 1]}, {})
+    item = {"fps": "25"}
+    clipes = [({"midia": m["id"], "inicio_q": 0, "entrada_q": 0, "fim_q": 10, "canal": 2}, True) for m in (sem, est, duo)]
+    a = EP.itens_offline(proj, item, clipes, None)
+    assert [a[m["id"]]["mono"] for m in (sem, est, duo)] == [True, False, True]
+    off = EP._modulo_offline()
+    xml, _, _ = off.item(**a[sem["id"]], proximo_id=10)
+    r = EP.ET.fromstring(f"<r>{xml}</r>")
+    assert sorted(e.findtext("StreamNumber") or "0" for e in r if e.tag == "Media") == ["0", "1"]   # 2 mono
+    xml, _, _ = off.item(**a[est["id"]], proximo_id=10)
+    assert sum(1 for e in EP.ET.fromstring(f"<r>{xml}</r>") if e.tag == "Media") == 1                # estéreo
+
+
+def test_canal_do_wav_polifonico_online_e_o_clipe_do_canal():
+    """⛔ O defeito antigo: no item de N clipes mono (WAV polifônico importado) o canal 3 tocava o canal 1."""
+    from cicloassist.carta import entrega_prproj as EP
+    info = {"audio": [("mc", f"ac{k}", k, 1) for k in range(5)]}
+    assert EP.canais_do_item(info) == 5 and EP.clipe_de_som_do_canal(info, 3)[1] == "ac2"
+    estereo = {"audio": [("mc", "ac0", 0, 2)]}
+    assert EP.canais_do_item(estereo) == 2 and EP.clipe_de_som_do_canal(estereo, 2)[1] == "ac0"
+
+
 _MOLDE_TR = _MOLDE_SOM.replace("</PremiereData>", """
 <AudioTransitionTrackItem ObjectID="80"><TransitionTrackItem><TrackItem><Start>3</Start><End>7</End></TrackItem><Alignment>2</Alignment><DisplayName>Potência constante</DisplayName><MatchName>Constant Power</MatchName><HasOutgoingClip>true</HasOutgoingClip><HasIncomingClip>true</HasIncomingClip></TransitionTrackItem><AudioChannelLayout>[{"channellabel":100},{"channellabel":101}]</AudioChannelLayout></AudioTransitionTrackItem>
 </PremiereData>""").replace("<Index>0</Index></ClipItems></ClipTrack>",

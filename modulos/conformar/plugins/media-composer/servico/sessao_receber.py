@@ -322,7 +322,7 @@ class SessaoReceber:
         trabalho = atualizacao.arquivo_de_trabalho(trabalho, recebidos)
         velha, nova_c, familia = self._duas_versoes(antiga, nova)
         plano = atualizacao.preparar(velha, nova_c, trabalho, contagem_api, recebidos,
-                                     lambda carta: self._midia_da_carta(carta, recebidos),
+                                     lambda carta: self._midia_da_carta(carta, recebidos, com_metas=True),
                                      sinais=sinais, codigo=codigo_de_cores.ler(), inicio=inicio)
         # A timeline atualizada leva o nome que o editor deu à versão NOVA, como no Trazer
         # (`_nome_da_timeline`). Antes ela herdava o da antiga: a v03 chegava como "…-v01"
@@ -368,9 +368,10 @@ class SessaoReceber:
             partidas.aposentar(substitui)
         return {"arquivado": None, "partida": partida}
 
-    def _midia_da_carta(self, carta, pasta: Path) -> tuple[list, list]:
+    def _midia_da_carta(self, carta, pasta: Path, com_metas: bool = False) -> tuple:
         """A mídia DESTA máquina para cada plano da Carta: o mesmo caminho do Importar (a
-        gerenciada daqui, depois o AMA do remetente, se passar pela tranca e existir aqui)."""
+        gerenciada daqui, depois o AMA do remetente, se passar pela tranca e existir aqui).
+        `com_metas`: devolve também os metadados dos rótulos OFFLINE (o Atualizar os insere no lugar)."""
         from avb_bin.segmentos import caminho_confiavel, montar_midia
         from media import pmr
 
@@ -390,8 +391,8 @@ class SessaoReceber:
         arquivos = {k: aqui for k, c in carta.arquivos.items() if (aqui := existe_aqui(c))}
         colunas = {k: {**c, "Source Path": _pasta_de_referencia(c.get("Source Path"))}
                    for k, c in carta.colunas_por_mob.items() if isinstance(c, dict)}
-        segs, casados, _metas = montar_midia(carta.resultado, arquivos, str(pasta), colunas, gerenciados)
-        return segs, casados
+        segs, casados, metas = montar_midia(carta.resultado, arquivos, str(pasta), colunas, gerenciados)
+        return (segs, casados, metas) if com_metas else (segs, casados)
 
     def _caminho(self, id_envio: str) -> str:
         if not RE_ID.match(id_envio or ""):
@@ -1207,11 +1208,14 @@ class SessaoReceber:
                 import premiere_montagem
 
                 self._etapa("montando", sequencia=nome, detalhe="preparando a montagem no Premiere")
-                pl = premiere_montagem.plano(segs, casados, fps_tl, nome, inicio=resultado.get("timeline_start_frames"))
+                pl = premiere_montagem.plano(segs, casados, fps_tl, nome, inicio=resultado.get("timeline_start_frames"),
+                                             metas=metas)
+                if pl["offline"]:
+                    pl["offline_prproj"] = premiere_montagem.escrever_offline(pl["offline"], _recebidos())
                 nos_originais = sum(1 for c in casados if c.get("matched_path") in set(preferir.values()))
                 self._etapa("montando", sequencia=nome, feitos=1, total=1)
                 return {"premiere": pl, "nome": nome, "tipo": tipo, "clipes": len(casados),
-                        "offline": pl["conta"]["offline"], "nos_originais": nos_originais,
+                        "offline": pl["conta"]["offline"], "offline_no_lugar": pl["conta"]["offline_no_lugar"], "nos_originais": nos_originais,
                         "na_gerenciada": sum(1 for c in casados if c.get("gerenciada")),
                         "referencia": os.path.basename(ref) if ref else None,
                         "avisos": [a.get("texto") for a in (resultado.get("avisos") or [])][:20]}

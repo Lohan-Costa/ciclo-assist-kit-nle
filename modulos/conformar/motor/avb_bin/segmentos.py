@@ -953,6 +953,16 @@ def so_de_som(info: dict) -> bool:
     return bool(ess) and all(str(k).startswith("sound") for k in ess)
 
 
+_TRACK_E_HASH = re.compile(r"(?i)[AV]\d{2}\.[0-9A-F]{6,}[0-9A-F_]*[A-Z]?\.mxf$")
+
+
+def essencia_gerenciada(caminho: str) -> bool:
+    """O arquivo é ESSÊNCIA do Avid (OP-Atom em `Avid MediaFiles/MXF/<n>/`, ou o nome com track + hash), não um
+    original de câmera ou de som — um original MXF (XAVC, câmera Sony) mora fora do `Avid MediaFiles`."""
+    c = (caminho or "").replace("\\", "/")
+    return "/avid mediafiles/" in c.lower() or bool(_TRACK_E_HASH.search(PurePath(c).name))
+
+
 def referencia_offline(info: dict, pasta: str, source_path: str = "",
                        source_file: str = "", fps_projeto: float | None = None) -> tuple[str, dict]:
     """O ORIGINAL de um master sem arquivo neste disco: `(caminho de referência, metadados)`.
@@ -979,9 +989,13 @@ def referencia_offline(info: dict, pasta: str, source_path: str = "",
     ident = info.get("identidade") or {}
     arquivo = PurePath((source_file or "").replace("\\", "/")).name
     if not arquivo:
-        arquivo = PurePath((info.get("caminho_na_bin") or "").replace("\\", "/")).name
-        if "." not in arquivo:
-            arquivo = ""                   # sem extensão, não ganha do reel
+        na_bin = (info.get("caminho_na_bin") or "").replace("\\", "/")
+        arquivo = PurePath(na_bin).name
+        if "." not in arquivo or essencia_gerenciada(na_bin):
+            # sem extensão, não ganha do reel; e o MXF GERENCIADO não é o original — o nome dele é o do clipe inteiro,
+            # truncado com hash ou só hash (banco `protocolos/mxf/README.md`, armadilha 4): o room tone do PRODUCAO-A
+            # (U03, pelo AAF) chegava ao Resolve como `129442__jmA01.6ABBB663AA0CA.mxf.wav` (2026-11-25)
+            arquivo = ""
     nome = nome_de_arquivo(arquivo or ident.get("reel") or info.get("nome") or "") or "offline"
     som = so_de_som(info)
     if som and os.path.splitext(nome)[1].lower() not in EXT_SOM:

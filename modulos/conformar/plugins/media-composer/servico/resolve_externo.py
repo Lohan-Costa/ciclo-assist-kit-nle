@@ -14,8 +14,8 @@ por dentro e por fora. Quem chama precisa de prazo.
 
 Portado: `projeto`, `timelines`, `midias`, `importar` (2026-10-18, 20h) e `fusion`, `luts`, `compostos` (2026-10-18,
 23h — os gêmeos Python que a casca já tinha: `drp.fusion_clipe`, `drp.luts`, `drp.compostos`). Depois, a conferência
-(`conferirInicio/Quadros/Fim`) e a prova do bypass (`efeitosNoMonitor`). O Atualizar segue na casca até passar
-pela mesma régua: casca × app dão o mesmo quadro no mesmo caso.
+(`conferirInicio/Quadros/Fim`) e a prova do bypass (`efeitosNoMonitor`). E o Atualizar (`exportarTrabalho`,
+`atualizar`, 2026-11-25): a casca saiu na Fase 4 sem ele ter sido portado — ficou sem casa até aqui.
 """
 from __future__ import annotations
 
@@ -861,6 +861,277 @@ def conferirFim(pedido: dict) -> dict:  # noqa: N802
 
 
 # ── a conferência sobre a timeline COMO ELA ESTÁ (autor, 2026-10-19; `conferencia_timeline.py`) ─────────────────
+
+
+# ── o ATUALIZAR (portado da casca em 2026-11-25: a casca saiu na Fase 4, `07e2e6e9`, e ele ficou sem casa) ──────────
+# O mesmo roteiro de `aplicarAtualizacao` da casca (`plugins/resolve/casca/main.js` no histórico): exportar a timeline
+# de trabalho; importar a reescrita; conferir a contagem (senão APAGA a importada e a do colorista fica como estava);
+# inserir os planos novos no quadro; conferir o tamanho; a anterior vai para De Lá Pra Cá › Backup (nunca é apagada).
+# ⭐ Novo: os planos novos SEM mídia nesta máquina entram OFFLINE no lugar — o serviço escreve o DRT dos rótulos
+# (`atualizacao._drt_dos_offline`); importá-lo faz os itens offline nascerem no pool, e o `AppendToTimeline` aceita o
+# item offline (medido no Studio 21.1, Mac, 2026-11-25).
+
+def _contar_itens(tl) -> dict:
+    fora = {}
+    for tipo, letra in (("video", "V"), ("audio", "A")):
+        for i in range(1, (tl.GetTrackCount(tipo) or 0) + 1):
+            n = len(tl.GetItemListInTrack(tipo, i) or [])
+            if n:
+                fora[f"{letra}{i}"] = n
+    return fora
+
+
+def _mesma_contagem(a: dict, b: dict) -> bool:
+    ka = {k: int(v) for k, v in (a or {}).items() if v}
+    kb = {k: int(v) for k, v in (b or {}).items() if v}
+    return ka == kb
+
+
+def _itens_do_pool_por_arquivo(mp) -> dict:
+    fora: dict = {}
+
+    def andar(pasta, fundo):
+        if pasta is None or fundo > 30:
+            return
+        for c in pasta.GetClipList() or []:
+            try:
+                p = c.GetClipProperty("File Path")
+                if p and _norma(p) not in fora:
+                    fora[_norma(p)] = c
+            except Exception:  # noqa: BLE001
+                pass
+        for f in pasta.GetSubFolderList() or []:
+            andar(f, fundo + 1)
+    andar(mp.GetRootFolder(), 0)
+    return fora
+
+
+def _item_de_timeline_no_pool(mp, nome):
+    achado = []
+
+    def andar(pasta, fundo):
+        if pasta is None or fundo > 30 or achado:
+            return
+        for c in pasta.GetClipList() or []:
+            try:
+                if c.GetClipProperty("Type") == "Timeline" and c.GetName() == nome:
+                    achado.append(c)
+                    return
+            except Exception:  # noqa: BLE001
+                pass
+        for f in pasta.GetSubFolderList() or []:
+            andar(f, fundo + 1)
+    andar(mp.GetRootFolder(), 0)
+    return achado[0] if achado else None
+
+
+def _carimbo() -> str:
+    return time.strftime("%d-%m %Hh%M")
+
+
+def exportarTrabalho(pedido: dict) -> dict:  # noqa: N802 — o nome da ponte
+    """A timeline de trabalho do colorista exportada em DRT para `recebidos/<uuid>.drt` (o Comparar e o Atualizar).
+    `Timeline.Export` exporta a pedida mesmo sem ser a corrente (medido no 19.1.4, 2026-10-18)."""
+    import uuid
+
+    import cache
+
+    uid, nome = (pedido or {}).get("uid"), (pedido or {}).get("nome")
+    r, p = _projeto_aberto()
+    if p is None:
+        return {"ok": False, "erro": "nenhum projeto aberto no Resolve"}
+    tl = _achar_timeline(p, uid if isinstance(uid, str) else "", nome if isinstance(nome, str) else "")
+    if tl is None:
+        return {"ok": False, "erro": f'a timeline "{nome or ""}" não está neste projeto — nada foi alterado'}
+    tipo = getattr(r, "EXPORT_DRT", 1)
+    destino = cache.sub(cache.RECEBIDOS) / f"{uuid.uuid4()}.drt"
+    ok = False
+    try:
+        ok = bool(tl.Export(str(destino), tipo))
+    except Exception as e:  # noqa: BLE001
+        log.info("Export: %s", e)
+    if not ok or not destino.is_file():
+        return {"ok": False, "erro": "o Resolve não exportou a timeline de trabalho"}
+    inicio = None                                  # None = não sei (o serviço usa o da Carta); 0 é um início válido
+    try:
+        q = tl.GetStartFrame()
+        if isinstance(q, (int, float)):
+            inicio = int(q)
+    except Exception:  # noqa: BLE001
+        pass
+    log.info("exportou a timeline de trabalho %r → %s", tl.GetName(), destino.name)
+    return {"ok": True, "drt": str(destino), "contagem": _contar_itens(tl), "inicio": inicio, "nome": tl.GetName()}
+
+
+def _importar_offline(p, mp, drt: str, nome) -> int:
+    """Importa o DRT dos rótulos offline (os itens nascem no pool, na pasta da mídia da timeline) e tira a timeline
+    auxiliar dele. Devolve quantos itens offline o pool ganhou."""
+    try:
+        aux = json.loads(Path(re.sub(r"\.drt$", ".midias.json", drt, flags=re.I)).read_text("utf-8")).get("offline_drt")
+    except (OSError, ValueError, AttributeError):
+        return 0
+    if not isinstance(aux, str) or not aux:
+        return 0
+    caminho = str(Path(drt).parent / aux)
+    if not drt_confiavel(caminho):
+        log.warning("DRT dos offline recusado: %s", aux)
+        return 0
+    antes = len(_itens_do_pool_por_arquivo(mp))
+    alvo = _pasta_da_midia(mp, nome)
+    if alvo is not None:
+        mp.SetCurrentFolder(alvo)
+    tl = _importar_drt(p, mp, caminho)
+    if tl is None:
+        return 0
+    try:
+        mp.DeleteTimelines([tl])                 # a timeline auxiliar sai; os itens offline ficam no pool
+    except Exception as e:  # noqa: BLE001
+        log.info("DeleteTimelines (auxiliar dos offline): %s", e)
+    return len(_itens_do_pool_por_arquivo(mp)) - antes
+
+
+def atualizar(pedido: dict) -> dict:
+    """`aplicarAtualizacao` da casca, pela API externa (mesmos campos de entrada e de saída)."""
+    pedido = pedido or {}
+    drt, esperado, antiga = pedido.get("drt"), pedido.get("esperado"), pedido.get("antiga") or {}
+    inserir, marcas, nome = pedido.get("inserir"), pedido.get("marcas"), pedido.get("nome")
+    marcar, colorir = bool(pedido.get("marcar")), bool(pedido.get("colorir"))
+    if not drt_confiavel(drt):
+        return {"ok": False, "erro": "arquivo fora da pasta do De Lá Pra Cá — recusado"}
+    _r, p = _projeto_aberto()
+    if p is None:
+        return {"ok": False, "erro": "nenhum projeto aberto no Resolve"}
+    mp = p.GetMediaPool()
+    velha = _achar_timeline(p, str(antiga.get("uid") or ""), str(antiga.get("nome") or ""))
+    if velha is None:
+        return {"ok": False, "erro": "a timeline de trabalho sumiu do projeto — nada foi alterado"}
+    pedidos = [x for x in inserir[:5000] if isinstance(x, dict)] if isinstance(inserir, list) else []
+    offline_novos = _importar_offline(p, mp, drt, nome) if any(x.get("offline") for x in pedidos) else 0
+    casa = _pasta_no_pool(mp, "De Lá Pra Cá")
+    if casa is not None:
+        mp.SetCurrentFolder(casa)
+    nova = _importar_drt(p, mp, drt)
+    if nova is None:
+        return {"ok": False, "erro": "o Resolve não importou a timeline atualizada — nada foi alterado"}
+    # ⭐ A conferência depois de importar: a contagem por trilha tem de ser a prevista (um id num formato novo faz a
+    # timeline entrar VAZIA, sem erro). Não bateu: apaga a importada.
+    contada = _contar_itens(nova)
+    if not _mesma_contagem(contada, esperado):
+        try:
+            mp.DeleteTimelines([nova])
+        except Exception as e:  # noqa: BLE001
+            log.info("DeleteTimelines: %s", e)
+        log.warning("atualizar: contagem %s ≠ prevista %s", contada, esperado)
+        return {"ok": False, "erro": "a timeline atualizada não entrou como devia; ela foi descartada e a sua "
+                                     "timeline de trabalho ficou como estava"}
+    p.SetCurrentTimeline(nova)
+    pool = _itens_do_pool_por_arquivo(mp)
+    infos, origem, faltaram = [], [], []
+    for x in pedidos:
+        item = pool.get(_norma(x["arquivo"])) if isinstance(x.get("arquivo"), str) else None
+        if item is None:
+            faltaram.append(x.get("nome") or x.get("arquivo"))
+            continue
+        tipo = "audio" if x.get("tipo") == "A" else "video"
+        while (nova.GetTrackCount(tipo) or 0) < int(x["trilha"]):
+            try:
+                if not nova.AddTrack(tipo):
+                    break
+            except Exception:  # noqa: BLE001
+                break
+        infos.append({"mediaPoolItem": item, "startFrame": int(x["inicio_fonte"]), "endFrame": int(x["fim_fonte"]),
+                      "mediaType": 2 if tipo == "audio" else 1, "trackIndex": int(x["trilha"]),
+                      "recordFrame": int(x["quadro"])})
+        origem.append(x)
+    inseridos = []
+    if infos:
+        try:
+            inseridos = mp.AppendToTimeline(infos) or []
+        except Exception as e:  # noqa: BLE001
+            log.info("AppendToTimeline: %s", e)
+    if faltaram or len(inseridos) < len(infos):
+        # Nunca "✓ atualizada" com um buraco onde devia haver um plano: desfaz e a do colorista fica como estava.
+        try:
+            mp.DeleteTimelines([nova])
+        except Exception as e:  # noqa: BLE001
+            log.info("DeleteTimelines: %s", e)
+        try:
+            p.SetCurrentTimeline(velha)
+        except Exception:  # noqa: BLE001
+            pass
+        log.warning("atualizar: %d de %d inseridos, %d sem item no pool — desfeito", len(inseridos), len(infos),
+                    len(faltaram))
+        return {"ok": False, "erro": f"{len(infos) - len(inseridos) + len(faltaram)} plano(s) novo(s) não entraram "
+                f"({', '.join(map(str, faltaram[:5])) or 'o Resolve recusou'}); a atualização foi desfeita e a sua "
+                "timeline de trabalho ficou como estava"}
+    # O TAMANHO de cada plano que entrou, achado NA TRILHA pelo início (o objeto devolvido para as trilhas 2…n de um
+    # grupo de áudio não responde — medido no 21). Nada aqui desfaz: o diferente vai para o editor conferir.
+    conferir, da_trilha = [], {}
+    for x in origem:
+        tipo = "audio" if x.get("tipo") == "A" else "video"
+        chave, pedido_q = f"{tipo}{x['trilha']}", int(x["fim_fonte"]) - int(x["inicio_fonte"])
+        veio = None
+        try:
+            if chave not in da_trilha:
+                da_trilha[chave] = nova.GetItemListInTrack(tipo, int(x["trilha"])) or []
+            achado = next((t for t in da_trilha[chave] if int(t.GetStart()) == int(x["quadro"])), None)
+            veio = int(achado.GetDuration()) if achado is not None else None
+        except Exception:  # noqa: BLE001
+            pass
+        rot = f"{x.get('nome') or 'plano novo'} ({x.get('tipo')}{x['trilha']})"
+        if veio is None:
+            conferir.append(f"{rot}: não achei o plano na trilha depois de inserir — conferir")
+        elif veio != pedido_q:
+            conferir.append(f"{rot}: entrou com {veio} quadro(s), o Avid tem {pedido_q} — conferir")
+    # O backup: a antiga ganha a data no nome e vai para De Lá Pra Cá › Backup. Nunca é apagada.
+    nome_velho = velha.GetName()
+    _nomear(p, velha, f"{nome_velho} (backup {_carimbo()})")
+    backup = velha.GetName()
+    pasta_backup = _pasta_no_pool(mp, "Backup", casa) if casa is not None else None
+    item_velho = _item_de_timeline_no_pool(mp, backup)
+    na_pasta = False
+    if pasta_backup is not None and item_velho is not None:
+        try:
+            na_pasta = bool(mp.MoveClips([item_velho], pasta_backup))
+        except Exception as e:  # noqa: BLE001
+            log.info("MoveClips backup: %s", e)
+    _nomear(p, nova, nome.strip()[:200] if isinstance(nome, str) and nome.strip() else nome_velho)
+    p.SetCurrentTimeline(nova)
+    # Os Sinais: marcador (a palavra-chave no customData) e a cor LOCAL do item, achado pela trilha e pelo início.
+    n_marcas = n_cores = 0
+    da_trilha_v: dict = {}
+    for m in (marcas[:5000] if (marcar or colorir) and isinstance(marcas, list) else []):
+        if not isinstance(m, dict):
+            continue
+        if marcar:
+            try:
+                if nova.AddMarker(int(m["quadro"]), m.get("cor_marcador"), m.get("nome") or "", "",
+                                  max(1, int(m.get("dur") or 1)), m.get("palavra") or "DLPC"):
+                    n_marcas += 1
+            except Exception:  # noqa: BLE001 — um marcador que falha não derruba a entrega
+                pass
+        if colorir:
+            try:
+                t = int(m["trilha"])
+                if t not in da_trilha_v:
+                    da_trilha_v[t] = nova.GetItemListInTrack("video", t) or []
+                alvo = next((it for it in da_trilha_v[t] if int(it.GetStart()) == int(m["quadro_abs"])), None)
+                if alvo is not None and alvo.SetClipColor(m.get("cor_clipe")):
+                    n_cores += 1
+            except Exception:  # noqa: BLE001
+                pass
+    uid = ""
+    try:
+        uid = nova.GetUniqueId() or ""
+    except Exception:  # noqa: BLE001
+        pass
+    n_off = sum(1 for x in origem if x.get("offline"))
+    log.info("atualizado: %r (backup %r), %d inseridos (%d offline; %d itens offline novos no pool)", nova.GetName(),
+             backup, len(inseridos), n_off, offline_novos)
+    return {"ok": True, "nome": nova.GetName(), "uid": uid, "backup": backup, "backup_na_pasta": na_pasta,
+            "inseridos": len(inseridos), "pedidos": len(infos), "offline": n_off, "faltaram": faltaram,
+            "conferir": conferir, "marcadores": n_marcas, "cores": n_cores}
+
 
 def _numero(v, padrao=0.0) -> float:
     try:

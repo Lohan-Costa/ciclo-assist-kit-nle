@@ -24,6 +24,7 @@ casos = 0
 falhas: list[str] = []
 FPS = 24000 / 1001
 A, B = "11" * 32, "22" * 32
+FUNDO: dict = {}          # (tipo, índice) → a trilha leva o TrackRef de fundo (`filler_proxy`)
 
 
 def ok(nome, obtido, esperado):
@@ -60,6 +61,9 @@ def montar(segs):
         T.set_origem(None, None)
     with avb.open(str(arq)) as f:
         comp = next(m for m in f.content.mobs if m.name == "T")
+        FUNDO.clear()
+        FUNDO.update({(t.media_kind, t.index): t.property_data.get("filler_proxy") is not None
+                      for t in comp.tracks if t.media_kind in ("picture", "sound")})
         return {(t.media_kind, t.index): [_resumo(c) for c in t.component.components if c.length]
                 for t in comp.tracks if t.media_kind in ("picture", "sound")}
 
@@ -112,7 +116,16 @@ def nada_a_calar():
        [("clip", 24), ("Filler", 24), ("clip", 24)])
 
 
+def vazio_do_som():
+    print("o VAZIO de uma trilha de som é silêncio")
+    montar([seg(1, 0, 48, "a"), seg(1000, 0, 24, "a", source_slot_id=1), seg(1001, 24, 24, "b", source_slot_id=1)])
+    ok("⭐ trilha de som SEM filler_proxy (o MC não grava; com ele o vazio da A2 tocava a A1 — medido de ouvido no "
+       "export do MC 25.12, 2026-11-25); a imagem mantém o fundo", FUNDO,
+       {("picture", 1): True, ("sound", 1): False, ("sound", 2): False})
+
+
 if __name__ == "__main__":
+    vazio_do_som()
     video()
     som()
     nada_a_calar()

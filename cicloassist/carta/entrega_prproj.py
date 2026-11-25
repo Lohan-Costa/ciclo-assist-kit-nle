@@ -139,6 +139,157 @@ def _midia_de(por: dict, clip: ET.Element) -> tuple[ET.Element | None, str]:
     return med, med.findtext("ActualMediaFilePath") or med.findtext("FilePath") or ""
 
 
+#: a chave, em `midia_do_projeto`, de um item de MÍDIA OFFLINE (sem caminho): `offline:<uid do ClipProjectItem>`
+CHAVE_OFFLINE = "offline:"
+
+
+def _modulo_offline():
+    """`prproj.offline` do Conformar: o item do "Arquivo offline" do Premiere, na forma exata que o 26.0.2 grava.
+    ⛔ Carregado PELO ARQUIVO (ele só usa a stdlib), sem pôr o `motor/` no `sys.path`: lá há um `tools/` que esconde o
+    `tools/` deste repo (medido: duas falhas de `test_notas_em_lista` na suíte inteira)."""
+    import importlib.util
+    import sys
+    from pathlib import Path as _P
+    nome = "cicloassist._conformar_prproj_offline"
+    if nome not in sys.modules:
+        arq = _P(__file__).resolve().parents[2] / "modulos" / "conformar" / "motor" / "prproj" / "offline.py"
+        spec = importlib.util.spec_from_file_location(nome, arq)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"o módulo do offline não foi achado ({arq})")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[nome] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[nome]
+
+
+_EXT_SOM = {".wav", ".wave", ".bwf", ".aif", ".aiff", ".aifc", ".mp3", ".m4a", ".aac", ".flac", ".ogg"}
+
+
+def _gerenciada(caminho: str) -> bool:
+    import re
+    c = (caminho or "").replace("\\", "/")
+    return "/avid mediafiles/" in c.lower() or bool(re.search(r"(?i)[AV]\d{2}\.[0-9A-F]{6,}[0-9A-F_]*[A-Z]?\.mxf$", c))
+
+
+def consertar_acentos(nome: str) -> str:
+    """O nome em UTF-8 lido como Latin-1 na bin do Avid (`PATÃO` → "PATÃ\\x83O", `Flüssigkeiten` → "FlÃ¼ssigkeiten";
+    banco `avb/estruturas.md`) de volta ao certo — só quando os bytes formam UTF-8 válido (um "é" legítimo não forma, e
+    fica). O que a bin já perdeu (`?`, `_` no lugar de um byte) não tem conserto. Medido 2026-11-25: o Premiere mostrava
+    o item offline com o nome quebrado, e religar pelo nome não acharia o arquivo."""
+    try:
+        certo = nome.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return nome
+    return certo if certo != nome else nome
+
+
+def nome_offline(proj: Projeto, ref: dict) -> str:
+    """O nome do ARQUIVO original de uma mídia sem arquivo nesta máquina — é por ele que o editor religa no Premiere.
+    A ordem: o arquivo de uma forma registrada (`original`, `proxy`… — de outra máquina, com a extensão) › o arquivo
+    que a bin do Avid guarda (`caminho_na_bin`, com a extensão; não o MXF gerenciado, cujo nome é o do clipe truncado
+    com hash) › o nome da fonte (o reel) › o nome. Só de som e sem extensão de som: `.wav` (a regra do rótulo do
+    Conformar, `segmentos.referencia_offline`)."""
+    from pathlib import PurePath
+
+    from . import diario
+    nome = ""
+    for f in diario.formas(proj).get(ref.get("id") or "", []):
+        a = PurePath(str(f.get("relativo") or f.get("arquivo") or "").replace("\\", "/")).name
+        if f.get("forma") != "avid" and "." in a and not _gerenciada(a):
+            nome = a
+            break
+    if not nome:
+        na_bin = str((ref.get("entrou_por") or {}).get("caminho_na_bin") or "").replace("\\", "/")
+        a = PurePath(na_bin).name
+        if "." in a and not _gerenciada(na_bin):
+            nome = a
+    ident = ref.get("identidade") or {}
+    nome = consertar_acentos((nome or ident.get("nome_da_fonte") or ref.get("nome") or "offline").strip())
+    if ident.get("tipo") == "audio" and os.path.splitext(nome)[1].lower() not in _EXT_SOM:
+        nome += ".wav"
+    return nome
+
+
+def _quadros_do_tc(tc: str, base: int) -> int | None:
+    import re
+    m = re.match(r"^(\d+)[:;](\d+)[:;](\d+)[:;.](\d+)$", str(tc or "").strip())
+    if not m:
+        return None
+    h, mi, s, q = (int(x) for x in m.groups())
+    return ((h * 60 + mi) * 60 + s) * base + q
+
+
+def itens_offline(proj: Projeto, item: dict, clipes: list[tuple[dict, bool]], quadro: tuple[int, int] | None) -> dict:
+    """{id da mídia: os argumentos de `prproj.offline.item`} das mídias SEM arquivo nesta máquina que `clipes`
+    ([(clipe, é de som?)]) usam. A duração é a da referência — e nunca menos que o trecho que a timeline usa; o TC, o da
+    referência (num master só de som, contado na taxa da TIMELINE, como o rótulo do Conformar: o master de som do Avid
+    diz 24 num projeto 23,976); o quadro, o do projeto (a referência offline não guarda o raster)."""
+    from fractions import Fraction
+    off = _modulo_offline()
+    from . import referencias
+    refs = {d["id"]: d for _p, d in referencias.todas(proj)}
+    fps_tl = Fraction(str(item.get("fps") or "25"))
+    usos: dict[str, dict] = {}
+    for c, audio in clipes:
+        u = usos.setdefault(c.get("midia") or "", {"video": False, "canal": 0, "fim_t": 0})
+        if audio:
+            u["canal"] = max(u["canal"], int(c.get("canal") or 1))
+        else:
+            u["video"] = True
+        ve = velocidade_do_clipe(c, item.get("fps") or "25")
+        if "fora" not in ve:
+            dur = (int(c["fim_q"]) - int(c["inicio_q"])) * (ve["vel"] or 1.0)
+            u["fim_t"] = max(u["fim_t"], round((int(c["entrada_q"]) + dur) * TICKS_POR_SEGUNDO / ve["fonte_fps"]))
+    out: dict[str, dict] = {}
+    for m, u in usos.items():
+        ref = refs.get(m)
+        if ref is None:
+            continue
+        ident = ref.get("identidade") or {}
+        fps = Fraction(str(ident.get("fps") or item.get("fps") or "25"))
+        dur = 0
+        if ident.get("quadros"):
+            dur = round(int(ident["quadros"]) * TICKS_POR_SEGUNDO / fps)
+        elif ident.get("duracao_s"):
+            dur = round(float(ident["duracao_s"]) * TICKS_POR_SEGUNDO)
+        fps_tc = fps_tl if ident.get("tipo") == "audio" else fps
+        q = _quadros_do_tc(ident.get("tc") or "", round(float(fps_tc)))
+        w, h = quadro or tuple(item.get("quadro") or (1920, 1080))
+        out[m] = {"nome": nome_offline(proj, ref), "dur_ticks": max(dur, u["fim_t"], 1),
+                  "inicio_ticks": q * off.ticks_por_quadro(float(fps_tc)) if q else 0,
+                  "video": {"largura": int(w), "altura": int(h)} if u["video"] else None,
+                  "canais": max(1, sum(int(x) for x in ident.get("canais_de_som") or [0]), u["canal"]),
+                  # ⛔ estéreo SÓ com a certeza de UMA trilha de 2 canais: o offline estéreo religado a um arquivo de
+                  #   mais canais deixa o canal 2 mudo (medido, 26.0.2); em N mono religa certo com qualquer arquivo
+                  "mono": [int(x) for x in ident.get("canais_de_som") or []] != [2],
+                  "fps_video": float(fps)}
+    return out
+
+
+def enxertar_offline(R: ET.Element, itens: dict, proximo_id: int) -> tuple[dict, int]:
+    """Os itens offline (`itens_offline`) no projeto `R`, como o Premiere os grava (`prproj.offline.item`), cada
+    `ClipProjectItem` na bin raiz. Devolve ({id da mídia: chave em `midia_do_projeto`}, o próximo ObjectID livre)."""
+    off = _modulo_offline()
+    raiz = next((e for e in R if e.tag == "RootProjectItem"), None)
+    if raiz is None:
+        raise CartaErro("o projeto não tem a bin raiz")
+    cont = raiz.find("ProjectItemContainer")
+    lista = cont.find("Items") if cont is not None else raiz.find("Items")
+    if lista is None and cont is None:
+        raise CartaErro("a bin raiz não tem onde pôr os itens")
+    if lista is None:
+        lista = ET.Element("Items", {"Version": "1"})
+        cont.insert(0, lista)
+    chaves = {}
+    for m, args in itens.items():
+        texto, uid, proximo_id = off.item(proximo_id=proximo_id, **args)
+        for e in ET.fromstring(f"<r>{texto}</r>"):
+            R.append(e)
+        ET.SubElement(lista, "Item", {"Index": str(len(lista)), "ObjectURef": uid})
+        chaves[m] = CHAVE_OFFLINE + uid
+    return chaves, proximo_id
+
+
 def midia_do_projeto(raiz: ET.Element) -> dict[str, dict]:
     """{arquivo (normalizado): {mc, video_clip, frame_rect, audio: [(mc, audio_clip, índice do clipe de som no master,
     nº de canais)]}} — os itens de mídia que o Premiere criou no projeto.
@@ -158,6 +309,8 @@ def midia_do_projeto(raiz: ET.Element) -> dict[str, dict]:
             if cl is None:
                 continue
             med, arq = _midia_de(por, cl)
+            if med is not None and not arq and med.findtext("OfflineReason"):
+                arq = CHAVE_OFFLINE + (cpi.get("ObjectUID") or "")   # a mídia OFFLINE não tem caminho: a chave é o item
             if cl.tag == "VideoClip" and med is not None:
                 vs_ref = med.find("VideoStream")
                 vs = por.get(vs_ref.get("ObjectRef") or "") if vs_ref is not None else None
@@ -171,6 +324,22 @@ def midia_do_projeto(raiz: ET.Element) -> dict[str, dict]:
                         (mc.get("ObjectUID"), _chave(cl), n_audio, canais))
                 n_audio += 1
     return out
+
+
+def canais_do_item(info: dict) -> int:
+    """Quantos canais o item de mídia tem: N clipes MONO (o WAV polifônico importado, o offline de N > 2 — medido no
+    26.0.2, `LAB OFFLINE MULTICANAL v01`) = N; senão, os canais do (único) clipe de som."""
+    a = info.get("audio") or []
+    return len(a) if len(a) > 1 and all(x[3] == 1 for x in a) else (a[0][3] if a else 0)
+
+
+def clipe_de_som_do_canal(info: dict, canal: int) -> tuple:
+    """(mc, AudioClip, índice do clipe de som, nº de canais dele) do canal `canal` (1…N). ⛔ No item de N clipes mono o
+    canal é o CLIPE: pegar sempre o 1º tocava o canal 1 no lugar de todos (o WAV polifônico da forma original)."""
+    a = info["audio"]
+    if len(a) > 1 and all(x[3] == 1 for x in a) and 1 <= canal <= len(a):
+        return a[canal - 1]
+    return a[0]
 
 
 # O que o 26.0.2 grava para um clipe de SOM (moldes "MOLDE SOM" e "MOLDE GANHO", montados por ele, 2026-11-14):
@@ -733,15 +902,23 @@ def _clonar_grafico(R: ET.Element, por: dict, molde: ET.Element, novo_id, novos:
     for c in cadeia.iter("Component"):
         comp = nv.get(c.get("ObjectRef"))
         if comp is not None and comp.findtext("MatchName") == "AE.ADBE Text":
-            for prm in comp.iter("Param"):
-                q = nv.get(prm.get("ObjectRef"))
-                if q is not None and q.findtext("Name") == "Source Text":
-                    texto = q
-                elif q is not None and q.findtext("Name") == "Position":
-                    posicao = q
+            # ⛔ o Premiere grava o nome do parâmetro NO IDIOMA dele (26.0.2 Mac em português: "Texto de origem",
+            #   "Posição"; medido 2026-11-25 — a escrita parava em "o molde do título não tem o Source Text"). Pelo nome
+            #   conhecido, ou pela forma: o texto é o parâmetro binário com valor inicial; a posição, o 1º ponto.
+            pars = [nv.get(prm.get("ObjectRef")) for prm in comp.iter("Param")]
+            pars = [q for q in pars if q is not None]
+            texto = next((q for q in pars if q.findtext("Name") in NOMES_DO_TEXTO), None) or next(
+                (q for q in pars if q.tag == "ArbVideoComponentParam" and q.find("StartKeyframeValue") is not None), None)
+            posicao = next((q for q in pars if q.findtext("Name") in NOMES_DA_POSICAO), None) or next(
+                (q for q in pars if q.tag == "PointComponentParam"), None)
     if texto is None:
         raise CartaErro("o molde do título não tem o Source Text")
     return copy.deepcopy(molde), cadeia, sub, texto, posicao, nv
+
+
+#: o nome do parâmetro do texto/da posição do gráfico, nos idiomas medidos (en: 26.5 Windows; pt-BR: 26.0.2 Mac)
+NOMES_DO_TEXTO = ("Source Text", "Texto de origem")
+NOMES_DA_POSICAO = ("Position", "Posição")
 
 
 def _escrever_titulo(R, por, molde, titulo: dict, dur_t: int, quadro: tuple, novo_id, novos: list,
@@ -775,7 +952,8 @@ def _escrever_titulo(R, por, molde, titulo: dict, dur_t: int, quadro: tuple, nov
 
 def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequencia: str,
                       nome: str, trilhas: set[str] | None = None, forma: str = "avid",
-                      quadro: tuple[int, int] | None = None, transcricao_vazia: bool = False) -> dict:
+                      quadro: tuple[int, int] | None = None, transcricao_vazia: bool = False,
+                      com_offline: bool = True) -> dict:
     """Numa CÓPIA de `prproj` (o projeto de entrega, com a mídia já importada por ele e a sequência-molde `sequencia`
     feita por ele), as trilhas da timeline `item` (`trilhas`: {"V1", "A3"}; None = todas) no lugar dos clipes do
     molde, e a sequência renomeada `nome`. Trilhas de som que faltam no molde são clonadas da 2ª dele.
@@ -787,7 +965,10 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
     ganho, outra transição): nunca um clipe com o tempo errado.
     `transcricao_vazia` (Premiere 26+): todo merged da saída leva um `TranscriptClip` vazio — sem ele o
     `importSequences` não reconhece o merged que o projeto do editor já tem e o REPETE (+36 por reimportação, medido;
-    com ele, 0 — `merged_prproj.transcricao_vazia`)."""
+    com ele, 0 — `merged_prproj.transcricao_vazia`).
+    `com_offline` (padrão): o clipe cuja mídia não está nesta máquina entra no lugar, apontando um item de MÍDIA
+    OFFLINE com o nome do original (`itens_offline`/`enxertar_offline`; `rel["offline_no_lugar"]`, `rel["itens_offline"]`).
+    Sem ele, fica de fora e contado (`rel["offline"]`), como antes."""
     import os
     from pathlib import Path as _P
     if _norm(prproj) == _norm(saida):
@@ -860,7 +1041,7 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
             removidos.add(l.get("ObjectRef"))
             lc.remove(l)
 
-    rel = {"clipes": 0, "transicoes": 0, "velocidades": 0, "desligados": 0, "fora": {}, "offline": 0, "sem_item": [], "trilhas": [], "trilhas_criadas": 0,
+    rel = {"clipes": 0, "transicoes": 0, "velocidades": 0, "desligados": 0, "fora": {}, "offline": 0, "offline_no_lugar": 0, "sem_item": [], "trilhas": [], "trilhas_criadas": 0,
            "merged": 0, "merged_fora": {}, "subclipes": 0, "subclipes_fora": {}, "titulos": 0, "titulos_avisos": [],
            "esticados": 0, "ganho_no_clipe": 0, "estabilizar": 0, "cor_do_avid": 0}
     molde_esc = molde_de_esticar(R, por)
@@ -958,6 +1139,24 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
         ET.SubElement(sub, "OrigChGrp").text = str(grupo)
         return sub
 
+    # ⭐ o plano SEM mídia nesta máquina entra como MÍDIA OFFLINE no lugar (autor, 2026-11-25: "nada some da timeline"):
+    #   o item do "Arquivo offline" do Premiere (`prproj.offline`, medido no 26.0.2), com o nome do ORIGINAL — o editor
+    #   religa no Premiere. Antes o plano ficava de fora, só contado.
+    sem_arquivo = [(c, t["tipo"] == "A") for t in da_timeline for c in t.get("clipes", [])
+                   if arquivos_de(c.get("midia") or "") is None]
+    offline_no_lugar: dict[str, str] = {}
+    if sem_arquivo and com_offline:
+        try:
+            args = itens_offline(proj, item, sem_arquivo, quadro)
+            offline_no_lugar, proximo = enxertar_offline(R, args, prox[0] + 1)
+            prox[0] = proximo - 1
+            rel["itens_offline"] = sorted(a["nome"] for a in args.values())
+        except (CartaErro, ValueError, ImportError) as e:   # sem o item, o plano volta a ficar de fora — e é dito
+            rel["offline_erro"] = str(e)
+            offline_no_lugar = {}
+        if offline_no_lugar:
+            por.update({_chave(e): e for e in R if _chave(e) and _chave(e) not in por})
+            midia = midia_do_projeto(R)
     merged = _os_merged(proj, R, por, item, da_timeline, midia, arquivos_de, tpf, rel, prox)
     from . import itens as _itens
     _por_item = {d["id"]: d for _, d in _itens.todos(proj)} if merged else {}
@@ -1002,6 +1201,9 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
                 arq = None
                 if achou is not None:
                     arq = (achou[1].get(f"A{int(c.get('canal') or 1)}" if audio else "V1") or achou[1].get("*"))
+                if arq is None and (c.get("midia") or "") in offline_no_lugar:
+                    arq = offline_no_lugar[c.get("midia") or ""]
+                    rel["offline_no_lugar"] += 1
                 if arq is None:
                     rel["offline"] += 1
                     offline_da_trilha.append((int(c["inicio_q"]), int(c["fim_q"])))
@@ -1014,7 +1216,7 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
                 rel["sem_item"].append(os.path.basename(arq))
                 continue
             if audio:
-                canais = info["audio"][0][3]
+                canais = canais_do_item(info)
                 if canais != 1 and int(c.get("canal") or 1) > canais:
                     fora(f"canal {int(c.get('canal') or 1)} que o arquivo não tem ({rot})")
                     continue
@@ -1076,7 +1278,7 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
                 rel["titulos"] += 1
             elif audio:
                 # o canal DENTRO do arquivo: o OP-Atom é mono (canal 0); o WAV/AIFF da forma original, o canal do clipe
-                mc, ac_id, grupo, canais = info["audio"][0]
+                mc, ac_id, grupo, canais = clipe_de_som_do_canal(info, int(c.get("canal") or 1))
                 canal = 0 if canais == 1 else int(c.get("canal") or 1) - 1
                 ac = copy.deepcopy(por[ac_id])
                 ac.set("ObjectID", novo_id())

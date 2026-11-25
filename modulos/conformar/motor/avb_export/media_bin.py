@@ -227,6 +227,20 @@ def _offline_specs(segments, match_results, handle=0):
     return specs
 
 
+def _molde_de_som(templates, canais):
+    """O molde de som offline com trilhas para `canais` canais: o menor de 24 bits com canais suficientes (sem um assim,
+    o maior). ⛔ Sem isto todo som offline era o molde de 2 canais, e a sequência que usa o canal 3+ de um som ausente
+    apontava para trilha que o master não tem — "Sequence refers to non-existent track in clip" no MC (medido
+    2026-11-25, MC 25.12 Mac: um MOV de 5 canais usado como som, Premiere → Avid). `canais` None: o molde de sempre."""
+    if not canais:
+        return None
+    so = {k[3]: v for k, v in templates.items() if k[0] == "audio" and len(k) == 4 and k[1] == 1 and k[2] == 24}
+    if not so:
+        return None
+    cabem = [c for c in so if c >= int(canais)]
+    return so[min(cabem)] if cabem else so[max(so)]
+
+
 def build_offline_masters(specs, out_dir, templates=None, fps=None):
     """clona um master OFFLINE (mídia ausente) por spec, com um template genérico por media-kind.
     `fps` = edit_rate da timeline (p/ o descriptor de ÁUDIO ficar coerente com master_len — ver
@@ -237,7 +251,7 @@ def build_offline_masters(specs, out_dir, templates=None, fps=None):
     aud = templates.get(("audio", 1, 24, 2)) or next((v for k, v in templates.items() if k[0] == "audio"), None)
     out = {}
     for i, (mob, d) in enumerate(specs.items()):
-        tpl = vid if d["kind"] == "video" else aud
+        tpl = vid if d["kind"] == "video" else (_molde_de_som(templates, d.get("canais")) or aud)
         if tpl is None:
             continue
         cbin = os.path.join(out_dir, "offline_%d.avb" % i)

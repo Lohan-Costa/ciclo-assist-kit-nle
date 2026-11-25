@@ -98,6 +98,24 @@ def main() -> int:
     ok("o offline do áudio", (specs["offline:Z:\\M\\SOM.WAV"]["kind"], specs["offline:Z:\\M\\SOM.WAV"]["master_len"]),
        ("audio", 240 + 2 * handle))
     ok("o vídeo achado NÃO vira offline", str(cam) in specs, False)
+    ok("⭐ o som offline pede TODOS os canais que a timeline usa (o maior canal: 2)",
+       specs["offline:Z:\\M\\SOM.WAV"].get("canais"), 2)
+    from avb_export import media_bin as MB
+    tpl = MB.load_bundled_templates()
+    canais = lambda n: (MB._molde_de_som(tpl, n) or ("", "", ""))[0].rsplit("_", 1)[-1]  # noqa: E731
+    ok("⭐ o molde offline de som tem trilhas para os canais (3 → 3ch, 5 → 5ch; antes, sempre 2ch)",
+       (canais(3), canais(5)), ("3ch.avb", "5ch.avb"))
+    ok("⭐ 8 e 16 canais têm molde (6 → 8ch, 8 → 8ch, 16 → 16ch; antes, o de 5: trilha inexistente no MC)",
+       (canais(6), canais(8), canais(16)), ("8ch.avb", "8ch.avb", "16ch.avb"))
+    ok("…acima do maior molde, o maior (17 → 16ch); sem o número, o de sempre", (canais(17), MB._molde_de_som(tpl, None)),
+       ("16ch.avb", None))
+    mov = tmp / "CAMERA_PARES.mov"
+    mov.write_bytes(b"x")
+    p2 = D.planejar({"leitura": {"fps": 23.976, "segmentos": [
+        seg(str(mov), audio=True, ini=0, dur=48, canal_arquivo=3)]}, "casamento": {}, "sons": {}})
+    ok("⭐ o MOV usado só como SOM (no lugar) vai pelo LINK, como o vídeo — o molde é de WAV (B03_PARES, 2026-11-25)",
+       (p2["video"], p2["audio"], p2["segmentos"][0]["source_slot_id"]), ({str(mov): "CAMERA_PARES.mov"}, {}, 3))
+    os.remove(mov)
 
     # ⭐ a transição do Premiere (os planos ENCOSTAM no corte) → a sobreposição do Avid (A3 Samba do PRODC, 18/10:
     # clipes 24:09–26:10 e 26:10–31:12, transição 26:06–26:14 com cutpoint 4; a 24 q/s nominais)

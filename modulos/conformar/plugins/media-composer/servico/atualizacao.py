@@ -175,6 +175,30 @@ def texto_nao_bate(e: dict) -> str:
             "Confira se escolheu o arquivo de onde esta timeline veio.")
 
 
+def _drt_dos_offline(nova, segs, arquivo_do_seg, metas, offline, recebidos: Path, avisos: list) -> str:
+    """O DRT AUXILIAR dos planos novos sem mídia nesta máquina: só os rótulos offline (nome, TC e duração do Avid),
+    escritos pelo MESMO writer do Importar (`build_drt(..., offline=metas)`). A ponte o importa para os itens offline
+    nascerem no pool e insere cada plano no quadro dele (`AppendToTimeline` aceita o item offline: medido no Studio 21.1,
+    Mac, 2026-11-25 — A3, quadro 100, 48 quadros, início de fonte 10). Devolve o NOME do arquivo em `recebidos`, ou ""."""
+    if not offline:
+        return ""
+    from drp.writer import build_drt
+
+    idxs = sorted({int(x["segmento"]) for x in offline})
+    sub = [segs[i] for i in idxs]
+    casados = [{**arquivo_do_seg[i], "segment_index": k} for k, i in enumerate(idxs)]
+    usados = {c.get("matched_path") for c in casados}
+    destino = recebidos / f"{uuid.uuid4()}.drt"
+    try:
+        build_drt(sub, casados, str(destino), timeline_name="De Lá Pra Cá · offline do Atualizar",
+                  timeline_fps=float(nova.resultado.get("timeline_fps") or 25.0),
+                  offline={k: v for k, v in metas.items() if k in usados})
+    except Exception as e:  # noqa: BLE001 — o resto da atualização segue; o aviso diz o que ficou de fora
+        avisos.append(f"{len(offline)} plano(s) sem mídia não entraram offline (o rótulo não foi escrito: {e})")
+        return ""
+    return destino.name
+
+
 def preparar(partida, nova, trabalho: str, contagem_api: dict, recebidos: Path, midia,
              sinais: dict | None = None, codigo: dict | None = None, inicio: int | None = None) -> dict:
     """`partida`/`nova`: as Cartas lidas. `midia(carta) -> (segs, casados)`: a mídia DESTA máquina
@@ -195,9 +219,19 @@ def preparar(partida, nova, trabalho: str, contagem_api: dict, recebidos: Path, 
 
     # O que inserir: a mídia desta máquina para cada plano novo / pedaço esticado — ANTES de reescrever,
     # porque só o plano que VAI entrar segura a transição do corte dele (revisão de código 2026-10-01).
-    segs, casados = midia(nova) if pe["inserir"] else ([], [])
+    # `midia` devolve (segs, casados) ou (segs, casados, metas): `metas` = {rótulo: {nb, fps, tc, …}} dos planos que
+    # NÃO têm arquivo nesta máquina — eles entram OFFLINE no lugar (autor, 2026-11-25: "pode fazer o som novo entrar como
+    # offline também. lembre da regra de nada sumir na timeline"). Antes eram pulados com um aviso.
+    r_midia = midia(nova) if pe["inserir"] else ([], [], {})
+    segs, casados = r_midia[0], r_midia[1]
+    metas = dict(r_midia[2]) if len(r_midia) > 2 and r_midia[2] else {}
     arquivo_do_seg = {c["segment_index"]: c for c in casados}
-    com_midia = lambda x: (c := arquivo_do_seg.get(x["segmento"])) and not c.get("offline")  # noqa: E731
+
+    def entra(x) -> bool:
+        """O plano novo entra: com o arquivo desta máquina, ou OFFLINE pelo rótulo (com os metadados do Avid)."""
+        c = arquivo_do_seg.get(x["segmento"])
+        return bool(c) and (not c.get("offline") or c.get("matched_path") in metas)
+    com_midia = entra
 
     # Os cortes onde um plano novo vai encostar: ali a transição do colorista FICA (o plano já vem do
     # motor de corte a corte, `atualizar._de_corte_a_corte`).
@@ -235,9 +269,13 @@ def preparar(partida, nova, trabalho: str, contagem_api: dict, recebidos: Path, 
                 n_trilhas[letra] += 1
                 novas_trilhas[x["trilha"]] = n_trilhas[letra]
             idx = novas_trilhas[x["trilha"]]
-        if not c or c.get("offline"):
-            avisos.append(f"{x['nome']}: sem a mídia nesta máquina — o plano não foi inserido")
+        if not entra(x):
+            avisos.append(f"{x['nome']}: sem a mídia nesta máquina e sem o que o Avid diz dela — o plano não foi "
+                          "inserido")
             continue
+        offline = bool(c.get("offline"))
+        if offline:
+            avisos.append(f"{x['nome']}: sem a mídia nesta máquina — entrou OFFLINE no lugar; religue no Resolve")
         # A velocidade do EDITOR (a conformação de fps não é decisão de edição e o Resolve a faz
         # sozinho, quadro a quadro): a mesma regra das notas (`notas._velocidade`; revisão 2026-09-28).
         classe = str(s.get("motion_class") or "native")
@@ -260,7 +298,12 @@ def preparar(partida, nova, trabalho: str, contagem_api: dict, recebidos: Path, 
                         "fim_fonte": inicio_fonte + quadros_fonte, "tipo": letra, "trilha": idx,
                         "trilha_nova": nova_trilha, "quadro": ini + int(x["inicio"]), "dur": int(x["dur"]),
                         "classe": x["classe"], "nome": x["nome"],
-                        "canal": canal})
+                        "canal": canal, "offline": offline, "segmento": x["segmento"]})
+    drt_offline = _drt_dos_offline(nova, segs, arquivo_do_seg, metas, [x for x in inserir if x["offline"]],
+                                   recebidos, avisos)
+    if not drt_offline:     # sem o DRT dos rótulos, os offline não têm item no pool: não vão (e o aviso já diz)
+        inserir = [x for x in inserir if not x["offline"]]
+        avisos[:] = [a for a in avisos if "entrou OFFLINE" not in a]
     # As transições: DEPOIS de saber quais planos novos entram (os sem mídia aqui não contam como vizinhos).
     # O fim é `fim_fonte - inicio_fonte` e não `dur`: a casca insere a 100%, e é isso que o plano ocupa na
     # timeline (com velocidade do editor, `dur` seria o do Avid, e o aviso "refazer" já sai acima).
@@ -303,7 +346,8 @@ def preparar(partida, nova, trabalho: str, contagem_api: dict, recebidos: Path, 
         sinal("camada", it["trilha"][0], int(it["trilha"][1:]), ini + int(a["inicio"]), int(a["dur"]))
 
     Path(str(destino)[:-4] + ".midias.json").write_text(json.dumps(
-        {"drt": destino.name, "midias": sorted({x["arquivo"] for x in inserir})}, ensure_ascii=False),
+        {"drt": destino.name, "midias": sorted({x["arquivo"] for x in inserir if not x["offline"]}),
+         "offline_drt": drt_offline}, ensure_ascii=False),
         encoding="utf-8")
     return {"drt": str(destino), "esperado": esperado, "inserir": inserir,
             "marcas": marcas if (sinais.get("marcar") or sinais.get("colorir")) else [],
