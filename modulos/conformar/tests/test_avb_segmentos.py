@@ -408,7 +408,7 @@ def main() -> int:
             "identidade": {"reel": "B001_C011", "tc_inicio": 132203, "tc_fps": 24, "fps": 23.976,
                            "audio_sr": 48000, "audio_canais": 2}}
     ref, meta = S.referencia_offline(info, r"E:\ENTREGA")
-    ok("sem o MC: o reel, na pasta do export", ref, os.path.join(r"E:\ENTREGA", "B001_C011"))
+    ok("sem o MC: o reel, na pasta do export", ref, os.path.join(r"E:\ENTREGA", S.PASTA_OFFLINE, "B001_C011"))
     ok("TC e duração do Avid", (meta["tc"], meta["nb"]), ("01:31:48:11", 3063))
     ref, _ = S.referencia_offline(info, r"E:\ENTREGA", r"F:\CARTAO\A001", r"B001_C011.braw")
     ok("⭐ com o MC: Source Path + Source File (com EXTENSÃO)", ref,
@@ -422,11 +422,33 @@ def main() -> int:
            "identidade": {**info["identidade"], "reel": "RELINKER_TESTCHART_3840x2160"}}
     ref, _ = S.referencia_offline(ama, r"E:\ENTREGA")
     ok("⭐ sem o MC: o nome do arquivo do AMA, com a extensão, na pasta do export", ref,
-       os.path.join(r"E:\ENTREGA", "RELINKER_TESTCHART_3840x2160.mov"))
+       os.path.join(r"E:\ENTREGA", S.PASTA_OFFLINE, "RELINKER_TESTCHART_3840x2160.mov"))
     ref, _ = S.referencia_offline({**ama, "caminho_na_bin": r"\\atacante\share\z.mov"}, r"E:\X")
-    ok("⛔ do caminho da bin vem só o nome, nunca a pasta (V2)", ref, os.path.join(r"E:\X", "z.mov"))
+    ok("⛔ do caminho da bin vem só o nome, nunca a pasta (V2)", ref, os.path.join(r"E:\X", S.PASTA_OFFLINE, "z.mov"))
     ref, _ = S.referencia_offline(ama, r"E:\X", "", "B001.braw")
     ok("o Source File do MC continua ganhando do AMA", os.path.basename(ref), "B001.braw")
+
+    # ⭐ O som (PRODUCAO-A, Resolve 21.1, 2026-11-24): o `RelinkClips` exige o nome com a extensão — 0/16 sem, 11/16 com.
+    som = {"nome": "BATIDA NA PORTA_Glass And Wood Door, Heavy", "duracao_frames": 194,
+           "essencias": {"sound:1": "urn:a1", "sound:2": "urn:a2"},
+           "identidade": {"reel": "Glass And Wood Door, Heavy", "tc_inicio": 0, "tc_fps": 24, "audio_sr": 48000}}
+    ref, _ = S.referencia_offline(som, r"E:\X")
+    ok("⭐ som sem extensão → `.wav` (e o nome do ARQUIVO, não o do clipe)", os.path.basename(ref),
+       "Glass And Wood Door, Heavy.wav")
+    ref, _ = S.referencia_offline({**som, "identidade": {**som["identidade"], "reel": "Fast_Depart_Tirescreech_PSEF.135"}}, r"E:\X")
+    ok("um ponto no nome não é extensão (`PSEF.135`)", os.path.basename(ref), "Fast_Depart_Tirescreech_PSEF.135.wav")
+    ref, _ = S.referencia_offline({**som, "identidade": {**som["identidade"], "reel": "Woman Crying - Unhappy."}}, r"E:\X")
+    ok("o ponto final sai antes da extensão (o Windows o descarta)", os.path.basename(ref), "Woman Crying - Unhappy.wav")
+    ref, _ = S.referencia_offline(som, r"E:\X", "", "Sus1.aif")
+    ok("som com a extensão do MC (Source File) fica como está", os.path.basename(ref), "Sus1.aif")
+    ref, _ = S.referencia_offline({**info, "essencias": {"picture:1": "urn:v", "sound:1": "urn:a"}}, r"E:\X")
+    ok("imagem + som sem extensão: nada muda (o reel de câmera)", os.path.basename(ref), "B001_C011")
+    drone = {**som, "identidade": {"reel": "PATÃO DRONE", "tc_inicio": 538837, "tc_fps": 24, "audio_sr": 48000}, "fps": 24.0}
+    _ref, meta = S.referencia_offline(drone, r"E:\X", fps_projeto=24000 / 1001)
+    ok("⭐ TC do som na taxa do PROJETO (06:14:11:13 a 23,976, não 06:13:49 a 24)",
+       (meta["tc"], round(meta["tc_segundos"] * 24000 / 1001)), ("06:14:11:13", 538837))
+    _ref, meta = S.referencia_offline(drone, r"E:\X")
+    ok("sem a taxa do projeto, como antes", round(meta["tc_segundos"], 3), round(538837 / 24, 3))
 
     print("\n── 11. um original, um clipe — e o In a partir dele ──────────")
     t = V([SourceClip(mid(201), 10, 20), SourceClip(mid(202), 5, 20)])

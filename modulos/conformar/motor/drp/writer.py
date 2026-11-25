@@ -1928,8 +1928,11 @@ def _semear_offline(offline: dict | None) -> None:
         _META_CACHE[p] = (nb, fps, m.get("tc"))
         sr = int(m.get("audio_sr") or 48000)
         dur = (nb / fps) if (nb and fps) else None
-        # Segundos na taxa EXATA — o mesmo cálculo que o vídeo faz a partir do TC.
-        inicio = (_tc_to_frames(m["tc"], round(fps)) / fps) if (m.get("tc") and fps) else 0.0
+        # Segundos na taxa EXATA — o mesmo cálculo que o vídeo faz a partir do TC. ⭐ `fps_tc` (de `referencia_offline`):
+        # o TC de um master SÓ DE SOM conta na taxa do PROJETO — o `PATÃO DRONE` (24 qps num projeto 23,976) chegava ao
+        # Resolve 22 s antes, 06:13:49:02 em vez de 06:14:11:13 (PRODUCAO-A, 2026-11-24).
+        fps_tc = _taxa_exata(m.get("fps_tc") or 0) or fps
+        inicio = (_tc_to_frames(m["tc"], round(fps_tc)) / fps_tc) if (m.get("tc") and fps_tc) else 0.0
         _META_CACHE_A[p] = (inicio, dur, sr, int(m.get("audio_canais") or 1) or 1,
                             int(round(dur * sr)) if dur else None)
 

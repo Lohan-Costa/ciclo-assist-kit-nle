@@ -87,6 +87,8 @@ class Leitura:
     ignoradas: tuple = ()
     #: `{urn da ESSÊNCIA (o mob daquele arquivo): caminho}` — o arquivo exato de cada trilha.
     por_arquivo: dict | None = None
+    #: Os `.mxf` que estavam no disco SEM constar do `.pmr` da pasta e entraram pela leitura do próprio arquivo.
+    completados: int = 0
 
     @property
     def masters(self) -> int:
@@ -276,8 +278,49 @@ def raizes_de_midia() -> list:
     return fora
 
 
-def indice_de(raizes) -> Leitura:
-    """As raízes de mídia → `{urn do master: [arquivos]}`, sem abrir `.mxf` nenhum.
+def _hex_para_urn(valor: str | None) -> str | None:
+    """`0x060A2B34…` (o UMID como o `ffprobe` escreve, 32 bytes) → a URN do pyavb e do `.pmr`."""
+    h = (valor or "").lower().removeprefix("0x")
+    if len(h) != 64 or any(c not in "0123456789abcdef" for c in h):
+        return None
+    return "urn:smpte:umid:" + ".".join(h[i:i + 8] for i in range(0, 64, 8))
+
+
+def _ler_do_arquivo(caminho: Path) -> tuple[str | None, str | None]:
+    """`(urn do master, urn da essência)` lidos do PRÓPRIO `.mxf` (OP-Atom, pelo `ffprobe`); `(None, None)` se não der."""
+    from media import opatom
+    doc = opatom.probe_file(str(caminho))
+    if not doc:
+        return None, None
+    lido = opatom.parse_probe(doc, str(caminho))
+    if isinstance(lido, str):
+        return None, None
+    return _hex_para_urn(lido.clip_umid), _hex_para_urn(lido.file_umid)
+
+
+def _completar(sub: Path, listados: set[str]) -> list[tuple[str, str | None, str | None]]:
+    """Os `.mxf` da pasta que o `.pmr` NÃO lista → `[(nome, urn da essência, urn do master)]`, lidos do arquivo.
+
+    ⛔ O `.pmr` não é fundação (`protocolos/msm/pmr-fmid.md` §5): ele fica para trás quando a pasta ganha arquivos — o
+    da `98_SFX…` da PRODUCAO-A listava 30 dos 84 (MC 25.12, 2026-11-24). O Media Composer lê os MXF e mostra tudo
+    online; quem confiava só no índice deixava 21 de 866 trechos offline. Só os NÃO listados são lidos (o índice
+    continua sendo o caminho rápido), em paralelo — um `ffprobe` por arquivo."""
+    try:
+        faltam = sorted(e for e in os.listdir(sub)
+                        if e.lower().endswith(".mxf") and not e.startswith("._") and e not in listados)
+    except OSError:
+        return []
+    if not faltam:
+        return []
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        lidos = list(ex.map(lambda n: _ler_do_arquivo(sub / n), faltam))
+    return [(nome, essencia, master) for nome, (master, essencia) in zip(faltam, lidos) if master or essencia]
+
+
+def indice_de(raizes, completar: bool = True) -> Leitura:
+    """As raízes de mídia → `{urn do master: [arquivos]}`: o `.pmr` de cada pasta e, com `completar`, os `.mxf` que ele
+    não lista lidos do próprio arquivo (`_completar` — desde 2026-11-24; antes, nenhum `.mxf` era aberto).
 
     ⚠️ Um master pode ter arquivos em pastas numeradas diferentes (e em volumes
     diferentes — nesta máquina `D:` e `E:` carregam o mesmo acervo). A lista soma todas e
@@ -287,7 +330,7 @@ def indice_de(raizes) -> Leitura:
     """
     por_master: dict = {}
     por_arquivo: dict = {}
-    lidos = sem_indice = 0
+    lidos = sem_indice = completados = 0
     ignoradas: list = []
 
     for raiz in raizes or []:
@@ -297,12 +340,21 @@ def indice_de(raizes) -> Leitura:
         ignoradas.extend(fora)
         for sub in pastas:
             alvo = sub / INDICE
-            if not alvo.is_file():
+            registros: list = []
+            if alvo.is_file():
+                lidos += 1
+                registros = ler_registros(alvo)
+            else:
                 sem_indice += 1
-                continue
-            lidos += 1
-            for nome, arquivo, urn in ler_registros(alvo):
-                por_master.setdefault(urn, []).append(str(sub / nome))
+            if completar:
+                extras = _completar(sub, {nome for nome, _a, _u in registros})
+                completados += len(extras)
+                registros = list(registros) + extras
+            for nome, arquivo, urn in registros:
+                if urn:
+                    por_master.setdefault(urn, []).append(str(sub / nome))
+                if not arquivo:
+                    continue
                 # A 1ª ocorrência fica (volumes e pastas são percorridos em ordem estável) —
                 # ⛔ salvo se o arquivo dela SUMIU e o desta existe: o índice de uma pasta não muda
                 # quando o editor move os `.mxf` para outra, e a velha vinha antes na ordem
@@ -316,8 +368,8 @@ def indice_de(raizes) -> Leitura:
     for urn in por_master:
         por_master[urn] = sorted(dict.fromkeys(por_master[urn]))
 
-    log.info("pmr: %d índice(s), %d master(s), %d sem índice, %d pasta(s) ignorada(s)",
-             lidos, len(por_master), sem_indice, len(ignoradas))
+    log.info("pmr: %d índice(s), %d master(s), %d sem índice, %d pasta(s) ignorada(s), %d .mxf fora do índice lidos do arquivo",
+             lidos, len(por_master), sem_indice, len(ignoradas), completados)
     return Leitura(por_master=por_master, indices_lidos=lidos,
                    pastas_sem_indice=sem_indice, ignoradas=tuple(ignoradas),
-                   por_arquivo=por_arquivo)
+                   por_arquivo=por_arquivo, completados=completados)

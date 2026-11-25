@@ -938,8 +938,23 @@ def ler_timeline_de_arquivo(caminho_avb: str, mob_id: str | None = None,
         return ler_timeline(f, alvo)
 
 
+#: ⭐ A pasta do RÓTULO offline (autor, 2026-11-24): o caminho de um original que não está nesta máquina é só nome — ele
+#: nunca existiu ali. Dentro da pasta de passagem (`recebidos/`, apagada por semana) ele parecia "mídia apagada do
+#: cache" (48 trechos dos DLPC PRODA 21 MAC, 23/11); com o nome explícito, quem abre o projeto lê o que é.
+PASTA_OFFLINE = "OFFLINE - religar"
+
+#: As extensões que já dizem que o nome é de um arquivo de SOM (o resto — `PSEF.135`, nome sem extensão — não é extensão).
+EXT_SOM = {".wav", ".wave", ".bwf", ".aif", ".aiff", ".aifc", ".mp3", ".m4a", ".aac", ".flac", ".ogg"}
+
+
+def so_de_som(info: dict) -> bool:
+    """O master só tem trilhas de som (um efeito, uma música, o som direto importado) — pelas essências que a bin diz."""
+    ess = info.get("essencias") or {}
+    return bool(ess) and all(str(k).startswith("sound") for k in ess)
+
+
 def referencia_offline(info: dict, pasta: str, source_path: str = "",
-                       source_file: str = "") -> tuple[str, dict]:
+                       source_file: str = "", fps_projeto: float | None = None) -> tuple[str, dict]:
     """O ORIGINAL de um master sem arquivo neste disco: `(caminho de referência, metadados)`.
 
     ⭐ É o caso NORMAL do export, não a exceção: quem edita offline tem só a mídia
@@ -950,8 +965,8 @@ def referencia_offline(info: dict, pasta: str, source_path: str = "",
     - nome: o `Source File` do Media Composer (tem a EXTENSÃO) quando ele sabe; senão o NOME
       do arquivo que o master AMA guarda na bin (`caminho_na_bin`, também com a extensão); só
       então o reel (o nome de câmera, SEM extensão);
-    - pasta: o `Source Path` do Media Composer quando ele sabe; senão `pasta` (a do DRT).
-      É só referência — o Resolve mostra offline até o colorista religar.
+    - pasta: o `Source Path` do Media Composer quando ele sabe; senão `<pasta>/OFFLINE - religar`
+      (`PASTA_OFFLINE`). É só referência — o Resolve mostra offline até o colorista religar.
 
     ⚠️ Medido em 2026-09-27 (caso E06, bin feita no Mac): sem o `Source File` — a bin aberta
     fora do Media Composer ("Abrir arquivo…") não tem as colunas dele —, o clipe ia como
@@ -968,16 +983,26 @@ def referencia_offline(info: dict, pasta: str, source_path: str = "",
         if "." not in arquivo:
             arquivo = ""                   # sem extensão, não ganha do reel
     nome = nome_de_arquivo(arquivo or ident.get("reel") or info.get("nome") or "") or "offline"
-    caminho = os.path.join((source_path or "").strip() or pasta, nome)
+    som = so_de_som(info)
+    if som and os.path.splitext(nome)[1].lower() not in EXT_SOM:
+        # ⭐ O `RelinkClips` do Resolve procura o nome EXATO, com a extensão (Resolve 21.1, 2026-11-24: 0 de 16 religados
+        # sem ela, 11 de 16 com ela — banco `plugins/resolve-scripting/api-scripting.md`). Do reel (sem extensão) não se
+        # sabe a do original; `.wav` é o caso comum de som importado, e quem tinha `.aif`/`.mp3` fica como estava.
+        nome += ".wav"
+    caminho = os.path.join((source_path or "").strip() or os.path.join(pasta, PASTA_OFFLINE), nome)
 
     fps = float(ident.get("fps") or info.get("fps") or 0) or None
     tc_fps = int(ident.get("tc_fps") or (round(fps) if fps else 0))
     inicio = ident.get("tc_inicio")
+    # ⭐ O TC de um master SÓ DE SOM conta na taxa do PROJETO: o master diz 24, o projeto é 23,976, e `início / 24` punha
+    # o `PATÃO DRONE` (06:14:11:13 no MC) em 06:13:49:02 no Resolve (PRODUCAO-A, 2026-11-24). Imagem: a taxa dela.
+    fps_tc = fps_projeto if (som and fps_projeto and tc_fps and round(fps_projeto) == tc_fps) else fps
     return caminho, {
         "nb": info.get("duracao_frames"),
         "fps": fps,
+        "fps_tc": fps_tc,
         "tc": frames_to_tc(int(inicio), tc_fps) if inicio is not None and tc_fps else None,
-        "tc_segundos": (int(inicio) / fps) if inicio is not None and fps else 0.0,
+        "tc_segundos": (int(inicio) / fps_tc) if inicio is not None and fps_tc else 0.0,
         "audio_sr": ident.get("audio_sr"),
         "audio_canais": ident.get("audio_canais"),
         "reel": ident.get("reel") or "",
@@ -1047,7 +1072,8 @@ def montar_midia(resultado: dict, arquivos: dict[str, str], pasta: str,
                                            "descritor": "", "fps": float(s.get("source_fps") or 0) or 25.0,
                                            "duracao_frames": 0, "essencias": {}})
             m["duracao_frames"] = max(m["duracao_frames"], ponta)
-    metadados, offline_por_mob, deslocamento = _referencias_offline(masters_ref, pasta, colunas_por_mob or {})
+    metadados, offline_por_mob, deslocamento = _referencias_offline(
+        masters_ref, pasta, colunas_por_mob or {}, float(resultado.get("timeline_fps") or 0) or None)
 
     casados = []
     for i, s in enumerate(segmentos):
@@ -1104,7 +1130,8 @@ def montar_offline(resultado: dict, arquivos: dict[str, str], pasta: str,
     return montar_midia(resultado, arquivos, pasta, colunas_por_mob)
 
 
-def _referencias_offline(masters: dict, pasta: str, colunas_por_mob: dict) -> tuple:
+def _referencias_offline(masters: dict, pasta: str, colunas_por_mob: dict,
+                         fps_projeto: float | None = None) -> tuple:
     """`(metadados, {master: caminho}, {master: deslocamento do In})` para os sem arquivo.
 
     ⚠️⚠️ **Um original, um clipe no pool — e o In medido a partir DELE.** Masters diferentes
@@ -1123,7 +1150,7 @@ def _referencias_offline(masters: dict, pasta: str, colunas_por_mob: dict) -> tu
     for chave, m in masters.items():
         col = colunas_por_mob.get(chave) or {}
         ref, meta = referencia_offline(m, pasta, col.get("Source Path", ""),
-                                       col.get("Source File", ""))
+                                       col.get("Source File", ""), fps_projeto)
         ident = m.get("identidade") or {}
         # Mesmo nome com taxa diferente não é o mesmo arquivo: vira outro caminho.
         chave_grupo = (ref, meta["fps"], ident.get("tc_fps"))
@@ -1145,7 +1172,8 @@ def _referencias_offline(masters: dict, pasta: str, colunas_por_mob: dict) -> tu
             fim = max(tc + nb for tc, nb in com_tc)
             meta["nb"] = fim - inicio
             meta["tc"] = frames_to_tc(inicio, tc_fps)
-            meta["tc_segundos"] = inicio / fps if fps else 0.0
+            fps_tc = meta.get("fps_tc") or fps
+            meta["tc_segundos"] = inicio / fps_tc if fps_tc else 0.0
             for chave, (tc, _nb) in g["membros"].items():
                 if tc is not None and tc != inicio:
                     deslocamento[chave] = tc - inicio
