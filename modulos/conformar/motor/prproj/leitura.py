@@ -164,6 +164,14 @@ def _float(v, padrao=None):
         return padrao
 
 
+def _versao_maior(p) -> int | None:
+    """O ano-versão do Premiere que GRAVOU o projeto (`MZ.BuildVersion.Modified`: "27.0.0x88 - …" → 27), ou None."""
+    try:
+        return int(str(p.versao() or "").split(".")[0])
+    except ValueError:
+        return None
+
+
 def frames_para_tc(f: int, fps_nominal: int) -> str:
     f = max(0, int(f))
     s, q = divmod(f, fps_nominal)
@@ -1330,7 +1338,17 @@ class Leitor:
         # casado com o quadro da MÍDIA): 8 clipes acelerados de 1,1× a 10× com In ÷ passo fracionário (0,08–0,79) — o
         # Premiere mostra piso(In ÷ passo) × passo em todos. O Resolve ARREDONDA o In ÷ passo: com fração ≥ 0,5 saía um
         # quadro de saída adiantado (147, 158, 271, LOU_7308). O teto, tentado antes, piorou 19 pontos.
-        if tpf_c and vel > 0 and p.campo(vc, "PlayBackwards") != "true":
+        # ⛔⛔ CORRIGE para o Premiere 26 em diante (2026-11-26, B32 — o MESMO projeto tocado em quatro versões no Mac, o
+        # quadro lido pelo código de barras de cada quadro do render): o 26.0.2 e o 27.0 começam na entrada EXATA (125 %
+        # com In 48: 48, 49, 50…; 29,97 a 1,791 com In 47,5: 47, 49, 51, 54…); o 23.6 e o 25.6.5 pelo TETO de
+        # In ÷ (v × quadro) (48, 50, 51… e 49, 51, 53…). Nenhuma das quatro bate com o PISO abaixo, medido no R04 (22.6/
+        # 23.2 Windows, pela semelhança da imagem) — ele fica para os projetos de antes do 26 até ser medido de novo. No 26
+        # em diante só a grade da TIMELINE vale (a entrada fora dela mostra o piso: o T25 da Carta, 2026-11-26).
+        maior = _versao_maior(p)
+        if tpf_c and vel > 0 and prof == 0 and maior is not None and maior >= 26 \
+                and p.campo(vc, "PlayBackwards") != "true":
+            entrada = math.floor(entrada / tpf_c + 1e-6) * tpf_c
+        elif tpf_c and vel > 0 and p.campo(vc, "PlayBackwards") != "true":
             passo = vel * tpf_c
             entrada = math.floor(entrada / passo + 1e-6) * passo
 
@@ -1631,7 +1649,33 @@ class Leitor:
             media = p.ref(fonte, "Media")
             if media is None:
                 return []
-            return [{"t0": t0, "t1": t1, "media": media, "src_in": u(t0), "canais": canais, "vel": vel}]
+            folha = {"t0": t0, "t1": t1, "media": media, "src_in": u(t0), "canais": canais, "vel": vel,
+                     # o "Maintain Audio Pitch" do clipe (ausente = desligado: o tom anda com a velocidade, como fita)
+                     "mantem_tom": p.campo(clip, "MaintainAudioPitch") == "true"}
+            if p.campo(clip, "PlayBackwards") == "true":
+                # ⭐ o SOM em REVERSO (2026-11-26, B32): a entrada conta do FIM da mídia, como na imagem — antes ela ia como
+                #   se fosse para a frente e o som saía de OUTRO trecho (o quadro 336 no lugar do 48–143; o lab não acusa
+                #   de ouvido: a claque e o tom são iguais em todo segundo). Só num A/V (o quadro do `VideoStream`); a 100 %.
+                # ⭐ MEDIDO (B33, 2026-11-26, a varredura que diz a posição da fonte): o som em reverso TERMINA em
+                #   Duration (do `AudioStream`) − InPoint, sem o quadro que a imagem desconta — A/V: 20,02 − 14,014 =
+                #   6,006 s (tocou de 6,0); WAV: 20,0 − 14,036 = 5,964 (tocou de 5,958). `src_in` = o FIM do trecho.
+                ast = p.ref(media, "AudioStream")
+                dur_a = _int(p.campo(ast, "Duration")) if ast is not None else 0
+                if dur_a:
+                    folha["src_in"] = dur_a - entrada - (t0 - ini) * vel
+                    folha["sentido"] = -1
+                    if abs(vel - 1.0) > 1e-6:
+                        # ⛔ MEDIDO (2026-11-26): o Time Shift do MC NÃO aceita Speed negativa — escrita −0,5, o painel
+                        #   mostrou 25 % (o mínimo dele) — e o MC não empilha dois AudioSuite (um substitui o outro). Vai
+                        #   AO CONTRÁRIO a 100 %, do ponto certo (o fim do trecho), e dito.
+                        avisos.append("som em reverso com velocidade: entrou ao contrário a 100 % — refazer a velocidade")
+                        folha["vel"] = 1.0
+                else:
+                    avisos.append("som em reverso " + ("com velocidade" if dur_a else "sem a duração do arquivo")
+                                  + ": entrou para a frente, a 100 % — refazer")
+                    folha["src_in"] = (dur_a or 0) - entrada - (t1 - ini) * vel if dur_a else folha["src_in"]
+                    folha["vel"] = 1.0
+            return [folha]
         if fonte.tag != "AudioSequenceSource" or prof > 8:
             avisos.append(f"fonte de áudio {fonte.tag} ignorada")
             return []
@@ -1729,7 +1773,10 @@ class Leitor:
                     segs.append({
                         "timeline_tc_in": frames_para_tc(a, nominal),
                         "timeline_tc_out": frames_para_tc(b, nominal), "duration_frames": b - a,
-                        "source_start_frames": round(f["src_in"] / tpf_tl), "source_fps": fps,
+                        "source_start_frames": (round((f["src_in"] - (b - a) * tpf_tl * f.get("vel", 1.0)) / tpf_tl)
+                                                if f.get("sentido") == -1 else round(f["src_in"] / tpf_tl)),
+                        "source_fps": fps,
+                        "reverso_som": f.get("sentido") == -1,       # o trecho PARA A FRENTE, e o Reverse do MC por cima
                         "clip_name": caminho.rsplit("/", 1)[-1] or "?", "track": trilha,
                         "canal_arquivo": canal + 1,
                         "media_ref": {"mob_name": caminho.rsplit("/", 1)[-1], "url": "",
@@ -1743,6 +1790,7 @@ class Leitor:
                         "speed_ratio": 1.0 / f.get("vel", 1.0), "relative_speed": 1.0 / f.get("vel", 1.0),
                         "conform_ratio": 1.0, "phase_offset": 0, "motion_effect_type": None,
                         "has_motion_effect": abs(f.get("vel", 1.0) - 1.0) > 1e-6,
+                        "mantem_tom": bool(f.get("mantem_tom")),
                         "source_offset_map": [], "speed_curve": [], "speed_keyframes": [],
                         **_volume_no_trecho(volume_db, volume_kf, f, a, b, tpf_tl, avisos),
                         "prproj": {"audio": True, "trilha_premiere": n}})
@@ -2154,6 +2202,11 @@ class Leitor:
             "timeline_tc_out": frames_para_tc(b, nominal),
             "duration_frames": b - a,
             "source_start_frames": 0 if f.get("parado") else round(f["src_in"] / tpf_m),
+            # ⭐ a posição EXATA da fonte no 1º quadro (2026-11-26, B32): numa fonte de OUTRA taxa a entrada (já no piso da
+            #   grade da timeline) cai NO MEIO de um quadro da fonte — 29,97 numa 23,976: 47,5 — e o Premiere mostra o
+            #   PISO dela e anda dali (47, 48, 50, 51…). O `round` acima (o que o Resolve usa) perde a fração; o Avid a
+            #   leva no gráfico de posição (`translate._entry_outra_taxa`).
+            "fonte_exata": None if f.get("parado") else f["src_in"] / tpf_m,
             "source_fps": fps_m,
             "clip_name": ("Adjustment Clip" if f.get("ajuste") else "Graphic") if sintetico else titulo,
             "ajuste": bool(f.get("ajuste")),

@@ -224,16 +224,32 @@ def mandar_do_avid(proj: Projeto, pasta: str, clipes, visivel: bool = True) -> C
     return conta
 
 
+def _nfc(caminho: str) -> str:
+    import unicodedata
+    return unicodedata.normalize("NFC", str(caminho))
+
+
 def _vincular(proj: Projeto, midia: str, forma: str, arquivo: Path, por: str, conta: Conta,
               medida: float | None = None, arquivos: list[str] | None = None) -> None:
     lugar = referencias.onde(arquivo)
     if arquivos:
         lugar["arquivos"] = arquivos            # a OP-Atom: um arquivo por trilha
-    ja = any(f["forma"] == forma and f["arquivo"] == lugar["arquivo"] and f["maquina"] == diario.maquina()
+    # ⛔ o MESMO caminho em duas normalizações (o caminho AMA da bin vem NFC; o `rglob` no exFAT do Mac devolve NFD):
+    #   sem normalizar, a forma de um arquivo com acento entrava DUAS vezes (B30 `CENA_AÇÃO`, 2026-11-26)
+    alvo = _nfc(lugar["arquivo"])
+    ja = any(f["forma"] == forma and _nfc(f.get("arquivo") or "") == alvo and f["maquina"] == diario.maquina()
              for f in diario.formas(proj).get(midia, []))
     if ja:
         return
-    diario.acrescentar(proj, {"fato": "forma", "midia": midia, "forma": forma, **lugar, "por": por, "medida": medida})
+    # ⭐ a IMPRESSÃO do arquivo (plano 2026-11-26: o hash em dois níveis — a rápida aqui; tamanho + começo + fim) acha a
+    #   cópia movida fora do nosso controle. Arquivo que não se lê agora fica sem ela (não barra o vínculo).
+    try:
+        from ..midia import identidade as _id
+        imp = _id.impressao(arquivo)
+    except OSError:
+        imp = None
+    diario.acrescentar(proj, {"fato": "forma", "midia": midia, "forma": forma, **lugar, "por": por, "medida": medida,
+                              **({"impressao": imp} if imp else {})})
     conta.vinculos.append(f"{arquivo.name} → {forma}")
 
 
@@ -286,6 +302,12 @@ def anexar(proj: Projeto, pasta_de_midia: str | Path, forma: str, ids: set[str] 
             arqs = achados[0]
             _vincular(proj, d["id"], forma, arqs[0], por, conta, medida=medida,
                       arquivos=[str(x) for x in arqs] if len(arqs) > 1 else None)
+    # ⭐ o MANIFESTO da conversão (plano 2026-11-26, etapa 2): o par original ⇄ convertido com a transformação, gravado
+    #   por quem converteu — vira o fato `relacao` no diário (`relacoes.py`)
+    if forma != "avid":
+        from . import relacoes
+        for nome in relacoes.registrar_do_manifesto(proj, pasta_de_midia, forma, conta):
+            conta.vinculos.append(f"{nome}: a relação com o original (manifesto)")
     return conta
 
 

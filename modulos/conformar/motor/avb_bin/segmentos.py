@@ -51,7 +51,7 @@ from aaf.parser import (MediaRef, Segment, _categorize_effect, _classify_motion,
 from titulos.avid import e_titulo as _e_titulo
 from titulos.avid import ler as _titulo
 
-from .efeitos import enquadramento, informativo, nome_do_plugin
+from .efeitos import enquadramento, informativo, nome_do_plugin, parametros_do_time_shift
 from .percurso import e_composicao, e_master, e_subclipe, tipo, track_de
 
 log = logging.getLogger("delapraca.avb_bin.segmentos")
@@ -602,6 +602,24 @@ class _Leitor:
                                 "reproducible": True, "params": {"titulo": _titulo(c)}})
             elif k != "MotionEffect" and getattr(c, "effect_id", None):
                 eid = str(c.effect_id)
+                ts = parametros_do_time_shift(c) if k == "AudioSuitePluginEffect" else None
+                vel = ts["velocidade"] if ts else None
+                if k == "AudioSuitePluginEffect" and nome_do_plugin(c) == "Reverse" and not movimento:
+                    # ⭐ o AudioSuite REVERSE (2026-11-26, B33): o som de trás para a frente sobre o clipe de dentro — o
+                    #   mesmo modelo do reverso da imagem (o mapa DESCE: o 1º quadro mostrado é o último do clipe)
+                    n = int(getattr(c, "length", 0) or 0)
+                    movimento.update({"speed_ratio": 1.0, "motion_effect_type": "constant",
+                                      "source_offset_map": [(0.0, float(n - 1)), (float(n - 1), 0.0)],
+                                      "speed_curve": [], "retime": None, "phase_offset": 0})
+                if vel is not None and abs(vel - 1.0) > 1e-6 and not movimento:
+                    # ⭐ o AudioSuite TIME SHIFT é a velocidade do SOM que o editor escolhe no MC (autor, 2026-11-26).
+                    #   Antes ia só como efeito não reproduzível, e o som chegava ao Premiere a 100 % com o DOBRO da fonte,
+                    #   sem marcador. A fonte começa no mesmo ponto e anda `vel` por quadro (o MC ouve só a 1ª parte do
+                    #   clipe de dentro, que tem a duração do de fora): o mesmo modelo de uma velocidade constante.
+                    comprimento = int(getattr(c, "length", 0) or 0)
+                    movimento.update({"speed_ratio": vel, "motion_effect_type": "constant",          # = a imagem (0,5 a 50 %)
+                                      "source_offset_map": [(0.0, 0.0), (float(comprimento), round(comprimento * vel, 3))],
+                                      "speed_curve": [], "retime": None, "phase_offset": 0})
                 # ⭐ Enquadramento (3D Warp, Resize, PIP, Pan&Scan, FrameFlex): os parâmetros
                 # saem da bin com os nomes do AAF (`efeitos.py`) e vão ao writer do DRT.
                 efeito, modo, avisos = enquadramento(c)
@@ -614,6 +632,8 @@ class _Leitor:
                 elif not modo:
                     categoria, _ = _categorize_effect(eid)
                     info = informativo(c)
+                    if ts:                 # o Time Shift: a velocidade e o tom (a carta os leva ao Premiere)
+                        info = {**info, "time_shift": ts}
                     efeitos.append({"name": eid, "category": categoria,
                                     # o CC que se traduz inteiro vai aos 2 nós do Resolve (`drp/cor_mc.py`)
                                     "reproducible": "cor_mc" in info, "params": info,

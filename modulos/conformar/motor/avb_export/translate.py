@@ -768,14 +768,30 @@ def _entry_outra_taxa(s, h):
         # 18/10) — vai como clipe simples
         return None
     sf, dur = float(sf), s["duration_frames"]
+    # ⭐ A FASE (2026-11-26, B32 no Premiere 27 × MC 25.12, o quadro lido na imagem): a entrada do Premiere numa fonte de
+    #   outra taxa cai no MEIO de um quadro da fonte (29,97 numa 23,976: 47,5) e ele mostra o PISO e anda dali — 47, 48,
+    #   50, 51, 52… O adaptador começa num quadro inteiro (48, 49, 50, 51, 53…: 48 de 96 iguais) e o `round` da entrada
+    #   errava o 1º quadro do 25 p e do 50 p (48 em vez de 47). Com a fração, vai pelo gráfico de POSIÇÃO a partir dela.
+    exata = s.get("fonte_exata")
+    inicio0 = s["source_start_frames"]
+    fase = 0.0
+    if exata is not None and not s.get("motion_effect_type") == "reverse":
+        inicio0 = int(math.floor(float(exata) + 1e-6))
+        fase = float(exata) - inicio0
+        if fase < 1e-4 or fase > 1 - 1e-4:
+            inicio0, fase = int(round(float(exata))), 0.0
     pos = []
     if s.get("has_motion_effect"):
         pos = RP.posicoes(s)
-        if not pos and s.get("speed_ratio"):                         # constante do .prproj: só o speed_ratio
-            pos = [k / float(s["speed_ratio"]) for k in range(dur)]
+        if pos:                                                      # rampa: as posições são relativas à entrada de sempre
+            inicio0 = s["source_start_frames"]
+        elif s.get("speed_ratio"):                                   # constante do .prproj: só o speed_ratio
+            pos = [fase + k / float(s["speed_ratio"]) for k in range(dur)]
+    elif fase:
+        pos = [fase + k * sf / float(_TL_FPS) for k in range(dur)]   # tempo real, com a fase
     if not pos:
         need = int(math.ceil(dur * sf / float(_TL_FPS) - 1e-6))
-        return ("adapter", sf, (h, s["source_start_frames"], max(1, need)), dur, None)
+        return ("adapter", sf, (h, inicio0, max(1, need)), dur, None)
     if s.get("motion_effect_type") == "reverse" or any(b < a - 1e-6 for a, b in zip(pos, pos[1:])):
         return None                                                  # ré sobre o adaptador: não medido
     # ⛔ Posição NEGATIVA no começo não é ré: é a fase do Premiere (o PRODC, LOU_7231 a 60 qps num nest: o mapa começa em
@@ -783,7 +799,7 @@ def _entry_outra_taxa(s, h):
     # que grava o início em quadros DA FONTE numa trilha na taxa da TIMELINE — o MC lia 2768 a 23,976 (≈ 6.927 a 60,
     # num arquivo de 3.545) e recusava a sequência inteira: CM_OFFSET_OUT_OF_RANGE (2026-10-18, MC 24.6). Desloca o
     # clipe de dentro para o quadro do piso e as posições junto: o mesmo quadro em cada ponto, tudo ≥ 0.
-    inicio = s["source_start_frames"]
+    inicio = inicio0
     base = math.floor(min(pos) + 1e-6)
     if base < 0:
         if inicio + base < 0:
@@ -1158,6 +1174,26 @@ def _seg_to_entry_base(s, m2h, name2h, kind):
     if _OFFLINE_H and _R(h) in _OFFLINE_HEXES:        # master offline: desloca +H (centraliza na folga)
         src_start += _OFFLINE_H                        # -> handle nos dois lados p/ transições (ver acima)
     clip = ("clip", h, src_start, dur, slot)          # reframe dropado: mantém clipe
+    if kind == "sound" and _ORIGEM == "premiere" and s.get("reverso_som") and not MOTION_OFF and dur:
+        # ⭐ o SOM em reverso do Premiere: o AudioSuite REVERSE do MC sobre o trecho para a frente (molde lido da bin do
+        #   laboratório B32, 2026-11-26: sem chunk, `precomputed` nulo — o editor renderiza; medido de ouvido: as claques
+        #   de trás para a frente, iguais às do Premiere)
+        return ("asplugin", "Reverse", clip, dur, None)
+    if kind == "sound" and _ORIGEM == "premiere" and s.get("has_motion_effect") and s.get("speed_ratio") \
+            and not MOTION_OFF and dur:
+        # ⭐ VELOCIDADE DO SOM (2026-11-26): o Premiere muda a velocidade do clipe inteiro, som junto; antes o som saía a
+        #   100 % calado (achado na EDL da B30: M2 no som do Premiere, nada no do MC). ⛔ O Audio Warp
+        #   (`EFF_TIMEWARP.AUDIO_TIME_WARP`) NÃO serve: é o adaptador de taxa mista e o MC o toca a 100 % (medido de
+        #   ouvido). O gesto do editor no MC é o AudioSuite TIME SHIFT (autor): tocou a 50 % mantendo o tom (claques a
+        #   cada 2 s, 3700/3800 Hz) DEPOIS do render. Como o MC grava: o clipe de dentro tem a MESMA duração do de fora,
+        #   do mesmo ponto de entrada (72 de fonte para 72 na timeline; a 50 % só a 1ª metade é ouvida) e a velocidade
+        #   é o `d_c006` do chunk (1,0 = 100 %). Vai SEM render (`precomputed=None`, como o D-Verb): o editor renderiza.
+        #   `speed_ratio` do segmento é timeline ÷ fonte (50 % → 2,0); ⬜ acima de 100 % não medido no MC.
+        vel = 1.0 / float(s["speed_ratio"])
+        if abs(vel - 1.0) > 1e-6:
+            # ⭐ o TOM (2026-11-26, B32): sem o "Maintain Audio Pitch" o Premiere toca como fita (50 % → o tom cai uma
+            #   oitava: 5400 → 2700 Hz, medido); no Time Shift isso é o Shift (`d_c005`) = a velocidade
+            return ("asplugin", "Time Shift", clip, dur, ("vel", (vel, s.get("mantem_tom", True) is not False)))
     if kind == "sound":
         lv = _gain_level(s)                            # ganho/volume do clipe (Audio Gain, não-unity)
         auto = s.get("volume_auto")                    # automação de VOLUME: [(quadro do clipe, level)]
@@ -1177,7 +1213,7 @@ def _position_row(segs, m2h, name2h, kind, fps):
     (overlap: pos -= dur) se estiver ENTRE dois clipes reais — senão pos se corrompe (transição
     órfã/no início) e todos os clipes seguintes deslocam. Gaps do parser: preenchimento por tc cobre."""
     ents = [(_seg_to_entry(s, m2h, name2h, kind), s) for s in segs]
-    _clip_like = ("clip", "motion", "gain", "title", "collapse", "adapter", "geo", "animatte", "mudo")   # ocupam a timeline (posicionados por tc_in)
+    _clip_like = ("clip", "motion", "gain", "title", "collapse", "adapter", "geo", "animatte", "mudo", "awarp", "asplugin")   # ocupam a timeline (posicionados por tc_in)
     pos = 0
     out = []
     pending_head_trim = 0    # TRANS_OFF: frames a cortar da CABEÇA do próximo clipe (ver bloco "trans")
@@ -1374,6 +1410,7 @@ def _collect_clip_mobs(entry, acc):
         for (mh, *_r) in a1: acc.add(mh)
     elif kind == "awarp":
         for (mh, *_r) in a2[0]: acc.add(mh)
+        if a2[2] is not None: _collect_clip_mobs(a2[2], acc)     # warp de clipe simples: o clipe de dentro
     elif kind == "selector":
         for (mh, *_r) in a1: acc.add(mh)
     elif kind == "mcam_sel":
@@ -1868,6 +1905,31 @@ def _automacao_de_volume(f, pontos, length):
     tk = f.create.Track(); tk.component = cc; tk.control_code = 1000; tk.lock_number = 0
     return tk
 
+def _chunk_com_velocidade(chunk: bytes, vel: float, shift: float | None = None) -> bytes:
+    """O chunk "Complete Controls State" do Time Shift (AAX) com a velocidade trocada. Formato (medido no MC 25.12, Mac,
+    2026-11-26): 4 bytes de cabeçalho, depois registros `<tag de 6 bytes>\\0\\0` + valor big-endian — `l_…` int32,
+    `d_…` double. `d_c006` = velocidade (1,0 no molde de fábrica, 0,5 no clipe a 50 % que o editor fez); `d_c005` é o
+    Shift do tom (1,0 = mantém)."""
+    import struct
+    b = bytearray(chunk)
+    achou = False
+    i = 4
+    while i + 8 <= len(b):
+        tag = bytes(b[i:i + 6]); i += 8
+        if tag[:1] == b"d":
+            if tag == b"d_c006":
+                b[i:i + 8] = struct.pack(">d", vel)
+                achou = True
+            elif tag == b"d_c005" and shift is not None:      # o Shift do tom (1,0 = mantém)
+                b[i:i + 8] = struct.pack(">d", shift)
+            i += 8
+        else:
+            i += 4
+    if not achou:
+        raise ValueError("chunk do Time Shift sem d_c006")
+    return bytes(b)
+
+
 def _build_one(f, entry, tkind, tpl):
     """constrói 1 componente .avb a partir de 1 entry (recursivo p/ gain->selector->clip)."""
     kind, a1, a2, length, slot_id = entry
@@ -1898,6 +1960,10 @@ def _build_one(f, entry, tkind, tpl):
             _set_inner_component(f, te, _build_one(f, a2, tkind, tpl))
         chunk, preset = slot_id if slot_id else (None, None)
         pls = te.property_data.get("plugins")
+        if isinstance(chunk, str) and chunk == "vel":   # velocidade do Premiere: o chunk do PRÓPRIO molde, `d_c006` trocado
+            v_ts, tom_ts = preset if isinstance(preset, tuple) else (float(preset), True)
+            chunk, preset = _chunk_com_velocidade(bytes(pls[0].property_data["chunks"][0].property_data["data"]),
+                                                  float(v_ts), None if tom_ts else float(v_ts)), None
         if chunk is not None and pls:
             chs = pls[0].property_data.get("chunks")
             if chs: chs[0].property_data["data"] = bytearray(chunk)   # config por instância (ex ganho)
@@ -1918,6 +1984,10 @@ def _build_one(f, entry, tkind, tpl):
     if kind == "awarp":
         me = materialize(f, tpl["EFF_TIMEWARP.AUDIO_TIME_WARP"]); me.length = length; me.edit_rate = ER
         if a1: me.speed_ratio = a1
+        for p in me.property_data.get("param_list") or []:       # o ParamClip do molde tem o comprimento DELE
+            ct = p.property_data.get("control_track")
+            if ct is not None:
+                ct.property_data["length"] = length
         comb_clips, comb_len, inner_entry = a2
         inner = me.tracks[0].component
         if type(inner).__name__ == "TrackEffect" and comb_clips:

@@ -96,6 +96,8 @@ class Trabalho:
     pasta_projeto: str = ""
     # O que o banco resolveu nesta preparação, para o painel poder contar ao editor.
     do_banco: dict = field(default_factory=dict)
+    #: o que o MAPA da Carta resolveu (`mapa_da_carta.consultar`: achados, alertas, quantas Cartas)
+    do_mapa: dict = field(default_factory=dict)
     achatar_subclipes: bool = True
     achatar_group_clips: bool = True
     # ⭐ Relink PARCIAL: uma timeline meio relinkada é o caso comum. Independentes e
@@ -140,6 +142,8 @@ class Trabalho:
         # mostra é indistinguível de um que não funciona.
         r["do_banco"] = self.do_banco.get("acertos", 0)
         r["ambiguos_no_banco"] = self.do_banco.get("ambiguos", 0)
+        r["do_mapa"] = sum(1 for c in self.casamentos if c.metodo == "mapa")
+        r["alertas_do_mapa"] = len(self.do_mapa.get("alertas") or [])
         return r
 
 
@@ -317,6 +321,17 @@ def preparar(trabalho: Trabalho, progresso: Progresso | None = None) -> Trabalho
                                    trabalho.pastas)
     trabalho.do_banco = do_banco
     conhecidos = dict(do_banco["arquivos"])
+
+    # ── o MAPA da Carta (plano 2026-11-26, etapa 3): de que ORIGINAL é cada offline, pelo que a Carta registrou ─────
+    # ⭐ Depois do banco de propósito: o que o banco (ou a rota) já trouxe e NÃO é o próprio offline, se o mapa disser
+    # outro arquivo, é empate do editor (`mapa_da_carta.marcar`). O que o mapa não souber segue o casamento de sempre.
+    import mapa_da_carta
+
+    p("consultando o mapa da Carta", 1, 3, "")
+    trabalho.do_mapa = mapa_da_carta.consultar(trabalho.masters)
+    discordam = mapa_da_carta.aplicar(trabalho.masters, trabalho.do_mapa)
+    for caminho in discordam.values():
+        conhecidos.setdefault(caminho, "")
     # Um master que JÁ chega com caminho (na rota `carta`: o AMA da Carta que existe nesta
     # máquina) entra no índice pelo mesmo caminho das linhas do banco — o estágio 1 do
     # matcher só o reconhece se ele estiver no índice.
@@ -381,6 +396,7 @@ def preparar(trabalho: Trabalho, progresso: Progresso | None = None) -> Trabalho
     trabalho.casamentos = casar_masters(
         trabalho.masters, indice,
         progresso=lambda f, t, n: p("casando", f, t, n))
+    mapa_da_carta.marcar(trabalho.casamentos, trabalho.do_mapa, discordam)
 
     # O que não casou pode já estar online (Avid MediaFiles, ou um link AMA feito por fora do app): a lista diz isso
     # e a _SEQ não o põe à vista. Acessório: falhar aqui só deixa tudo como "sem mídia", como antes.

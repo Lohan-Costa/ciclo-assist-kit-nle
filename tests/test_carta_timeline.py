@@ -432,6 +432,42 @@ def test_enxerto_passa_a_transicao_do_modelo_do_avid_para_o_do_premiere(proj, tm
     assert b.find("./ClipTrackItem/TailTransition").get("ObjectRef") == EP._chave(t2)
 
 
+def test_enxerto_leva_o_time_shift_do_mc_como_velocidade_do_som_com_o_tom(proj, tmp_path):
+    """O AudioSuite TIME SHIFT do MC (a velocidade do SOM que o editor escolhe, 2026-11-26) vai ao Premiere como a
+    velocidade do clipe de som — PlaybackSpeed no Clip do AudioClip, o vínculo no ORIGINAL (nunca o render do MC) — e,
+    com o Shift a 100 %, `MaintainAudioPitch` true (como o Premiere grava, B30 do laboratório). O efeito não é mais
+    dito "sem correspondência": tem par."""
+    from cicloassist.carta import entrega_prproj as EP
+    cam = _ref_com_op_atom(proj, tmp_path, "S01_T002")
+    wav = tmp_path / "SFX.wav"
+    wav.write_bytes(b"x")
+    molde = tmp_path / "entrega v01.prproj"
+    xml = (_MOLDE_SOM.replace("ARQA", str(tmp_path / "S01_T002_A02.mxf")).replace("WAV", str(wav))
+           .replace("ARQ", str(tmp_path / "S01_T002.mxf")))
+    EP._gravar_prproj(EP.ET.fromstring(xml.split("?>", 1)[1]), str(molde))
+    ts = {"razao": 0.5, "tipo": "constant", "classe": "creative", "relativa": 0.5, "mapa": [[0.0, 0.0], [72.0, 36.0]],
+          "time_shift": True, "mantem_tom": True}
+    efeito = {"nome": "EFF_AUDIO_AS_PLUG_IN", "categoria": "other", "rotulo": "Time Shift",
+              "params": {"time_shift": {"velocidade": 0.5, "tom": 1.0}}, "traduzivel": False}
+    item = {"tipo": "sequencia", "timeline": True, "fps": "24000/1001", "tc_inicio_q": 0, "trilhas": [
+        {"tipo": "A", "k": 1, "transicoes": [], "sem_clipe": [], "clipes": [
+            {"midia": cam["id"], "inicio_q": 0, "entrada_q": 48, "fim_q": 72, "canal": 2, "velocidade": ts,
+             "efeitos": [efeito]}]}]}
+    saida = str(tmp_path / "entrega v02.prproj")
+    rel = EP.escrever_timeline(proj, item, str(molde), saida, "MOLDE", "CORTE", {"A1"})
+    assert rel["clipes"] == 1 and rel["velocidades"] == 1 and not rel["fora"], rel["fora"]
+    R = EP._ler_prproj(saida)
+    por = {EP._chave(e): e for e in R if EP._chave(e)}
+    ti = next(e for e in R if e.tag == "AudioClipTrackItem")
+    ac = por[por[ti.find("./ClipTrackItem/SubClip").get("ObjectRef")].find("Clip").get("ObjectRef")]
+    tpf = 10594584000
+    assert ac.findtext("./Clip/InPoint") == str(48 * tpf)
+    assert ac.findtext("./Clip/OutPoint") == str(48 * tpf + 36 * tpf)          # 72 na timeline = 36 da fonte
+    assert float(ac.findtext("./Clip/PlaybackSpeed")) == 0.5 and ac.findtext("./Clip/MaintainAudioPitch") == "true"
+    tags = [x.tag for x in ac.find("Clip")]
+    assert tags.index("MaintainAudioPitch") == tags.index("PlaybackSpeed") + 1
+
+
 def test_enxerto_leva_velocidade_conformacao_e_desligado(proj, tmp_path):
     """Molde `MOLDE VELOCIDADE` (2026-11-14): PlaybackSpeed no Clip, InPoint = a entrada na mídia, OutPoint = entrada +
     duração × velocidade, optical flow = TimeInterpolationType 2; `[1000,1001]` nativo = tempo real com a entrada na
@@ -459,12 +495,27 @@ def test_enxerto_leva_velocidade_conformacao_e_desligado(proj, tmp_path):
     def clip(ti):
         return por[por[ti.find("./ClipTrackItem/SubClip").get("ObjectRef")].find("Clip").get("ObjectRef")].find("Clip")
     c0, c1, c2 = (clip(t) for t in tis)
+    # ⛔ a entrada NA GRADE da TIMELINE, pelo teto (Premiere 26/27, B32 2026-11-26, código de barras de cada quadro: a
+    #   entrada na grade começa EXATA, com ou sem velocidade; a grade de passo × velocidade era a regra do 23–25) —
+    #   100 quadros a 85 % ficam 100; 37 a 24 numa 23,976 = 36,96 quadros da timeline → 37 (o exato mostraria o 36)
     assert c0.findtext("InPoint") == str(100 * tpf)
     assert c0.findtext("OutPoint") == str(100 * tpf + round(79 * tpf * 0.85))
     assert float(c0.findtext("PlaybackSpeed")) == pytest.approx(0.85) and c0.findtext("TimeInterpolationType") == "2"
-    assert c1.findtext("InPoint") == str(37 * tps // 24)                      # 37 quadros a 24, em tempo real
-    assert c1.findtext("OutPoint") == str(37 * tps // 24 + 370 * tpf) and c1.find("PlaybackSpeed") is None
+    assert c1.findtext("InPoint") == str(37 * tpf)                            # 37 quadros a 24, em tempo real, na grade
+    assert c1.findtext("OutPoint") == str(37 * tpf + 370 * tpf) and c1.find("PlaybackSpeed") is None
     assert tis[2].findtext("./ClipTrackItem/IsMuted") == "true" and tis[0].find("./ClipTrackItem/IsMuted") is None
+
+
+def test_fonte_de_outra_taxa_e_tempo_real_nao_velocidade():
+    """`conform` (25 p numa sequência 23,976, o adaptador `[960, 1001]` do Avid) é TEMPO REAL com a entrada contada a 25 —
+    como o Premiere toca (T25 da B30, 2026-11-26: ia PlaybackSpeed 1,0427 e a entrada 1 quadro adiante)."""
+    from fractions import Fraction
+    from cicloassist.carta import entrega_prproj as EP
+    v = {"razao": 0.9590409590409591, "tipo": "constant", "classe": "conform", "relativa": 1.000001000001,
+         "mapa": [[0.0, 0.0], [72.0, 75.075]]}
+    ve = EP.velocidade_do_clipe({"velocidade": v}, "24000/1001")
+    assert ve["vel"] is None and ve["fonte_fps"] == Fraction(25)
+    assert round(49 * EP.TICKS_POR_SEGUNDO / ve["fonte_fps"]) == 49 * EP.TICKS_POR_SEGUNDO // 25   # o quadro 49 a 25
 
 
 def test_vinculo_e_um_trecho_so():
@@ -490,3 +541,150 @@ def test_vinculo_e_um_trecho_so():
     grupos = [[x.get("ObjectRef") for x in lk.find("TrackItemGroup/TrackItems")] for lk in novos]
     assert grupos == [["v1", "a1", "a2"], ["b1", "b2"], ["s1", "s2"]]
     assert rel["vinculos"] == 3 and rel["vinculos_com_imagem"] == 1
+
+
+def test_time_shift_da_bin_vira_velocidade_do_som_na_carta(tmp_path, monkeypatch):
+    """Da BIN à carta (2026-11-26): o Time Shift escrito pelo Conformar (o mesmo do editor no MC) é lido como a velocidade
+    do clipe de som, com o tom mantido; antes ia como efeito "sem correspondência" e o som chegava a 100 %."""
+    import sys
+    from cicloassist.carta import timeline as TL
+    antes = set(sys.modules)
+    monkeypatch.setattr(sys, "path", list(sys.path))       # o motor do Conformar sai do caminho no fim do teste
+    TL._conformar()
+    import avb
+    from avb_export import translate as T
+    try:
+        _time_shift_na_carta(tmp_path, monkeypatch, TL, avb, T)
+    finally:                                                # e os módulos dele também (há `tools` dos dois lados)
+        for k in set(sys.modules) - antes:
+            if k != "avb" and not k.startswith("avb."):
+                sys.modules.pop(k, None)
+
+
+def _time_shift_na_carta(tmp_path, monkeypatch, TL, avb, T):
+    fps = 24000 / 1001
+
+    def seg(track, **kw):
+        s = {"track": track, "timeline_tc_in": T._frames_tc(0, fps), "duration_frames": 72, "clip_name": "a",
+             "mob_id": "a", "source_start_frames": 48, "source_fps": fps, "is_gap": False, "is_transition": False,
+             "is_audio": track >= 1000, "is_effect": False, "disabled": False, "effects": [], "source_slot_id": 1}
+        s.update(kw)
+        return s
+    T.ER = fps
+    T.set_remap(None)
+    T.set_master_len({})
+    T.set_origem("premiere", fps)
+    try:
+        pic, snd = T.tracks_from_segments([seg(1), seg(1000, has_motion_effect=True, speed_ratio=2.0)], fps, {},
+                                          {"a": "11" * 32})
+        arq = tmp_path / "t.avb"
+        with avb.file.AVBFile() as f:
+            T.build(f, "T", pic + snd, T.capture_templates(), 24, 9, "HD 1080p/23.976")
+            f.write(str(arq))
+    finally:
+        T.set_origem(None, None)
+    S = TL._conformar()
+    ler = S.ler_timeline
+
+    def com_master(f, alvo):           # a bin de teste não tem o master: o mob do clipe fica como o do segmento
+        r = ler(f, alvo)
+        for x in r["segments"]:
+            if not x.get("is_gap") and not x.get("is_transition"):
+                x["mob_id"] = x.get("mob_id") or "a"
+        return r
+    monkeypatch.setattr(S, "ler_timeline", com_master)
+    with avb.open(str(arq)) as f:
+        seq = next(m for m in f.content.mobs if m.name == "T")
+        item, _ = TL.do_avid(f, seq, lambda mob_id: "m")
+    som = [c for t in item["trilhas"] if t["tipo"] == "A" for c in t["clipes"]]
+    assert len(som) == 1
+    v = som[0]["velocidade"]
+    assert v["razao"] == 0.5 and v["tipo"] == "constant" and v["time_shift"] and v["mantem_tom"]
+    assert som[0]["entrada_q"] == 48 and som[0]["fim_q"] - som[0]["inicio_q"] == 72
+
+
+def test_velocidade_do_mapa_fase_outra_taxa_e_reverso():
+    """O modelo da B32 (2026-11-26, código de barras de cada quadro, 12/12 casos 96/96 pela Carta): a velocidade do
+    Premiere = inclinação do mapa ÷ (taxa nativa ÷ timeline); o 1º valor do mapa é a FASE; o mapa que DESCE é o reverso."""
+    from fractions import Fraction
+    from cicloassist.carta import entrega_prproj as EP
+    v = EP.velocidade_do_clipe({"velocidade": {"tipo": "constant", "classe": "conform+creative", "conform": 0.8,
+                                               "mapa": [[0.0, 0.5], [95.0, 213.187]]}}, "24000/1001")
+    assert round(v["vel"], 4) == 1.791 and v["fonte_fps"] == Fraction(30000, 1001) and v["desloc"] == 0.5
+    t = EP.velocidade_do_clipe({"velocidade": {"tipo": "constant", "classe": "conform", "conform": 0.95904,
+                                               "mapa": [[0.0, 0.965], [94.0, 98.976]]}}, "24000/1001")
+    assert t["vel"] is None and t["desloc"] == 0.965 and round(float(t["fonte_fps"]), 3) == 25.0
+    r = EP.velocidade_do_clipe({"velocidade": {"tipo": "constant", "classe": "native", "conform": 1.0,
+                                               "mapa": [[0.0, 95.0], [95.0, 0.0]]}}, "24000/1001")
+    assert r["rev"] and r["vel"] is None and r["desloc"] == 95.0
+    assert "fora" in EP.velocidade_do_clipe({"velocidade": {"tipo": "constant", "mapa": [[0.0, 5.0], [9.0, 5.0]]}},
+                                            "24000/1001")
+
+
+def test_enxerto_escreve_rampa_e_congelado_como_time_remapping(proj, tmp_path):
+    """Autor (2026-11-26): "nada de marcador a menos que seja impossível a tradução". A rampa e o congelado do Avid vão
+    como TIME REMAPPING (`modulos/conformar/motor/prproj/remap.py`, o escritor provado no laboratório B22: 48/48): canto
+    a cada quadro onde a velocidade muda, só as pontas no constante; a curva começa em (0, 0) e o In anda quadros
+    INTEIROS; sem PlaybackSpeed."""
+    from cicloassist.carta import entrega_prproj as EP
+    cam = _ref_com_op_atom(proj, tmp_path, "a001_C003")
+    molde = tmp_path / "entrega v01.prproj"
+    EP._gravar_prproj(EP.ET.fromstring(_MOLDE.replace("ARQ", str(tmp_path / "a001_C003.mxf")).split("?>", 1)[1]), str(molde))
+    # rampa: 12 quadros a 100 %, 12 acelerando de 1 para 2 quadros por quadro, 24 a 200 % (mapa em quadros da fonte)
+    pos = [float(k) for k in range(13)]
+    for k in range(1, 13):
+        pos.append(pos[-1] + 1 + k / 12)
+    for _ in range(23):
+        pos.append(pos[-1] + 2)
+    rampa = {"tipo": "ramp", "classe": "creative", "mapa": [[float(k), p] for k, p in enumerate(pos)]}
+    congelado = {"tipo": "freeze", "classe": "creative", "mapa": [[0.0, 0.0], [30.0, 0.0]]}
+    item = {"tipo": "sequencia", "timeline": True, "fps": "24000/1001", "tc_inicio_q": 0, "trilhas": [
+        {"tipo": "V", "k": 1, "transicoes": [], "sem_clipe": [], "clipes": [
+            {"midia": cam["id"], "inicio_q": 0, "entrada_q": 100, "fim_q": 48, "velocidade": rampa},
+            {"midia": cam["id"], "inicio_q": 60, "entrada_q": 200, "fim_q": 90, "velocidade": congelado}]}]}
+    saida = str(tmp_path / "entrega v02.prproj")
+    rel = EP.escrever_timeline(proj, item, str(molde), saida, "MOLDE", "CORTE", {"V1"})
+    assert rel["rampas"] == 2 and rel["velocidades"] == 2
+    assert not rel["fora"]
+    R = EP._ler_prproj(saida)
+    por = {EP._chave(e): e for e in R if EP._chave(e)}
+    tpf, tps = 10594584000, 254016000000
+    q = 1001 / 24000
+    tis = sorted((e for e in R if e.tag == "VideoClipTrackItem"), key=lambda e: int(e.findtext("./ClipTrackItem/TrackItem/Start") or 0))
+
+    def clip(ti):
+        return por[por[ti.find("./ClipTrackItem/SubClip").get("ObjectRef")].find("Clip").get("ObjectRef")].find("Clip")
+
+    def curva(cl):
+        tr = por[cl.find("TimeRemapping").get("ObjectRef")]
+        par = por[tr.find("Keyframes").get("ObjectRef")]
+        assert par.findtext("Name") == "Speed" and par.findtext("IsTimeVarying") == "true"
+        return [(int(a) / tps, float(b)) for a, b, *_ in (k.split(",") for k in par.findtext("Keyframes").split(";") if k)]
+    c0, c1 = (clip(t) for t in tis)
+    assert c0.find("PlaybackSpeed") is None and c1.find("PlaybackSpeed") is None
+    # rampa: In = teto de 100 quadros (inteiro) → 100; o 1º canto (0, 0); a posição de cada quadro na curva = a do mapa
+    k0 = curva(c0)
+    assert c0.findtext("InPoint") == str(100 * tpf) and c0.findtext("OutPoint") == str(148 * tpf)
+    assert k0[0] == (0.0, 0.0) and len(k0) == 1 + 1 + 12 + 1 + 1        # (0,0), o início, um por quadro onde a velocidade muda (12–23), o último e o fim
+    rm = EP._modulo_remap()
+    pts = [(t, s, "6") for t, s in k0]
+    for k, p in enumerate(pos[:48]):
+        assert rm.fonte_no_clipe(pts, (100 + k) * q) == pytest.approx((100 + p) * q, abs=1e-6)
+    # congelado: a reta deitada no quadro 200 da fonte
+    k1 = curva(c1)
+    assert c1.findtext("InPoint") == str(200 * tpf)
+    assert {round(s / q, 6) for t, s in k1[1:]} == {200.0}
+
+
+def test_som_com_time_shift_de_fonte_de_outra_taxa_e_tempo_real():
+    """B32 (2026-11-26, as claques): o som com o Time Shift de um master 25p ou 29,97 numa timeline 23,976 — a entrada
+    conta na taxa da TIMELINE e o Speed é a razão em tempo real (0,5 e 1,791), sem a razão das taxas."""
+    from fractions import Fraction
+    from cicloassist.carta import entrega_prproj as EP
+    v = EP.velocidade_do_clipe({"velocidade": {"tipo": "constant", "classe": "conform+creative", "conform": 0.95904,
+                                               "mapa": [[0.0, 0.0], [95.0, 47.5]], "time_shift": True,
+                                               "mantem_tom": True}}, "24000/1001")
+    assert v["vel"] == pytest.approx(0.5) and v["fonte_fps"] == Fraction(24000, 1001)
+    w = EP.velocidade_do_clipe({"velocidade": {"tipo": "constant", "classe": "conform+creative", "conform": 0.8,
+                                               "mapa": [[0.0, 0.0], [96.0, 171.94]], "time_shift": True}}, "24000/1001")
+    assert w["vel"] == pytest.approx(1.791, abs=1e-3) and w["fonte_fps"] == Fraction(24000, 1001)

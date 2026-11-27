@@ -155,6 +155,30 @@ def conferir_saida(destino: Path, videos: list[Path], sondas: dict[Path, dict]) 
     return {"pares": pares, "problemas": problemas, "proxies": sum(1 for x in pares if x["ok"])}
 
 
+def gravar_manifesto(destino: Path, pares: list[dict], sondas: dict[Path, dict]) -> str:
+    """⭐ O MANIFESTO da conversão (plano 2026-11-26, etapa 2): "o original X virou o proxy Y, com estas características"
+    — `ciclo-conversao.json` ao lado dos proxies; a Carta o lê ao anexar a pasta (`carta/relacoes.py`). Só os pares que
+    passaram na conferência. Devolve o caminho, ou "" (sem par bom, ou sem como gravar: o proxy segue, é só o registro)."""
+    from .carta import relacoes
+    from .midia import identidade as _id
+    bons = []
+    for p in pares:
+        if not p.get("ok"):
+            continue
+        o, c = Path(p["original"]), Path(p["proxy"])
+        so = dict(sondas.get(o) or sondar(o))
+        sc = sondar(c)
+        so.update(arquivo=str(o), impressao=_id.impressao(o))
+        sc.update(arquivo=str(c), impressao=_id.impressao(c))
+        bons.append({"original": so, "convertido": sc})
+    if not bons:
+        return ""
+    try:
+        return str(relacoes.escrever_manifesto(destino, bons, "resolve_proxy"))
+    except OSError:
+        return ""
+
+
 def converter(projeto: str, videos: list[Path], destino: Path, *,
               relatar: Callable[[str, float | None, str], None] | None = None,
               prazo_s: float = 3600) -> dict[str, Any]:
@@ -178,6 +202,7 @@ def converter(projeto: str, videos: list[Path], destino: Path, *,
     if r.get("status") != "Complete":
         raise ConversaoFalhou(f"o render terminou como '{r.get('status')}' (pasta {destino})")
     saida = conferir_saida(destino, videos, plano["sondas"])
+    saida["manifesto"] = gravar_manifesto(destino, saida["pares"], plano["sondas"])
     return {"pasta": str(destino), "taxa": plano["taxa"], "segundos": r.get("segundos"),
             "grupos": [{"tamanho": f"{g['largura']}x{g['altura']}", "clipes": len(g["videos"])} for g in grupos],
             "timelines_no_resolve": [g["timeline"] for g in r.get("grupos") or []], **saida}

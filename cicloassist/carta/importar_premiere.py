@@ -148,6 +148,15 @@ def importar_timeline(proj: Projeto, item: dict, chamar, quadro: tuple[int, int]
     R = _ep._ler_prproj(editor)
     ja = _ep.midia_do_projeto(R)
     faltando = [a for a in arquivos if _ep._norm(a) not in ja]
+    # ⭐ o molde do SOM precisa de um clipe MONO montado pelo Premiere; numa timeline só de som ESTÉREO (B32, 2026-11-26)
+    #   não havia nenhum e a timeline inteira era recusada: a Carta põe um WAV mono de silêncio no projeto, junto da mídia
+    pede_mono = R is not None and {"som", "ganho", "transicao_A"} & set(
+        _mo.faltam(_mo.inventario(R), _mo.o_que_a_timeline_pede(proj, item)))
+    if pede_mono and _mo.som_mono(R, arquivos) is None:
+        molde_som = str(_mo.gravar_som_molde(proj.interna / "moldes"))
+        if _ep._norm(molde_som) not in ja:
+            faltando.append(molde_som)
+        rel["som_molde"] = molde_som
     # ⭐ UM pedido com a lista inteira (autor, 2026-11-15: um por arquivo fazia a janela de importar piscar centenas de
     #   vezes); o host importa a lista de uma vez por bin e confere arquivo a arquivo o que entrou
     recusados = []

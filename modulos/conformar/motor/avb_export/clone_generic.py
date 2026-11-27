@@ -104,21 +104,33 @@ def _own_track_sourceclips(mob):
 
 def _inicio_exato_bwf(path, edit_rate):
     """O início do áudio em quadros do projeto, FRACIONÁRIO (o pulldown não cai em quadro inteiro), a partir do
-    `time_reference` do bext. None sem time_reference. Ver `_probe_bwf_start` e `tempos_do_audio`."""
+    `time_reference` do bext. None sem time_reference. Ver `_probe_bwf_start` e `tempos_do_audio`.
+
+    Os segundos do relógio × a taxa EXATA do projeto (NTSC: nominal × 1000/1001 exato, não o `edit_rate` arredondado),
+    sem arredondar no meio. ⛔ CORRIGE (2026-11-25): a conta antiga arredondava primeiro em quadros NOMINAIS (24) e só
+    depois descontava o pulldown — num WAV de gravador a 23,976 (o `time_reference` = quadros × 2002 amostras) isso
+    tirava UM quadro em metade dos arquivos, os de milésimo de quadro < 0,5 (06:00:00:00 = 518400 virava 518399; 36 de
+    124 WAVs da PRODUCAO-A). MEDIDO contra o próprio MC: os 35 masters desses WAVs nas bins da PRODUCAO-A (linkados
+    pelo MC) batem com esta conta, nenhum com a antiga. Com segundos inteiros (os gabaritos de 2026-10-31) as duas
+    coincidem — por isso passava."""
     try:
         o = __import__("json").loads(subprocess.check_output([fftools.ffprobe_exe(), "-v", "error", "-select_streams",
              "a:0", "-show_entries", "format_tags=time_reference:stream=sample_rate", "-of", "json", path]).decode())
         tr = (o.get("format", {}).get("tags", {}) or {}).get("time_reference")
         sr = float(o["streams"][0]["sample_rate"])
         if tr and str(tr).isdigit():
-            nominal = int(round(edit_rate))
-            tc_frames = round(int(tr) / sr * nominal)          # TC nominal (24)
-            # pulldown p/ frames ACTUAL: NTSC (23.976/29.97) usa 1000/1001 EXATO (não edit_rate arredondado)
-            factor = 1000.0 / 1001.0 if abs(edit_rate - nominal) > 0.005 else 1.0
-            return tc_frames * factor
+            return inicio_exato_do_relogio(int(tr), sr, edit_rate)
     except Exception:
         pass
     return None
+
+
+def inicio_exato_do_relogio(time_reference: int, taxa_amostras: float, edit_rate: float) -> float:
+    """Amostras desde a meia-noite → quadros do projeto, fracionários: segundos × taxa exata (NTSC 1000/1001)."""
+    nominal = int(round(edit_rate))
+    if abs(edit_rate - nominal) > 0.005:                  # NTSC: a conta em inteiros até a divisão (sem resto de float)
+        return time_reference * nominal * 1000 / (float(taxa_amostras) * 1001)
+    return time_reference * float(edit_rate) / float(taxa_amostras)
 
 
 def _probe_bwf_start(path, edit_rate):

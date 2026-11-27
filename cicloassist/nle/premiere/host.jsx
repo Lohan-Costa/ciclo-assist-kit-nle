@@ -1159,10 +1159,22 @@ function cicloTransicionar(seq, trs) {
 }
 
 // ⚠️ O nome do efeito sai no IDIOMA do app, e o QE devolve objeto até para nome que não existe (com `name` vazio).
-function cicloEfeitoQE(nomes) {
+function cicloEfeitoQE(nomes, contem) {
   for (var i = 0; i < nomes.length; i++) {
     var e = qe.project.getVideoEffectByName(nomes[i]);
     if (e && String(e.name)) return e;
+  }
+  // ⛔ o nome muda com o IDIOMA do Premiere (2026-11-26, 26.0.2 em português: "Cor de Lumetri" — nenhum dos nomes da lista
+  //   existia, o molde da cor nunca era montado e os Color Correction do Avid ficavam de fora): a reserva procura na lista
+  //   de efeitos o nome que CONTÉM a marca (`contem`, minúsculas), em qualquer idioma
+  if (contem) {
+    var lista = String(qe.project.getVideoEffectList()).split(",");
+    for (var j = 0; j < lista.length; j++) {
+      if (lista[j].toLowerCase().indexOf(contem) >= 0) {
+        var x = qe.project.getVideoEffectByName(lista[j]);
+        if (x && String(x.name)) return x;
+      }
+    }
   }
   return null;
 }
@@ -1175,8 +1187,8 @@ function cicloCorDoAvid(seq, pedidos) {
     app.enableQE();
     app.project.openSequence(seq.sequenceID);
     var q = qe.project.getActiveSequence();
-    var pa = cicloEfeitoQE(["ProcAmp", "Amplificador de processo", "Proc Amp"]);
-    var lu = cicloEfeitoQE(["Lumetri Color", "Cor Lumetri", "Lumetri"]);
+    var pa = cicloEfeitoQE(["ProcAmp", "Amplificador de processo", "Proc Amp"], "procamp");
+    var lu = cicloEfeitoQE(["Lumetri Color", "Cor de Lumetri", "Cor Lumetri", "Lumetri"], "lumetri");
     for (var i = 0; i < pedidos.length; i++) {
       var pd = pedidos[i], r = { pedido: pd };
       if (!pa || !lu) {

@@ -56,9 +56,6 @@ const AUTOR_URL: &str = "https://www.linkedin.com/in/lohan-costa/";
 const LARGURA: f64 = 560.0;
 const ALTURA: f64 = 820.0;
 const FRACAO_DA_ALTURA: f64 = 0.85;
-/// A largura do padrão ANTIGO (até 2026-11-07): geometria lembrada com ela e a altura inteira é o padrão gravado,
-/// não uma escolha do editor — ela é refeita com o tamanho novo.
-const LARGURA_ANTIGA: f64 = 480.0;
 
 /// A largura da revisão de mídias do De Lá Pra Cá (`--janela-larga`): os dois nomes de arquivo lado a lado.
 const LARGURA_LARGA: f64 = 1180.0;
@@ -490,33 +487,13 @@ fn gravar_preferencias(app: &tauri::AppHandle) {
     }
 }
 
-/// A geometria lembrada, se ainda cabe num monitor ligado (e não é o padrão antigo); senão, o meio da tela.
+/// ⭐ O app ABRE SEMPRE no tamanho padrão, no meio do monitor principal (autor, 2026-11-26: "vamos iniciar com um
+/// tamanho padrão" — a janela voltava larga, com a geometria lembrada de um alargamento à mão). A geometria segue
+/// gravada no `app.json` ao sair (a do alargamento da revisão é desfeita), mas não é mais lida ao abrir.
 fn posicionar(janela: &tauri::Window) {
     use tauri::{PhysicalPosition, PhysicalSize};
 
     let monitores = janela.available_monitors().unwrap_or_default();
-    if let Some(g) = ler_preferencias().janela {
-        let (cx, cy) = (g.x + (g.w / 2) as i32, g.y + 16);
-        let cabe = monitores.iter().any(|m| {
-            let a = m.work_area();
-            cx >= a.position.x
-                && cx < a.position.x + a.size.width as i32
-                && cy >= a.position.y
-                && cy < a.position.y + a.size.height as i32
-        });
-        let padrao_antigo = monitores.iter().any(|m| {
-            let a = m.work_area();
-            g.w == (LARGURA_ANTIGA * m.scale_factor()) as u32 && g.h + 64 >= a.size.height && !g.max
-        });
-        if cabe && !padrao_antigo && g.w >= 200 && g.h >= 200 {
-            let _ = janela.set_size(PhysicalSize::new(g.w, g.h));
-            let _ = janela.set_position(PhysicalPosition::new(g.x, g.y));
-            if g.max {
-                let _ = janela.maximize();
-            }
-            return;
-        }
-    }
     let Some(m) = janela.primary_monitor().ok().flatten().or_else(|| monitores.into_iter().next()) else { return };
     let a = *m.work_area();
     let esc = m.scale_factor();

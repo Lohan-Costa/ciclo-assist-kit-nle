@@ -177,24 +177,56 @@ def _no(R: ET.Element, cpi_uid: str) -> str | None:
     return None
 
 
+#: o som MONO que a Carta põe no projeto quando a timeline só tem som estéreo (o molde do som precisa de um clipe mono
+#: montado pelo Premiere): silêncio, 10 s, 48 kHz — na bin dos moldes, com o nome que diz o que é
+NOME_DO_SOM_MOLDE = "CARTA molde de som mono.wav"
+
+
+def som_mono(R: ET.Element, arquivos: list[str]) -> str | None:
+    """O `nodeId` de um item SÓ DE SOM com clipe mono: primeiro os arquivos da timeline, depois qualquer um do projeto.
+    ⛔ (2026-11-26, B32) uma timeline só com câmera ESTÉREO (B30, B02: 2 canais) não tinha nenhum, e a Carta recusava
+    a timeline inteira ("o projeto não tem um clipe de som mono montado pelo Premiere")."""
+    midia = _ep.midia_do_projeto(R)
+    proprios = [midia.get(_ep._norm(a)) or {} for a in arquivos]
+    for info in proprios + [i for i in midia.values() if i not in proprios]:
+        if info.get("video_clip"):
+            continue
+        for mc_uid, _ac, _k, canais in info.get("audio") or []:
+            if canais == 1:
+                cpi = next((c.get("ObjectUID") for c in R.iter("ClipProjectItem")
+                            if (c.find(".//MasterClip") is not None
+                                and c.find(".//MasterClip").get("ObjectURef") == mc_uid)), None)
+                no = _no(R, cpi) if cpi else None
+                if no:
+                    return no
+    return None
+
+
+def gravar_som_molde(pasta: Path) -> Path:
+    """O WAV mono de silêncio do molde (10 s, 48 kHz, 24 bits) em `pasta`; reaproveitado se já existe."""
+    import wave
+    pasta.mkdir(parents=True, exist_ok=True)
+    arq = pasta / NOME_DO_SOM_MOLDE
+    if not arq.exists():
+        with wave.open(str(arq), "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(3)
+            w.setframerate(48000)
+            w.writeframes(b"\x00" * 3 * 48000 * 10)
+    return arq
+
+
 def plano(R: ET.Element, faltando: list[str], arquivos: list[str]) -> tuple[str, list[str]]:
     """(o plano do `cicloMontar`, o que não deu para montar com o porquê). `arquivos`: os da timeline (os primeiros
     servem de mídia: a sequência nasce do formato do 1º clipe de IMAGEM — taxa e quadro iguais aos da timeline)."""
     midia = _ep.midia_do_projeto(R)
     nao: list[str] = []
-    video = mono = None
+    video = None
     for a in arquivos:
         info = midia.get(_ep._norm(a)) or {}
         if video is None and info.get("video_clip") and info.get("cpi"):
             video = _no(R, info["cpi"])
-        if mono is None and not info.get("video_clip"):
-            for mc_uid, _ac, _k, canais in info.get("audio") or []:
-                if canais == 1:
-                    cpi = next((c.get("ObjectUID") for c in R.iter("ClipProjectItem")
-                                if (c.find(".//MasterClip") is not None
-                                    and c.find(".//MasterClip").get("ObjectURef") == mc_uid)), None)
-                    mono = _no(R, cpi) if cpi else None
-                    break
+    mono = som_mono(R, arquivos)
     if video is None:
         raise _ep.CartaErro("nenhum arquivo de imagem da timeline está no projeto: não há como fazer a sequência-molde")
     # ⛔ A receita da transição é a da bancada (2026-11-14): planos de 2 s com SOBRA dos dois lados na fonte e 20 quadros

@@ -139,7 +139,29 @@ def do_avid(f, seq, chave) -> tuple[dict, dict[str, dict]]:
         k = chave(mob_id)
         if k:
             masters[k] = _json(info)
-    for s in r["segments"]:
+    trilhas = trilhas_de_segmentos(r["segments"], q, lambda s: chave(s["mob_id"]), masters)
+    avisos = [a["texto"] + (f" ({a['vezes']}×)" if a.get("vezes", 1) > 1 else "") for a in r.get("avisos") or []]
+    item = {"tipo": "sequencia", "timeline": True, "fps": _taxa_texto(seq.edit_rate),
+            "tc_inicio_q": int(r["timeline_start_frames"]), "drop_frame": bool(r.get("timeline_drop_frame")),
+            "duracao_q": int(getattr(seq, "length", 0) or 0), "trilhas": trilhas}
+    try:
+        m = marcadores(seq)
+    except Exception as e:  # noqa: BLE001 — marker que não se lê não derruba a timeline; é dito
+        m, avisos = [], avisos + [f"os markers da timeline não foram lidos ({e})"]
+    if m:
+        item["marcadores"] = m
+    if avisos:
+        item["avisos"] = avisos
+    return item, masters
+
+
+def trilhas_de_segmentos(segments: list[dict], q, chave, masters: dict[str, dict] | None = None) -> list[dict]:
+    """As trilhas do item `sequencia` a partir dos SEGMENTOS do leitor do Conformar (a bin pela Carta; a bin ou o AAF
+    pelo Conformar — plano 2026-11-26, "um leitor, um escritor"). `q(tc)` = o quadro da timeline de um TC;
+    `chave(segmento)` = o id da mídia do clipe (a referência da Carta), ou vazio."""
+    masters = masters or {}
+    trilhas: dict[tuple[str, int], dict] = {}
+    for s in segments:
         n = int(s["track"])
         tipo, k = ("A", n - 999) if n >= 1000 else ("V", n)
         tr = trilhas.setdefault((tipo, k), {"tipo": tipo, "k": k, "clipes": [], "transicoes": [], "sem_clipe": []})
@@ -156,7 +178,7 @@ def do_avid(f, seq, chave) -> tuple[dict, dict[str, dict]]:
                 tr["sem_clipe"].append({"inicio_q": a, "fim_q": a + int(s["duration_frames"]),
                                         "nome": s.get("clip_name"), "efeitos": _json(s.get("effects") or [])})
             continue
-        c: dict = {"midia": chave(s["mob_id"]), "inicio_q": a, "entrada_q": int(s["source_start_frames"]),
+        c: dict = {"midia": chave(s), "inicio_q": a, "entrada_q": int(s["source_start_frames"]),
                    "fim_q": a + int(s["duration_frames"])}
         if s.get("is_audio"):
             c["canal"] = int(s.get("canal_arquivo") or s.get("source_slot_id") or 1)
@@ -173,7 +195,15 @@ def do_avid(f, seq, chave) -> tuple[dict, dict[str, dict]]:
             c["velocidade"] = _json({"razao": s.get("speed_ratio"), "tipo": s.get("motion_effect_type"),
                                      "classe": s.get("motion_class"), "relativa": s.get("relative_speed"),
                                      "mapa": s.get("source_offset_map"), "curva": s.get("speed_curve"),
-                                     "fase": s.get("phase_offset"), "retime": s.get("retime")})
+                                     "fase": s.get("phase_offset"), "retime": s.get("retime"),
+                                     "conform": s.get("conform_ratio")})
+            ts = next((e["params"]["time_shift"] for e in s.get("effects") or []
+                       if isinstance(e.get("params"), dict) and e["params"].get("time_shift")), None)
+            if ts and s.get("is_audio"):
+                # ⭐ a velocidade do SOM veio do AudioSuite TIME SHIFT do MC (2026-11-26): Shift 100 % = o tom mantido —
+                #   no Premiere, o "Maintain Audio Pitch" (`MaintainAudioPitch`) do clipe
+                c["velocidade"]["time_shift"] = True
+                c["velocidade"]["mantem_tom"] = abs(float(ts.get("tom") or 1.0) - 1.0) < 1e-6
         if s.get("has_reframe") and s.get("reframe_mode"):
             c["enquadramento"] = s["reframe_mode"]
         efeitos = []
@@ -190,20 +220,7 @@ def do_avid(f, seq, chave) -> tuple[dict, dict[str, dict]]:
         if s.get("clip_name") and nome_master and s["clip_name"] != nome_master and not c.get("subclipe"):
             c["via"] = s["clip_name"]
         tr["clipes"].append(c)
-    avisos = [a["texto"] + (f" ({a['vezes']}×)" if a.get("vezes", 1) > 1 else "") for a in r.get("avisos") or []]
-    item = {"tipo": "sequencia", "timeline": True, "fps": _taxa_texto(seq.edit_rate),
-            "tc_inicio_q": int(r["timeline_start_frames"]), "drop_frame": bool(r.get("timeline_drop_frame")),
-            "duracao_q": int(getattr(seq, "length", 0) or 0),
-            "trilhas": [trilhas[k] for k in sorted(trilhas, key=lambda x: (x[0] != "V", x[1]))]}
-    try:
-        m = marcadores(seq)
-    except Exception as e:  # noqa: BLE001 — marker que não se lê não derruba a timeline; é dito
-        m, avisos = [], avisos + [f"os markers da timeline não foram lidos ({e})"]
-    if m:
-        item["marcadores"] = m
-    if avisos:
-        item["avisos"] = avisos
-    return item, masters
+    return [trilhas[k] for k in sorted(trilhas, key=lambda x: (x[0] != "V", x[1]))]
 
 
 def midias_usadas(item: dict) -> list[str]:

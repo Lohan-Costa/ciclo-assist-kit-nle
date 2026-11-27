@@ -71,6 +71,7 @@ def arquivos_da_timeline(proj: Projeto, item: dict, forma: str = "avid",
 # ⛔ O `Start` some quando é 0. Um tick = 1/254016000000 s; o quadro a 23,976 = 10594584000 ticks.
 
 import copy
+from fractions import Fraction
 import os
 import gzip
 import uuid
@@ -141,6 +142,26 @@ def _midia_de(por: dict, clip: ET.Element) -> tuple[ET.Element | None, str]:
 
 #: a chave, em `midia_do_projeto`, de um item de MÍDIA OFFLINE (sem caminho): `offline:<uid do ClipProjectItem>`
 CHAVE_OFFLINE = "offline:"
+
+
+def _modulo_remap():
+    """`prproj.remap` do Conformar (o Time Remapping provado no laboratório B22), carregado pelo arquivo como o offline."""
+    return _modulo_do_conformar("remap.py", "cicloassist._conformar_prproj_remap")
+
+
+def _modulo_do_conformar(arquivo: str, nome: str):
+    import importlib.util
+    import sys
+    from pathlib import Path as _P
+    if nome not in sys.modules:
+        arq = _P(__file__).resolve().parents[2] / "modulos" / "conformar" / "motor" / "prproj" / arquivo
+        spec = importlib.util.spec_from_file_location(nome, arq)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"o módulo {arquivo} do Conformar não foi achado ({arq})")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[nome] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[nome]
 
 
 def _modulo_offline():
@@ -237,7 +258,9 @@ def itens_offline(proj: Projeto, item: dict, clipes: list[tuple[dict, bool]], qu
         else:
             u["video"] = True
         ve = velocidade_do_clipe(c, item.get("fps") or "25")
-        if "fora" not in ve:
+        if ve.get("remap"):
+            u["fim_t"] = max(u["fim_t"], round(max(ve["remap"]) * TICKS_POR_SEGUNDO))
+        elif "fora" not in ve:
             dur = (int(c["fim_q"]) - int(c["inicio_q"])) * (ve["vel"] or 1.0)
             u["fim_t"] = max(u["fim_t"], round((int(c["entrada_q"]) + dur) * TICKS_POR_SEGUNDO / ve["fonte_fps"]))
     out: dict[str, dict] = {}
@@ -316,9 +339,16 @@ def midia_do_projeto(raiz: ET.Element) -> dict[str, dict]:
                 vs = por.get(vs_ref.get("ObjectRef") or "") if vs_ref is not None else None
                 d = out.setdefault(_norm(arq), {})
                 d.update({"mc": mc.get("ObjectUID"), "cpi": cpi.get("ObjectUID"), "video_clip": _chave(cl),
-                          "frame_rect": (vs.findtext("FrameRect") if vs is not None else None)})
+                          "frame_rect": (vs.findtext("FrameRect") if vs is not None else None),
+                          # a duração e o quadro da mídia (ticks): o REVERSO conta a entrada do FIM dela
+                          "duracao": int(vs.findtext("Duration") or 0) if vs is not None else 0,
+                          "tpf_fonte": int(vs.findtext("FrameRate") or 0) if vs is not None else 0})
             elif cl.tag == "AudioClip":
                 if med is not None:
+                    as_ref = med.find("AudioStream")
+                    ast = por.get(as_ref.get("ObjectRef") or "") if as_ref is not None else None
+                    if ast is not None and ast.findtext("Duration"):        # o som em reverso conta do FIM dele
+                        out.setdefault(_norm(arq), {})["duracao_som"] = int(ast.findtext("Duration") or 0)
                     canais = len(cl.findall("./SecondaryContents/SecondaryContentItem")) or 1
                     out.setdefault(_norm(arq), {}).setdefault("audio", []).append(
                         (mc.get("ObjectUID"), _chave(cl), n_audio, canais))
@@ -499,6 +529,10 @@ def _efeitos_sem_par(c: dict, audio: bool, rot: str, fora, offline: bool = False
     sufixo = f"({rot}{', clipe offline' if offline else ''})"
     for e in c.get("efeitos") or []:
         nome = e.get("rotulo") or e.get("nome")
+        if audio and (e.get("params") or {}).get("time_shift") and (c.get("velocidade") or {}).get("time_shift"):
+            continue                       # o Time Shift do MC TEM par: vai como a velocidade do clipe (PlaybackSpeed)
+        if audio and (e.get("rotulo") or "") == "Reverse" and c.get("velocidade"):
+            continue                       # o Reverse do MC TEM par: o PlayBackwards do clipe
         if e.get("categoria") == "gain":
             pan = (e.get("params") or {}).get("pan")
             if audio and pan is not None and int(pan) != PAN_CENTRO:
@@ -621,31 +655,89 @@ def _transicoes_da_trilha(transicoes: list[dict], escritos: list[dict], audio: b
 TICKS_POR_SEGUNDO = 254016000000
 
 
+def _entrada_na_grade(in_t: int, tpf: int, vel: float | None, audio: bool) -> int:
+    """A entrada da IMAGEM no 1º ponto da grade da timeline (passo × velocidade) que não fica antes dela. ⛔ MEDIDO
+    (Premiere 27.0, 2026-11-26, T25 da B30 com o quadro escrito na imagem): o Premiere mostra o PISO da entrada nessa
+    grade — a 25 p numa 23,976 a entrada exata do quadro 49 mostrava o 47; na grade, o 49 (o Conformar faz o mesmo:
+    `premiere_montagem.na_grade`). O som não (amostras)."""
+    if audio:
+        return in_t
+    from fractions import Fraction
+    k = Fraction(in_t) / tpf                 # ⛔ só a grade da TIMELINE: a de passo × velocidade era a regra do 23–25 (B32)
+    k = round(k) if abs(k - round(k)) < Fraction(1, 1000) else -(-k // 1)
+    return round(k * tpf)
+
+
 def velocidade_do_clipe(c: dict, fps) -> dict:
-    """O que o MotionEffect do Avid vira no Premiere (molde `MOLDE VELOCIDADE`, 2026-11-14):
-    {"vel": PlaybackSpeed ou None, "fonte_fps": a taxa em que `entrada_q` conta, "interp": TimeInterpolationType ou None}
-    ou {"fora": motivo}. Leitor do Conformar: `[1000, 1001]` com a curva zerada é CONFORMAÇÃO de taxa (fonte a 24 numa
-    sequência 23,976: tempo REAL, não velocidade); o resto, a curva que o Avid integrou (`mapa`)."""
+    """O que a velocidade do Avid vira no Premiere: {"vel": PlaybackSpeed ou None, "fonte_fps": a taxa em que a entrada
+    conta, "interp": TimeInterpolationType ou None, "desloc": quadros da fonte a SOMAR à entrada (a fase, com fração)}
+    ou {"fora": motivo}.
+
+    ⭐ (2026-11-26, B32 — código de barras de cada quadro, Premiere 26/27): a verdade é o MAPA de posição (quadros DA
+    FONTE por quadro da timeline): a inclinação ÷ (taxa nativa ÷ taxa da timeline) é a PlaybackSpeed; o 1º valor é a
+    FASE (0,5 num 29,97 numa 23,976). `conform` (fonte de outra taxa, inclinação = a razão das taxas) é TEMPO REAL. O
+    `razao`/`relativa` dos clipes promovidos do Avid vêm em convenções trocadas (o 29,97 a 1,791 chegava como 0,56)."""
     from fractions import Fraction
     v = c.get("velocidade")
     taxa = Fraction(str(fps))
     if not v:
-        return {"vel": None, "fonte_fps": taxa, "interp": None}
-    if v.get("classe") == "native":
-        razao = Fraction(float(v.get("razao") or 1)).limit_denominator(100000)
-        if razao <= 0:
-            return {"fora": "velocidade (conformação sem razão)"}
-        return {"vel": None, "fonte_fps": taxa / razao, "interp": None}
-    if v.get("tipo") != "constant":
-        return {"fora": f"velocidade variável ({v.get('tipo')})"}
-    mapa = v.get("mapa") or []
-    if len(mapa) < 2 or not mapa[-1][0]:
-        return {"fora": "velocidade sem mapa"}
-    vel = (float(mapa[-1][1]) - float(mapa[0][1])) / (float(mapa[-1][0]) - float(mapa[0][0]))
-    if vel <= 0:
-        return {"fora": "velocidade ao contrário ou congelada"}
+        return {"vel": None, "fonte_fps": taxa, "interp": None, "desloc": 0.0}
+    conform = float(v.get("conform") or 0) or None
+    if v.get("time_shift"):
+        # ⛔ o SOM com o Time Shift do MC (B32, 2026-11-26, as claques de 25p a 50 % e 29,97 a 200 %): a entrada do som
+        #   conta em quadros da TIMELINE (como o som sem velocidade de um master de outra taxa) e o Speed do Time Shift
+        #   é a razão em TEMPO REAL — nada de taxa nativa. Antes: 0,5 virava 0,4795 e 1,791 virava 1,43, e a entrada
+        #   contada a 25 adiantava o trecho.
+        conform = None
+    if conform is None and v.get("classe") in ("native", "conform") and v.get("razao") and not v.get("time_shift"):
+        conform = float(v["razao"])
+    nativa = taxa / Fraction(conform).limit_denominator(100000) if conform and abs(conform - 1) > 1e-4 else taxa
+    mapa = sorted((float(a), float(b)) for a, b in (v.get("mapa") or []))
     interp = {"optical_flow": "2", "blend": "1"}.get(str(v.get("retime") or ""))
-    return {"vel": vel, "fonte_fps": taxa, "interp": interp}
+    def _remap(motivo: str) -> dict:
+        """⭐ RAMPA e CONGELADO (autor, 2026-11-26: "nada de marcador a menos que seja impossível a tradução"): a posição
+        da FONTE em cada quadro do plano (o mapa da bin, em quadros da fonte, ligado em reta — o Linear do Avid é exato),
+        em segundos; a escrita faz o Time Remapping (`prproj/remap.py`, provado no B22: 48/48)."""
+        n = int(c.get("fim_q", 0)) - int(c.get("inicio_q", 0))
+        if n <= 0 or (not mapa and v.get("tipo") != "freeze"):
+            return {"fora": motivo}
+        ent = float(c.get("entrada_q") or 0)
+
+        def em(t):
+            if not mapa:
+                return 0.0
+            if t <= mapa[0][0]:
+                return mapa[0][1]
+            for (a0, b0), (a1, b1) in zip(mapa, mapa[1:]):
+                if t <= a1:
+                    return b0 if a1 == a0 else b0 + (b1 - b0) * (t - a0) / (a1 - a0)
+            return mapa[-1][1]
+        t0 = mapa[0][0] if mapa else 0.0
+        pos = [(ent + em(t0 + k)) / float(nativa) for k in range(n)]
+        return {"vel": None, "remap": pos, "fonte_fps": nativa, "interp": interp, "desloc": 0.0,
+                "tipo": "congelado" if len({round(x, 9) for x in pos}) == 1 else "rampa"}
+
+    if v.get("tipo") not in ("constant", "reverse", None):
+        return _remap(f"velocidade variável ({v.get('tipo')})")
+    if len(mapa) < 2 or mapa[-1][0] <= mapa[0][0]:
+        if v.get("classe") in ("native", "conform"):
+            return {"vel": None, "fonte_fps": nativa, "interp": None, "desloc": 0.0}
+        return {"fora": "velocidade sem mapa"}
+    (t0, v0), (t1, v1) = mapa[0], mapa[-1]
+    incl = (v1 - v0) / (t1 - t0)
+    if any(abs(b - (v0 + incl * (a - t0))) > 0.02 for a, b in mapa):
+        return _remap("velocidade variável")
+    if abs(incl) < 1e-6:
+        return _remap("velocidade congelada")
+    vel = abs(incl) / float(nativa / taxa)
+    if incl < 0:
+        # ⭐ o REVERSO (2026-11-26, B32): `PlayBackwards` com a entrada contada do FIM da mídia (banco prproj/estruturas.md
+        #   §reverso) — `desloc` = a posição do 1º quadro MOSTRADO (o mais alto); a escrita faz a conta com a duração
+        return {"vel": None if abs(vel - 1.0) < 1e-4 else vel, "rev": True, "fonte_fps": nativa, "interp": interp,
+                "desloc": v0}
+    if abs(vel - 1.0) < 1e-4:
+        return {"vel": None, "fonte_fps": nativa, "interp": None, "desloc": v0}
+    return {"vel": vel, "fonte_fps": nativa, "interp": interp, "desloc": v0}
 
 
 def _clonar(e: ET.Element, por: dict, novo_id, novos: list) -> ET.Element:
@@ -1112,6 +1204,8 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
         """InPoint = a entrada na MÍDIA; OutPoint = entrada + duração × velocidade (o molde); PlaybackSpeed e o
         TimeInterpolationType (2 = optical flow, banco) quando há velocidade."""
         dur_t = round((w["fim"] - w["ini"]) * tpf * (w["vel"] or 1.0))
+        if w.get("remap"):                   # o Time Remapping: In/Out no tempo do CLIPE, a quadros inteiros
+            dur_t = (w["fim"] - w["ini"]) * tpf
         for tag, v in (("InPoint", w["in_t"]), ("OutPoint", w["in_t"] + dur_t)):
             el = cl.find(tag)
             if el is None:
@@ -1122,11 +1216,26 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
         cid = cl.find("ClipID")
         if cid is not None:
             cid.text = str(uuid.uuid4())
-        for tag in ("PlaybackSpeed", "TimeInterpolationType"):
+        for tag in ("PlaybackSpeed", "TimeInterpolationType", "PlayBackwards"):
             for x in cl.findall(tag):
                 cl.remove(x)
+        for x in cl.findall("MaintainAudioPitch"):
+            cl.remove(x)
+        if w.get("rev"):                     # o reverso: a entrada já conta do FIM da mídia (como o Premiere grava)
+            ET.SubElement(cl, "PlayBackwards").text = "true"
+        for x in cl.findall("TimeRemapping"):
+            cl.remove(x)
+        if w.get("remap"):
+            rm = _modulo_remap()
+            id_r, id_p = novo_id(), novo_id()
+            novos.extend(rm.objetos(id_r, id_p, w["remap"]["remap"], w["remap"]["limite_s"]))
+            rm.pendurar(cl, id_r)
+            if w["interp"]:
+                ET.SubElement(cl, "TimeInterpolationType").text = w["interp"]
         if w["vel"] is not None:
             ET.SubElement(cl, "PlaybackSpeed").text = repr(w["vel"])
+            if w.get("mantem_tom"):          # o Time Shift do MC com Shift 100 % (o lugar: logo depois do PlaybackSpeed,
+                ET.SubElement(cl, "MaintainAudioPitch").text = "true"     # como o Premiere 26 grava, B30 do lab)
             if w["interp"]:
                 ET.SubElement(cl, "TimeInterpolationType").text = w["interp"]
 
@@ -1220,9 +1329,46 @@ def escrever_timeline(proj: Projeto, item: dict, prproj: str, saida: str, sequen
                 if canais != 1 and int(c.get("canal") or 1) > canais:
                     fora(f"canal {int(c.get('canal') or 1)} que o arquivo não tem ({rot})")
                     continue
+            if ve.get("remap"):
+                if audio:
+                    fora(f"{ve['tipo']} no som: o Premiere não remapeia o som ({rot})")
+                    continue
+                cur = _modulo_remap().de_posicoes(ve["remap"], float(Fraction(tpf, TICKS_POR_SEGUNDO)))
+                dur_s = int(info.get("duracao") or 0) / TICKS_POR_SEGUNDO
+                cur["limite_s"] = max(dur_s, max(p[1] for p in cur["remap"]))
+                escritos.append({"c": c, "info": info, "ini": int(c["inicio_q"]), "fim": int(c["fim_q"]),
+                                 "in_t": round(cur["in_s"] * TICKS_POR_SEGUNDO), "vel": None, "interp": ve["interp"],
+                                 "remap": cur, "cabeca": None, "cauda": None, "mantem_tom": False})
+                rel["velocidades"] += 1
+                rel["rampas"] = rel.get("rampas", 0) + 1
+                if c.get("desligado"):
+                    rel["desligados"] += 1
+                continue
+            if ve.get("rev"):
+                alto = round((Fraction(int(c["entrada_q"])) + Fraction(ve.get("desloc") or 0.0).limit_denominator(100000))
+                             * TICKS_POR_SEGUNDO / ve["fonte_fps"])
+                if audio and info.get("duracao_som"):
+                    # ⭐ o SOM em reverso TERMINA em Duration (do AudioStream) − InPoint, sem o quadro que a imagem desconta
+                    #   (B33, 2026-11-26: o A/V e o WAV) — o fim do trecho = o 1º mostrado + um quadro da timeline
+                    in_rev = int(info["duracao_som"]) - (alto + tpf)
+                elif not info.get("duracao") or not info.get("tpf_fonte"):
+                    fora(f"reverso sem a duração da mídia ({rot})")
+                    continue
+                else:
+                    in_rev = int(info["duracao"]) - int(info["tpf_fonte"]) - alto
+                escritos.append({"c": c, "info": info, "ini": int(c["inicio_q"]), "fim": int(c["fim_q"]), "in_t": in_rev,
+                                 "vel": ve["vel"], "interp": ve["interp"], "rev": True, "cabeca": None, "cauda": None,
+                                 "mantem_tom": False})
+                rel["velocidades"] += 1
+                if c.get("desligado"):
+                    rel["desligados"] += 1
+                continue
             escritos.append({"c": c, "info": info, "ini": int(c["inicio_q"]), "fim": int(c["fim_q"]),
-                             "in_t": round(int(c["entrada_q"]) * TICKS_POR_SEGUNDO / ve["fonte_fps"]),
-                             "vel": ve["vel"], "interp": ve["interp"], "cabeca": None, "cauda": None})
+                             "in_t": _entrada_na_grade(round((Fraction(int(c["entrada_q"])) + Fraction(ve.get("desloc") or 0.0)
+                                                              .limit_denominator(100000)) * TICKS_POR_SEGUNDO
+                                                             / ve["fonte_fps"]), tpf, ve["vel"], audio),
+                             "vel": ve["vel"], "interp": ve["interp"], "cabeca": None, "cauda": None,
+                             "mantem_tom": bool(audio and (c.get("velocidade") or {}).get("mantem_tom"))})
             if ve["vel"] is not None:
                 rel["velocidades"] += 1
             if c.get("desligado"):

@@ -125,6 +125,8 @@ class SessaoReceber:
         self._analise: tuple | None = None                 # (chave, sequência, pastas, análise)
         # Premiere → Premiere: o plano de cada cópia relinkada preparada (id → plano), que `/premiere/copia` executa
         self._relinks: dict[str, dict] = {}
+        #: o envio para a CARTA (plano 2026-11-26, etapa 1): o que o `/premiere/montar` repassa ao núcleo
+        self._cartas_premiere: dict[str, dict] = {}
         self._lock = threading.Lock()
         # O andamento do Trazer. Lido por `GET /receber/progresso` enquanto o `preparar` corre
         # noutra thread do servidor (ThreadingHTTPServer), por isso é trocado inteiro, nunca
@@ -1086,6 +1088,10 @@ class SessaoReceber:
         with self._lock:
             return self._relinks.get(rid)
 
+    def carta_premiere(self, cid: str) -> dict | None:
+        with self._lock:
+            return self._cartas_premiere.get(cid)
+
     def preparar_avulso(self, chave: str, mob_id: str = "", originais: dict | None = None,
                         raizes: list[str] | None = None, notas: bool = False,
                         sinais: dict | None = None) -> dict:
@@ -1204,14 +1210,23 @@ class SessaoReceber:
                 return {**r, "tipo": tipo}
             if (sinais or {}).get("destino") == "premiere":
                 # ⭐ O MODO PREMIERE (organograma aprovado em 2026-10-19): os mesmos segmentos e o mesmo casamento viram
-                # o plano que a ponte monta em ExtendScript (`premiere_montagem`), no lugar do DRT
+                # o envio para a Carta (`premiere_montagem.envio_para_a_carta`), no lugar do DRT
                 import premiere_montagem
 
                 self._etapa("montando", sequencia=nome, detalhe="preparando a montagem no Premiere")
-                pl = premiere_montagem.plano(segs, casados, fps_tl, nome, inicio=resultado.get("timeline_start_frames"),
-                                             metas=metas)
-                if pl["offline"]:
-                    pl["offline_prproj"] = premiere_montagem.escrever_offline(pl["offline"], _recebidos())
+                # ⭐ a montagem vai pelo ESCRITOR DA CARTA (plano 2026-11-26, etapa 1; decisão do autor: "nada de
+                #   marcador a menos que seja impossível"): o envio fica no serviço e o painel só diz qual (`carta_id`)
+                envio = premiere_montagem.envio_para_a_carta(segs, casados, fps_tl, nome, id_saida,
+                                                             inicio=resultado.get("timeline_start_frames"),
+                                                             drop=bool(resultado.get("timeline_drop_frame")), metas=metas)
+                with self._lock:
+                    self._cartas_premiere = dict(list(self._cartas_premiere.items())[-9:])
+                    self._cartas_premiere[id_saida] = envio
+                clipes = [x for x in envio["segmentos"]
+                          if not (x.get("is_gap") or x.get("is_transition") or x.get("is_effect"))]
+                pl = {"carta_id": id_saida, "nome": nome, "planos_n": len(clipes),
+                      "conta": {"offline_no_lugar": sum(1 for x in clipes if x.get("offline")),
+                                "offline": sum(1 for x in clipes if not x.get("arquivo") and not x.get("offline"))}}
                 nos_originais = sum(1 for c in casados if c.get("matched_path") in set(preferir.values()))
                 self._etapa("montando", sequencia=nome, feitos=1, total=1)
                 return {"premiere": pl, "nome": nome, "tipo": tipo, "clipes": len(casados),

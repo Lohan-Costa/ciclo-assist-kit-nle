@@ -1365,6 +1365,90 @@ def rota_nucleo_viva(pedido: Pedido) -> Resposta:
     return _do_nucleo(pedido) or Resposta.de_json({"viva": _ponte.painel_vivo()})
 
 
+#: ⭐ O NLE DE TRABALHO (autor, 2026-11-26: "todas as abas"): UMA escolha, guardada no estado do núcleo, que o Assistir,
+#: o Conformar e o Preparar seguem quando há mais de um programa aberto. Sem escolha, cada aba usa o padrão dela.
+NLES_DE_TRABALHO = ("avid", "premiere", "resolve", "baselight")
+
+
+def _nle_de_trabalho(pedido: Pedido) -> Resposta:
+    from . import config as _cfg
+    if pedido.metodo == "POST":
+        corpo = pedido.json() or {}
+        nle = str((corpo or {}).get("nle") or "") if isinstance(corpo, dict) else ""
+        if nle not in NLES_DE_TRABALHO:
+            return Resposta.de_json({"erro": f"nle: um de {', '.join(NLES_DE_TRABALHO)}"}, 400)
+        _cfg.gravar_estado({"nle_de_trabalho": nle})
+    nle = _cfg.ler_estado().get("nle_de_trabalho")
+    return Resposta.de_json({"nle": nle if nle in NLES_DE_TRABALHO else None})
+
+
+@rota("GET", "/nle")
+def rota_nle(pedido: Pedido) -> Resposta:
+    """O NLE de trabalho (a página do Assistir)."""
+    return _nle_de_trabalho(pedido)
+
+
+@rota("POST", "/nle")
+def rota_nle_escolher(pedido: Pedido) -> Resposta:
+    """O editor escolheu no seletor do topo: vale para TODAS as abas."""
+    return _nle_de_trabalho(pedido)
+
+
+@rota("GET", "/nucleo/nle", exige_painel=False)
+def rota_nucleo_nle(pedido: Pedido) -> Resposta:
+    """O NLE de trabalho para os outros módulos (o Conformar, o Preparar), com o token do núcleo."""
+    recusa = _do_nucleo(pedido)
+    return recusa or _nle_de_trabalho(pedido)
+
+
+@rota("POST", "/nucleo/nle", exige_painel=False)
+def rota_nucleo_nle_escolher(pedido: Pedido) -> Resposta:
+    recusa = _do_nucleo(pedido)
+    return recusa or _nle_de_trabalho(pedido)
+
+
+@rota("POST", "/nucleo/carta/mapa", exige_painel=False)
+def rota_nucleo_carta_mapa(pedido: Pedido) -> Resposta:
+    """O CONFORM PELO MAPA (plano 2026-11-26, etapa 3): o Conformar pergunta, antes de varrer pasta, de que ORIGINAL é
+    cada offline da timeline — a Carta responde pelo que registrou (forma, impressão, relação; `carta/mapa.py`). Vale
+    o conjunto das Cartas abertas por aqui (`carta_projetos`). ⛔ Só o processo com o token do núcleo."""
+    recusa = _do_nucleo(pedido)
+    if recusa:
+        return recusa
+    corpo = pedido.json() or {}
+    if not isinstance(corpo, dict) or not isinstance(corpo.get("masters"), list):
+        return Resposta.de_json({"erro": "corpo: {masters: [{chave, nome, origem, arquivos?}]}"}, 400)
+    from ..carta import mapa as _mapa
+    from .rotas_carta import _autorizadas
+    try:
+        return Resposta.de_json({"ok": True, **_mapa.consultar(_autorizadas(), corpo["masters"])})
+    except Exception as e:  # noqa: BLE001 — o mapa é acelerador: o Conformar segue pelo casamento de sempre
+        return Resposta.de_json({"ok": False, "motivo": str(e)})
+
+
+@rota("POST", "/nucleo/conformar/premiere", exige_painel=False)
+def rota_nucleo_conformar_premiere(pedido: Pedido) -> Resposta:
+    """O CONFORMAR monta no Premiere pelo escritor da Carta (plano 2026-11-26, etapa 1; decisão do autor: "nada de
+    marcador a menos que seja impossível"): os segmentos que ele leu e CASOU viram uma Carta oculta
+    (`<dados>/conformar/cartas/<id>`) e a importação da Carta (`carta/do_conformar.py`). ⛔ Só o processo com o token
+    do núcleo (`_do_nucleo`), como a ponte."""
+    recusa = _do_nucleo(pedido)
+    if recusa:
+        return recusa
+    corpo = pedido.json() or {}
+    if not isinstance(corpo, dict) or not isinstance(corpo.get("segmentos"), list):
+        return Resposta.de_json({"erro": "corpo: {id, nome, fps, tc_inicio_q, segmentos}"}, 400)
+    try:
+        from ..carta import do_conformar as _dc
+        from . import config as _cfg
+        q = corpo.get("quadro")
+        quadro = (int(q[0]), int(q[1])) if isinstance(q, list) and len(q) == 2 else None
+        rel = _dc.importar(_cfg.pasta() / "conformar" / "cartas", corpo, _ponte.chamar, quadro=quadro)
+        return Resposta.de_json({"ok": True, **rel})
+    except Exception as e:  # noqa: BLE001 — o motivo volta ao Conformar, que o diz ao editor
+        return Resposta.de_json({"ok": False, "motivo": str(e)})
+
+
 @rota("POST", "/nucleo/premiere/chamar", exige_painel=False)
 def rota_nucleo_chamar(pedido: Pedido) -> Resposta:
     """`{modulo, funcao, args, prazo}` → `{ok, r}` com o TEXTO que a função devolveu no Premiere.

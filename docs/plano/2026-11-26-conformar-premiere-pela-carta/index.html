@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conformar pela Carta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head><body>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Conformar · Avid → Premiere</p>
+  <h1>O Conformar passa a montar no Premiere pelo escritor da Carta</h1>
+  <div class="barra"></div>
+  <p class="lead">Decisão do autor: nada de marcador a menos que a tradução seja impossível, e toda tradução já estabelecida serve aos dois módulos. O ExtendScript não alcança o Time Remapping; a Carta escreve o projeto e importa só a sequência, <strong>sem fechar nada do editor</strong>.</p>
+  <div class="numeros">
+    <div class="numero"><b>4</b><span>coisas que hoje viram marcador no Conformar</span></div>
+    <div class="numero"><b>48/48</b><span>rampas pela Carta (B34, ×3)</span></div>
+    <div class="numero"><b>1</b><span>leitor para os dois</span></div>
+    <div class="numero"><b>6</b><span>provas, em ordem</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">Hoje × depois</p><h2>O que sai do marcador</h2>
+    <p class="muted">O modo Premiere do Conformar monta pela ponte (<code>dlpcMontar</code>). O que o ExtendScript não faz vira marcador "refazer". A Carta já traduz cada um desses itens, medida quadro a quadro.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Na timeline do Avid</th><th>Conformar hoje</th><th>Pela Carta</th></tr></thead>
+  <tbody id="hoje"></tbody></table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O desenho</p><h2>Um leitor, um escritor, e a troca de mídia que só o Conformar faz</h2></div>
+  <div class="grade">
+    <div class="card"><span class="selo">1</span><h3>O mesmo leitor</h3>
+      <p>O laço do <code>do_avid</code> da Carta vira <code>trilhas_de_segmentos</code>. A Carta e o Conformar (bin ou AAF) passam os mesmos segmentos do leitor do Conformar.</p></div>
+    <div class="card acao"><span class="selo">2</span><h3>Uma Carta oculta por envio</h3>
+      <p>Na pasta de trabalho do Conformar: uma referência por arquivo casado, com o arquivo que o <strong>relink do Conformar</strong> decidiu, o online no lugar do offline. É a diferença do Conformar, preservada.</p></div>
+    <div class="card"><span class="selo">3</span><h3>A importação da Carta</h3>
+      <p><code>importar_timeline</code> pela ponte única: os moldes numa cópia, a escrita num <code>.prproj</code> à parte, e só a sequência volta ao projeto do editor. O placar do painel lê o relatório dela.</p></div>
+  </div>
+  <div class="card aviso"><p class="eyebrow">Um caminho só</p>
+    <p>O <code>dlpcMontar</code> fica no código até as provas fecharem; depois sai. Marcador passa a existir só para o que a Carta diz que ficou de fora, com o motivo.</p></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">As provas</p><h2>Cada etapa fecha antes da próxima</h2></div>
+  <div class="provas" id="ordem"></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Decisões pendentes</p><h2>O que segue como está, salvo outra decisão</h2></div>
+  <ol class="passos">
+    <li>O <strong>vídeo de referência</strong> do Conformar continua como trilha a mais na mesma sequência.</li>
+    <li>O Conformar também recebe <strong>AAF</strong> de outra máquina: entra pelo mesmo leitor. A cor e o merged dependem do que o AAF traz, e o relatório diz quando não vier.</li>
+  </ol>
+</section>
+
+<p class="rodape">Plano no repositório: <code>docs/plano/2026-11-26-conformar-premiere-pela-carta.md</code> · Ciclo Assist · 26/11/2026</p>
+</main>
+
+<script>{
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const H=[
+ ['Rampa de velocidade','marcador, entra a 100 %','Time Remapping, um keyframe por quadro na curva (B34 48/48)'],
+ ['Congelado','marcador, entra a 100 %','Time Remapping deitado (B34 48/48)'],
+ ['Transição de imagem e de som','marcador; a de som vira corte seco','dissolve e crossfade nos moldes do Premiere (B30)'],
+ ['Título','marcador','gráfico de texto do Premiere, pelo molde'],
+ ['Velocidade constante, reverso, Time Shift','aplicados','aplicados (B32 12/12, B33 7/8)'],
+ ['Mídia que não está na máquina','offline no lugar','offline no lugar']];
+document.getElementById('hoje').innerHTML=H.map(h=>`<tr><td>${esc(h[0])}</td><td>${esc(h[1])}</td><td>${esc(h[2])}</td></tr>`).join('');
+const O=[
+ ['Testes','O leitor comum dá o mesmo item que o do_avid de antes; a Carta oculta leva os arquivos casados.','A suíte da Carta igual, mais os testes novos.'],
+ ['B32: velocidade','Os 12 casos pelo Conformar = o Premiere original.','Código de barras: 96/96 por caso.'],
+ ['B34: rampas','Rampa, rampa que começa na curva e congelado pelo Conformar.','48/48 nos três.'],
+ ['B30: EDL','Dissolve de imagem e de som (o feito à mão), WAV, 25p, nome longo, acento.','Os tempos de cada clipe e transição.'],
+ ['B33: som','Velocidade e reverso do som.','A posição da varredura, ±2 ms.'],
+ ['PRODUCAO-A','Uma timeline de produção inteira, Avid → Premiere.','Clipes, transições e títulos contados; nenhum marcador sem motivo.']];
+document.getElementById('ordem').innerHTML=O.map((o,i)=>`<div class="prova"><div class="n">${String(i+1).padStart(2,'0')}</div><div class="corpo"><h3>${esc(o[0])}</h3><p class="pergunta">${esc(o[1])}</p><p class="medido">${esc(o[2])}</p></div></div>`).join('');
+}</script>
+</body></html>

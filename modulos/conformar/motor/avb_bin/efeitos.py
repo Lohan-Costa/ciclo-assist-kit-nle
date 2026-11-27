@@ -226,3 +226,40 @@ def nome_do_plugin(te) -> str:
         return str(dict(te.property_data.get("attributes") or {}).get("_EFFECT_PLUGIN_NAME") or "")
     except Exception:  # noqa: BLE001 — atributo ilegível: sem nome, segue o id
         return ""
+
+
+
+def parametros_do_time_shift(te) -> dict | None:
+    """{"velocidade": Speed (1,0 = 100 %), "tom": Shift (1,0 = mantém o tom)} de um AudioSuite TIME SHIFT — o gesto do
+    editor no MC para mudar a velocidade do SOM —, ou None se não for um Time Shift legível. No chunk "Complete Controls
+    State": 4 bytes de cabeçalho e registros `<tag 6 bytes>\\0\\0` + valor big-endian (`l_…` int32, `d_…` double);
+    `d_c006` = Speed (`confirmado`), `d_c005` = Shift (`hipotese`, pelo painel) — banco, `protocolos/avb/escrita.md`
+    (Time Shift, MC 25.12, 2026-11-26)."""
+    import struct
+    if nome_do_plugin(te) != "Time Shift":
+        return None
+    try:
+        b = bytes(te.property_data["plugins"][0].property_data["chunks"][0].property_data["data"])
+    except Exception:  # noqa: BLE001 — chunk ilegível
+        return None
+    vals: dict[bytes, float] = {}
+    i = 4
+    while i + 8 <= len(b):
+        tag = b[i:i + 6]
+        i += 8
+        if tag[:1] == b"d":
+            if i + 8 <= len(b):
+                vals[tag] = struct.unpack(">d", b[i:i + 8])[0]
+            i += 8
+        else:
+            i += 4
+    vel = vals.get(b"d_c006")
+    if not vel or vel <= 0:
+        return None
+    return {"velocidade": vel, "tom": vals.get(b"d_c005", 1.0)}
+
+
+def velocidade_do_time_shift(te) -> float | None:
+    """A Speed de um AudioSuite TIME SHIFT (1,0 = 100 %), ou None (`parametros_do_time_shift`)."""
+    p = parametros_do_time_shift(te)
+    return p["velocidade"] if p else None

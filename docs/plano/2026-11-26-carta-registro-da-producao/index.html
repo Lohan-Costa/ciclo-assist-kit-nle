@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carta: registro da produção</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400..700&display=swap">
+<link rel="stylesheet" href="tema.css">
+<style>
+/* esboço do navegador: a lateral de Locais, as colunas, a barra de caminho e o painel de detalhe */
+.nav{border:1px solid var(--slate-soft);border-radius:10px;overflow:hidden;font:13px/1.4 var(--mono);background:var(--surface-page)}
+.nav .corpo{display:grid;grid-template-columns:150px repeat(3,minmax(0,1fr));min-height:220px}
+.nav .lat,.nav .col{border-right:1px solid var(--slate-soft);padding:8px 0}
+.nav .lat b,.nav .col b{display:block;padding:2px 12px 6px;font:600 11px var(--display);color:var(--teal-strong)}
+.nav .it{padding:3px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav .it.sel{background:var(--teal-tint);color:var(--ink);font-weight:600}
+.nav .it.p::before{content:"▣ ";color:var(--teal-strong)}
+.nav .it.b::before{content:"▤ ";opacity:.7}
+.nav .it.m::before{content:"▶ ";opacity:.6}
+.nav .it.t::before{content:"≡ ";opacity:.7}
+.nav .caminho{border-top:1px solid var(--slate-soft);padding:6px 12px;font-size:12px;color:var(--teal-strong)}
+.nav .detalhe{border-top:1px solid var(--slate-soft);padding:10px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 18px}
+.nav .detalhe span{opacity:.65}
+@media(max-width:700px){.nav .corpo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.nav .lat,.nav .col:nth-child(2){display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head><body>
+
+<header class="capa"><div class="wrap">
+  <p class="eyebrow">Carta Aberta · plano de redesenho</p>
+  <h1>A Carta vira o registro de mídia da produção, e o conform passa a ler o mapa</h1>
+  <div class="barra"></div>
+  <p class="lead">Quando o fluxo é nosso do ingest ao online, já se sabe para onde cada mídia foi convertida, com que transformação, onde está em cada máquina e o que a câmera disse dela. <strong>O conform deixa de varrer a pasta de bruto.</strong> O De Lá Pra Cá fica para o que não passou por fluxo nosso.</p>
+  <div class="numeros">
+    <div class="numero"><b>6</b><span>decisões tomadas</span></div>
+    <div class="numero"><b>5</b><span>fatos novos no registro</span></div>
+    <div class="numero"><b>8</b><span>etapas, cada uma útil sozinha</span></div>
+    <div class="numero"><b>0</b><span>bancos fechados</span></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<section>
+  <div class="cab"><p class="eyebrow">O navegador</p><h2>No molde do Job Manager e do Finder em colunas</h2>
+    <p class="muted">Substitui a janela atual da Carta. Os Locais ficam na lateral; as colunas começam onde o editor abriu (a raiz de um volume ou uma pasta funda) e andam para a direita; a barra de caminho diz de onde veio; o painel de baixo mostra o detalhe do selecionado. Esboço com nomes da PRODUCAO-A; os números do painel são ilustrativos.</p></div>
+  <div class="nav" aria-label="esboço do navegador">
+    <div class="corpo">
+      <div class="lat"><b>Locais</b><div class="it sel">SSD · Produções</div><div class="it">Servidor · Produções</div><div class="it">HD V-001</div><div class="it">Recentes</div></div>
+      <div class="col"><b>Produções</b><div class="it p sel">PRODUCAO-A</div><div class="it p">PRODUCAO-C</div><div class="it p">LAB BASELIGHT</div></div>
+      <div class="col"><b>PRODUCAO-A</b><div class="it b">DIÁRIAS</div><div class="it b sel">CORTE</div><div class="it p">EP01 · colorista</div><div class="it p">ENTREGA NETFLIX</div></div>
+      <div class="col"><b>CORTE</b><div class="it t sel">PRODA_CORTE.02</div><div class="it t">CORTE FINAL</div><div class="it m">A001C003</div><div class="it m">12-1T01.wav</div></div>
+    </div>
+    <div class="caminho">SSD › Produções › PRODUCAO-A › CORTE</div>
+    <div class="detalhe"><div><span>Timeline</span> PRODA_CORTE.02</div><div><span>Taxa</span> 23,976 · 01:00:00:00</div><div><span>Mídias</span> 866 clipes · 44 subclipes</div><div><span>Formas</span> original 812 · trabalho 866</div><div><span>Fora do mapa</span> 54 (vão ao casamento)</div><div><span>Última mudança</span> MAC-MINI · 26/11 18:40</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Decidido</p><h2>As seis decisões da conversa</h2></div>
+  <div class="grade">
+    <div class="card"><span class="selo">1</span><h3>A pasta é a bin</h3><p>Pastas reais no Finder/Explorer organizam; cada mídia e cada timeline é um arquivo pequeno dentro delas. Sem banco fechado e sem trava: dois assistentes em mídias diferentes nunca brigam.</p></div>
+    <div class="card"><span class="selo">2</span><h3>Produção e sub-projetos</h3><p>A produção é uma pasta com <code>.carta/</code>. Episódio, rolo, entrega e sessão do colorista são sub-projetos dentro dela e <strong>enxergam as mídias de cima</strong>, como o MediaFiles do MC.</p></div>
+    <div class="card"><span class="selo">3</span><h3>O navegador substitui a janela</h3><p>Locais na lateral, colunas que começam em qualquer ponto do caminho, barra de caminho e painel de detalhe embaixo.</p></div>
+    <div class="card"><span class="selo">4</span><h3>Hash em dois níveis</h3><p>A impressão rápida no dia a dia, para achar cópias movidas fora do nosso controle; o hash completo só no ingest, lido do MHL do DIT quando houver. Reforça a identidade, não a substitui.</p></div>
+    <div class="card"><span class="selo">5</span><h3>Metadado volta como anexo</h3><p>ALE para o Avid, CSV ou XMP para o Premiere, o CSV do Resolve, a lista do VFX. A mídia nunca é regravada.</p></div>
+    <div class="card aviso"><span class="selo ambar">6</span><h3>Mapa e casamento discordam</h3><p>Alerta, e o editor decide: a regra do empate. Nunca uma troca calada.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">O registro</p><h2>O que a Carta passa a guardar</h2>
+    <p class="muted">Tudo no diário que só acrescenta, um arquivo por máquina: mudar é uma linha nova, o histórico fica e o conflito aparece.</p></div>
+  <div class="tabela"><table class="stack"><thead><tr><th>Fato</th><th>O que diz</th><th>Quem grava</th></tr></thead><tbody id="fatos"></tbody></table></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">As etapas</p><h2>A tradução e o mapa antes do navegador</h2>
+    <p class="muted">A ordem proposta: primeiro o que muda o resultado no NLE (1–3), depois o que muda a vida do assistente (4–8).</p></div>
+  <div class="provas" id="etapas"></div>
+</section>
+
+<section>
+  <div class="cab"><p class="eyebrow">Em aberto</p><h2>Para pensar com calma</h2></div>
+  <ol class="passos">
+    <li><strong>A tabela de metadados no navegador:</strong> (a) a bin vira tabela, com as colunas escolhidas e salvas por bin, como a bin do MC em texto; (b) o painel de baixo com abas (Identidade · Formas · Relações · Câmera · Editorial · Histórico); (c) os dois. Um esboço navegável de cada um, com dados reais da PRODUCAO-A, quando chegar a etapa 5.</li>
+    <li><strong>Permissões</strong> de leitura, escrita e visualização por pasta: desejo futuro. O desenho em arquivos e pastas permite.</li>
+    <li><strong>Um índice</strong> para consultar rápido com dezenas de milhares de mídias: um SQLite que se reconstrói a partir dos arquivos e nunca é a verdade.</li>
+    <li><strong>A ordem das etapas</strong>, que a decisão do autor confirma ou muda.</li>
+  </ol>
+</section>
+
+<p class="rodape">Plano no repositório: <code>docs/plano/2026-11-26-carta-registro-da-producao.md</code> · junta o plano da manhã (o Conformar pela Carta) · Ciclo Assist · 26/11/2026</p>
+</main>
+
+<script>{
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const F=[
+ ['forma (já existe)','Onde está uma forma (original, trabalho, avid) de uma mídia, nesta máquina.','anexar, mandar'],
+ ['impressão','A impressão rápida e, quando houver, o hash completo, com a origem (MHL ou calculado).','anexar, ingest'],
+ ['relação','O arquivo Y saiu do X com a transformação Z: deslocamento de TC, taxa, enquadramento (escala, tarja, corte), trecho do original, mapa de canais.','as conversões do app; JSON manual'],
+ ['sincronia','O vídeo A com o áudio B: deslocamento, método (TC, claquete, forma de onda), confiança, quem confirmou.','o Preparar (sync, subclipe)'],
+ ['metadado','O que o arquivo de câmera diz, cru (lente, ISO, câmera…), por plano. O por quadro é lido do original quando pedirem.','ingest'],
+ ['nota','O metadado editorial: continuidade, comentários, markers, com máquina, hora e histórico.','mandar da timeline ou da bin']];
+document.getElementById('fatos').innerHTML=F.map(f=>`<tr><td><strong>${esc(f[0])}</strong></td><td>${esc(f[1])}</td><td>${esc(f[2])}</td></tr>`).join('');
+const E=[
+ ['O Conformar monta no Premiere pelo escritor da Carta','Rampa, congelado, transição e título sem marcador.','O plano da manhã; provas B32, B34, B30, B33 e PRODUCAO-A.'],
+ ['A relação entre as formas e a impressão na referência','As conversões do app gravam o par original ⇄ convertido com a transformação.','Sem dedução: o par nasce na conversão.'],
+ ['O conform pelo mapa, clipe a clipe','Sem varrer pasta; o De Lá Pra Cá completa só o que ficou fora do mapa.','Alerta quando o mapa não confere.'],
+ ['Os fatos de sincronia do Preparar','O casamento som/imagem sobrevive ao projeto perdido.','Com procedência: método, confiança, quem confirmou.'],
+ ['O navegador e os sub-projetos','Várias produções lado a lado, cada uma separada.','Substitui a janela atual da Carta.'],
+ ['O metadado de câmera, cru, no ingest','Lente e captação guardadas para o VFX.','Tudo o que o arquivo diz, sem escolher campo ainda.'],
+ ['O metadado editorial','A continuidade do assistente no registro.','Markers e comentários, com histórico.'],
+ ['Os anexos por destino','O metadado volta ao convertido sem tocar a mídia.','ALE, CSV, XMP, a lista do VFX.']];
+document.getElementById('etapas').innerHTML=E.map((e,i)=>`<div class="prova"><div class="n">${String(i+1).padStart(2,'0')}</div><div class="corpo"><h3>${esc(e[0])}</h3><p class="pergunta">${esc(e[1])}</p><p class="medido">${esc(e[2])}</p></div></div>`).join('');
+}</script>
+</body></html>

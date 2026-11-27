@@ -992,3 +992,8 @@ html.sem-flex-gap .fechar-acoes > * + * { margin-left:8px; }
              font-size:10.5px; letter-spacing:.04em; white-space:nowrap; }
 .pasta-tag.avid { background:#4a3a78; color:#e0d4ff; }
 .pasta-tag.fora { background:#4a2f2c; color:#f0b3ab; }
+
+/* o seletor do NLE de trabalho (o mesmo visual do Assistir, `cicloassist/painel/painel.css` .qual-nle) */
+.qual-nle-linha { padding: 6px 10px 0; }
+.qual-nle { background: var(--fundo-2, #2a2a2a); color: inherit; border: 1px solid #444; border-radius: 4px; font: inherit;
+            font-size: 12px; padding: 2px 4px; width: auto !important; min-width: 0; max-width: 220px; }

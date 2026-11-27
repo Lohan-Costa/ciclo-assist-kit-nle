@@ -672,8 +672,108 @@ def _resolve_externo(fn, *args):
         return 409, {"ok": False, "erro": str(e)}
 
 
+#: o NLE de trabalho do núcleo (`avid` lá é o `mc` daqui) — lido a cada batida, guardado 3 s
+_ESCOLHA = {"v": None, "ate": 0.0}
+_DO_NUCLEO = {"avid": "mc", "premiere": "premiere", "resolve": "resolve", "baselight": "baselight"}
+_PARA_O_NUCLEO = {v: k for k, v in _DO_NUCLEO.items()}
+
+
+def _escolha_do_editor() -> str | None:
+    import time
+
+    import premiere_ponte
+    if time.monotonic() < _ESCOLHA["ate"]:
+        return _ESCOLHA["v"]
+    try:
+        v = _DO_NUCLEO.get(str((premiere_ponte._nucleo("GET", "/nucleo/nle", prazo=2.0) or {}).get("nle") or ""))
+    except premiere_ponte.PremiereIndisponivel:
+        v = None
+    _ESCOLHA.update(v=v, ate=time.monotonic() + 3.0)
+    return v
+
+
+def _abertos() -> list[str]:
+    """Os programas que este módulo atende e que estão ABERTOS agora (o seletor do topo, com 2 ou mais)."""
+    import plataforma
+    import premiere_ponte
+    from baselight import enviar as _bl
+    out = []
+    if plataforma.media_composer_aberto():
+        out.append("mc")
+    if premiere_ponte.ponte_viva():
+        out.append("premiere")
+    nomes = {n.lower().rsplit("/", 1)[-1] for _, _, n in plataforma.processos()}
+    if {"resolve.exe", "resolve"} & nomes:
+        out.append("resolve")
+    try:
+        if _bl.interface_aberta():
+            out.append("baselight")
+    except Exception:  # noqa: BLE001 — sem o Baselight instalado
+        pass
+    return out
+
+
+def _conexao_de(ctx, programa: str) -> dict | None:
+    """A conexão com UM programa (o escolhido pelo editor), ou None se ele não atende."""
+    from pathlib import Path as _P
+
+    import premiere_ponte
+    if programa == "mc":
+        return _conexao_mc(ctx)
+    if programa == "premiere":
+        try:
+            e = premiere_ponte.chamar("dlpcEstado", prazo=5)
+            return {"programa": "premiere", "versao": e.get("versao") or "",
+                    "projeto": _P(e["projeto"]).stem if e.get("projeto") else ""}
+        except (premiere_ponte.PremiereIndisponivel, premiere_ponte.ExtendScriptFalhou):
+            return None
+    if programa == "resolve":
+        import aviso_ocupado
+        import resolve_externo
+        try:
+            with aviso_ocupado.mudo("esperando o DaVinci Resolve (projeto)"):
+                r = resolve_externo.projeto()
+            return {"programa": "resolve", "versao": r.get("versao") or "", "projeto": r.get("projeto") or ""}
+        except RuntimeError as e:
+            return {"programa": "resolve", "versao": "", "projeto": "", "erro": str(e)}
+    if programa == "baselight":
+        from baselight import enviar as _bl
+        bl = _bl.interface_aberta()
+        return {"programa": "baselight", "versao": bl.get("versao") or "", "projeto": ""} if bl else None
+    return None
+
+
 @rota("GET", "/conexao")
 def conexao(ctx):
+    """⭐ O NLE DE TRABALHO (autor, 2026-11-26: "todas as abas"): com 2 ou mais programas abertos, vale o que o editor
+    escolheu no seletor (guardado no núcleo, o mesmo do Assistir); sem escolha, ou com o escolhido fechado, o padrão de
+    antes (`_conexao_padrao`: o MC vence). `abertos` = a lista para o seletor."""
+    abertos = _abertos()
+    escolha = _escolha_do_editor()
+    if escolha and escolha in abertos and len(abertos) > 1:
+        c = _conexao_de(ctx, escolha)
+        if c:
+            return 200, {**c, "abertos": abertos, "escolhido": True}
+    codigo, c = _conexao_padrao(ctx)
+    return codigo, {**c, "abertos": abertos}
+
+
+@rota("POST", "/nle-de-trabalho")
+def nle_de_trabalho(ctx):
+    """O editor escolheu no seletor do Conformar: grava no núcleo, para TODAS as abas."""
+    import premiere_ponte
+    programa = str((ctx.json() or {}).get("programa") or "")
+    if programa not in _PARA_O_NUCLEO:
+        return 400, {"erro": "programa: mc, premiere, resolve ou baselight"}
+    try:
+        r = premiere_ponte._nucleo("POST", "/nucleo/nle", {"nle": _PARA_O_NUCLEO[programa]}, prazo=3.0)
+    except premiere_ponte.PremiereIndisponivel as e:
+        return 409, {"erro": str(e)}
+    _ESCOLHA.update(v=programa, ate=0.0)
+    return 200, {"ok": True, **(r or {})}
+
+
+def _conexao_padrao(ctx):
     """Com que programa o app está falando (organograma do app unificado, 2026-10-18): o painel aberto na janela do
     app segue o programa CONECTADO, não um seletor. `{programa: "mc"|"resolve"|None, versao, projeto}`.
 
@@ -1013,34 +1113,33 @@ def premiere_sequencia(ctx):
 
 @rota("POST", "/premiere/montar")
 def premiere_montar(ctx):
-    """Montar no Premiere (modo Premiere, decisão A do organograma de 2026-10-19): `{plano}` — o que o `/receber/preparar`
-    com `destino: "premiere"` devolveu — → a ponte importa a mídia, cria a sequência e põe cada plano no lugar."""
+    """Montar no Premiere (modo Premiere): `{plano: {carta_id}}` — o que o `/receber/preparar` com `destino: "premiere"`
+    devolveu — → o núcleo monta pelo escritor da Carta (`/nucleo/conformar/premiere`)."""
     import os
 
     import premiere_ponte
 
     pl = (ctx.json() or {}).get("plano")
-    if not isinstance(pl, dict) or not isinstance(pl.get("midias"), list) or not isinstance(pl.get("planos"), list):
-        return 400, {"erro": "plano de montagem inválido"}
-    midias = [m for m in pl["midias"][:5000] if isinstance(m, str) and "\0" not in m and os.path.isfile(m)]
-    if len(midias) != len(pl["midias"]):
-        return 400, {"erro": "o plano aponta arquivo que não está neste computador"}
-    try:
-        plano = {"nome": str(pl.get("nome") or "De Lá Pra Cá")[:120], "tpf": int(pl["tpf"]), "inicio": int(pl["inicio"]),
-                 "midias": midias,
-                 "planos": [{"m": int(x["m"]), "v": bool(x["v"]), "t": max(1, min(int(x["t"]), 99)), "rec": int(x["rec"]),
-                             "dur": int(x["dur"]), "src": int(x["src"]), "ref": bool(x.get("ref")),
-                             # o som desligado no Avid entra desligado (`premiere_montagem.plano`)
-                             **({"desligado": True} if x.get("desligado") is True and not x.get("v") else {})}
-                            for x in pl["planos"][:20000] if 0 <= int(x["m"]) < len(midias)],
-                 "marcas": [{"q": int(x["q"]), "nome": str(x.get("nome") or "")[:80], "nota": str(x.get("nota") or "")[:400]}
-                            for x in (pl.get("marcas") or [])[:5000]]}
-    except (KeyError, TypeError, ValueError):
-        return 400, {"erro": "plano de montagem inválido"}
-    try:
-        return 200, premiere_ponte.chamar("dlpcMontar", plano, prazo=900)
-    except (premiere_ponte.PremiereIndisponivel, premiere_ponte.ExtendScriptFalhou) as e:
-        return 409, {"erro": str(e)}
+    if isinstance(pl, dict) and pl.get("carta_id"):
+        # ⭐ pelo ESCRITOR DA CARTA (plano 2026-11-26, etapa 1): o envio ficou no serviço (o painel só diz qual)
+        envio = ctx.servico.receber.carta_premiere(str(pl["carta_id"]))
+        if not envio:
+            return 409, {"erro": "a montagem não está mais preparada — monte de novo"}
+        try:
+            r = premiere_ponte._nucleo("POST", "/nucleo/conformar/premiere", envio, prazo=1800)
+        except premiere_ponte.PremiereIndisponivel as e:
+            return 409, {"erro": str(e)}
+        if not r.get("ok"):
+            return 409, {"erro": r.get("motivo") or r.get("erro") or "a Carta não montou a timeline"}
+        esc = r.get("escrita") or {}
+        return 200, {"ok": True, "pela_carta": True, "sequencia": envio.get("nome"), "planos": esc.get("clipes", 0),
+                     "colocados": esc.get("clipes", 0), "transicoes": esc.get("transicoes", 0),
+                     "velocidades": esc.get("velocidades", 0), "rampas": esc.get("rampas", 0),
+                     "titulos": esc.get("titulos", 0), "offline_no_lugar": esc.get("offline_no_lugar", 0),
+                     "fora": esc.get("fora") or {}, "midia_recusada": r.get("midia_recusada") or [],
+                     "id": (r.get("novas") or [{}])[0].get("id", ""), "carta": r.get("carta"),
+                     "bin": r.get("bin") or ""}
+    return 409, {"erro": "a montagem não está preparada — leia a timeline de novo"}
 
 
 @rota("POST", "/premiere/copia")

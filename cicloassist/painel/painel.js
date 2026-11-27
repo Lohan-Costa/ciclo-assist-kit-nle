@@ -4608,9 +4608,12 @@ window.cicloArrasto = function (n) {
 function escolherONle() {
   if (!CASCA_APP || CEP) { return; }
   var seletor = document.getElementById("qualNle");
-  fetch("/conexao", { cache: "no-store" })
-    .then(function (r) { return r.json(); })
-    .then(function (c) {
+  // ⭐ o NLE DE TRABALHO (autor, 2026-11-26): a escolha é UMA para todas as abas, guardada no núcleo (`/nle`)
+  Promise.all([fetch("/conexao", { cache: "no-store" }).then(function (r) { return r.json(); }),
+               fetch("/nle", { cache: "no-store" }).then(function (r) { return r.json(); })
+                 .catch(function () { return {}; })])
+    .then(function (rs) {
+      var c = rs[0], escolhido = (rs[1] || {}).nle;
       var vivos = ["avid", "premiere"].filter(function (n) { return c && c[n]; });
       if (seletor) {
         // ⚠️ Embutido, só com os DOIS ligados: o topo do guarda-chuva já diz qual está aberto.
@@ -4623,7 +4626,9 @@ function escolherONle() {
       }
       var alvo = NLE;
       if (vivos.length === 1) { alvo = vivos[0]; }
-      else if (vivos.length === 2 && !NLE_PEDIDO) { alvo = "avid"; }
+      else if (vivos.length === 2) {
+        alvo = vivos.indexOf(escolhido) >= 0 ? escolhido : (NLE_PEDIDO || "avid");
+      }
       if (alvo !== NLE && !ocupado) { trocarONle(alvo); }
     })
     .catch(function () { /* sem serviço, o ponto do topo já diz */ });
@@ -4641,7 +4646,12 @@ function trocarONle(alvo) {
   //    podia RECARREGAR a página no meio da leitura dos ajustes.
   if (!CASCA_APP || CEP || !seletor || SO_AJUSTES) { return; }
   seletor.addEventListener("change", function () {
-    if (seletor.value !== NLE) { trocarONle(seletor.value); }
+    var alvo = seletor.value;
+    // grava a escolha para TODAS as abas (o Conformar e o Preparar seguem); a troca daqui não espera a gravação
+    fetch("/nle", { method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nle: alvo }) })
+      .catch(function () { /* sem serviço, o ponto do topo já diz */ })
+      .then(function () { if (alvo !== NLE) { trocarONle(alvo); } });
   });
   escolherONle();
   setInterval(escolherONle, 15000);

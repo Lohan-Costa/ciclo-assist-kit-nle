@@ -193,6 +193,20 @@ def test_mandar_e_anexar(proj, tmp_path):
     json.dumps(formas)                                         # tudo serializável
 
 
+def test_a_forma_com_acento_nao_entra_duas_vezes(proj, tmp_path):
+    """O caminho AMA da bin vem NFC; o do disco (exFAT no Mac) pode vir NFD — é o MESMO arquivo (B30 `CENA_AÇÃO`,
+    2026-11-26: a forma `original` entrava duas vezes)."""
+    import unicodedata
+    (proj.raiz / "D01").mkdir()
+    _, ref = referencias.criar(proj, "D01", "CENA", {"nome_da_fonte": "CENA_AÇÃO", "tipo": "video"}, {})
+    arq = tmp_path / unicodedata.normalize("NFC", "CENA_AÇÃO.mov")
+    arq.write_bytes(b"x")
+    c = anexar.Conta()
+    anexar._vincular(proj, ref["id"], "original", Path(unicodedata.normalize("NFC", str(arq))), "AMA", c)
+    anexar._vincular(proj, ref["id"], "original", Path(unicodedata.normalize("NFD", str(arq))), "rglob", c)
+    assert len(c.vinculos) == 1 and len(diario.formas(proj)[ref["id"]]) == 1
+
+
 # ── as rotas (C1; a janela é a C2) ─────────────────────────────────────────────
 
 def _post(fn, corpo):

@@ -1900,7 +1900,10 @@ async function carregarRevisao() {
     pill(`${t.segmentos_resolvidos || 0}/${t.segmentos_total || 0} clipes na timeline`) +
     // ⭐ O banco só aparece quando ATUOU. Uma pílula "0 do banco" em todo relink seria
     // ruído permanente para informar um não-evento.
-    ((t.do_banco) ? pill(`${t.do_banco} do banco`, "ok") : "");
+    ((t.do_banco) ? pill(`${t.do_banco} do banco`, "ok") : "") +
+    // o mapa da Carta (etapa 3): o original que o registro já sabia, sem varrer pasta; o alerta é empate do editor
+    ((t.do_mapa) ? pill(`${t.do_mapa} pelo mapa da Carta`, "ok") : "") +
+    ((t.alertas_do_mapa) ? pill(`${t.alertas_do_mapa} alerta${t.alertas_do_mapa > 1 ? "s" : ""} do mapa`, "warn") : "");
 
   const r = await api("/trabalho/masters" + (filtro === "revisao" ? "?revisao=1" : ""));
   const itens = r.masters || [];
@@ -2425,6 +2428,14 @@ bloquear(true);
 /* ⭐ Na janela do APP o painel segue o programa CONECTADO (organograma do app unificado, 2026-10-18): o topo diz qual
    e o PROJETO em foco (destaque discreto — o Premiere e o Resolve com a troca dinâmica abrem vários), e o modo do painel
    (`nle`) vira o dele. A troca recarrega a página, então NUNCA no meio de um trabalho: espera a próxima batida. */
+if (el("qualNle")) {
+  el("qualNle").addEventListener("change", async () => {
+    const programa = el("qualNle").value;
+    try { await post("/nle-de-trabalho", { programa }); } catch (_) { /* a próxima batida diz */ }
+    seguirConexao();
+  });
+}
+
 async function seguirConexao() {
   let c;
   try { c = await api("/conexao"); } catch (_) { return; }
@@ -2453,6 +2464,20 @@ async function seguirConexao() {
   const ocupado = (typeof rcOcupado !== "undefined" && rcOcupado) ||
     (el("passoProgresso") && !el("passoProgresso").hidden);
   if (c.tambem) el("connTexto").insertAdjacentHTML("beforeend", ` <span class="conn-tambem">· também: ${escapar(c.tambem)}</span>`);
+  // ⭐ o seletor do NLE de trabalho: com 2 ou mais abertos, como no Assistir; a escolha vale para TODAS as abas
+  const sel = el("qualNle");
+  if (sel) {
+    const abertos = Array.isArray(c.abertos) ? c.abertos.filter((p) => NOMES[p]) : [];
+    sel.hidden = abertos.length < 2;
+    if (!sel.hidden) {
+      const chave = abertos.join(",");
+      if (sel.dataset.abertos !== chave) {
+        sel.innerHTML = abertos.map((p) => `<option value="${escapar(p)}">${escapar(NOMES[p])}</option>`).join("");
+        sel.dataset.abertos = chave;
+      }
+      sel.value = c.programa;
+    }
+  }
   if (c.programa !== NLE && !ocupado) {
     const u = new URL(location.href);
     u.searchParams.set("nle", c.programa);
@@ -4293,8 +4318,8 @@ async function trazerPedido(pedido, titulo, idEnvio) {
    O serviço devolveu o plano (`premiere_montagem`): a ponte importa a mídia na bin De Lá Pra Cá › Mídia › <nome>, cria
    a sequência e põe cada plano no lugar; o que ainda não traduz vira marcador no lugar. */
 async function montarNoPremiere(p, idEnvio) {
-  const pl = p.premiere || { planos: [], conta: {} };
-  pintarAndamento({ etapa: "importando", detalhe: `montando ${pl.planos.length} planos no Premiere — a mídia entra na `
+  const pl = p.premiere || { planos_n: 0, conta: {} };
+  pintarAndamento({ etapa: "importando", detalhe: `montando ${pl.planos_n || 0} planos no Premiere — a mídia entra na `
                     + "bin De Lá Pra Cá › Mídia; não mexa no Premiere até terminar" });
   let r;
   try { r = await post("/premiere/montar", { plano: pl }); }
@@ -4315,25 +4340,22 @@ async function montarNoPremiere(p, idEnvio) {
   const c = pl.conta || {};
   const pill = (n, txt, cls) => (n ? `<span class="pill${cls ? " " + cls : ""}">${n} ${escapar(txt)}</span>` : "");
   el("rcFeito").innerHTML =
-    `<p class="previa-ok">✓ “${escapar(r.sequencia)}” no Premiere, na bin De Lá Pra Cá › Mídia</p><div class="placar">` +
+    `<p class="previa-ok">✓ “${escapar(r.sequencia)}” no Premiere, ${r.bin ? `na bin ${escapar(r.bin)}` : "na raiz do projeto"}</p><div class="placar">` +
     `<span class="pill ok">${r.colocados} de ${r.planos} planos no lugar</span>` +
     (p.nos_originais ? pill(p.nos_originais, "nos originais", "ok") : "") +
-    pill(c.offline_no_lugar, "offline no lugar (religar)", "warn") +
-    pill(c.offline, "offline (marcador)", "warn") + pill(c.velocidade, "com velocidade (a 100 %, marcador)", "warn") +
-    pill(c.transicoes, "transições (marcador)", "warn") + pill(c.titulos, "títulos (marcador)", "warn") +
-    pill(c.transicoes_audio, "transições de áudio viraram corte seco") +
-    pill(c.audio_juntado, "pares de mono juntados") +
-    pill(c.desligados, "vídeos desligados no Avid não entraram") +
-    pill(c.audio_desligado, "sons desligados no Avid entraram desligados") +
+    // ⭐ pelo escritor da Carta (plano 2026-11-26): o que entrou traduzido, e o que ficou de fora com o motivo
+    pill(r.transicoes, "transições") + pill(r.velocidades, "com velocidade") + pill(r.rampas, "rampas/congelados") +
+    pill(r.titulos, "títulos") + pill(r.offline_no_lugar, "offline no lugar (religar)", "warn") +
+    Object.entries(r.fora || {}).map(([k, n]) => pill(n, k, "warn")).join("") +
+
     `<span class="pill">${relogio(Math.round((Date.now() - rcInicio) / 1000))}</span></div>` +
-    (r.nfalhas ? `<p class="aviso">${r.nfalhas} ${r.nfalhas === 1 ? "plano não entrou" : "planos não entraram"}: ${escapar((r.falhas || []).join(" · "))}</p>` : "") +
-    (r.sem_item ? `<p class="aviso">${r.sem_item} ${r.sem_item === 1 ? "arquivo o Premiere não importou" : "arquivos o Premiere não importou"}.</p>` : "") +
+    ((r.midia_recusada || []).length ? `<p class="aviso">O Premiere recusou: ${escapar(r.midia_recusada.join(" · "))}</p>` : "") +
     (r.aviso || []).map((a) => `<p class="aviso">${escapar(a)}</p>`).join("") +
     (c.offline_no_lugar ? `<div class="dica">Os planos sem mídia entraram OFFLINE no lugar, com o nome do original, o TC e os
       canais: quando a mídia estiver nesta máquina, selecione os itens offline na bin De Lá Pra Cá › Mídia ›
       ${escapar(r.sequencia || "")} e use Vincular mídia.</div>` : "") +
-    `<div class="dica">Esta primeira versão monta os CORTES: velocidade, transições, títulos e efeitos ficam marcados no lugar
-      para refazer. O que é do Media Composer e ainda não traduz aparece nos marcadores da sequência.</div>` +
+    `<div class="dica">Montado pelo escritor da Carta: velocidade, rampas, congelados, transições e títulos entram
+      traduzidos. O que não tem par no Premiere aparece acima, com o motivo.</div>` +
     (arquivo.arquivado ? `<div class="dica">A Carta foi para “já importados”.</div>` : "") +
     (pendente ? `<div class="dica">⚠ ${escapar(AVISO_PENDENTE)}</div>` : "");
   el("rcFeito").hidden = false;
